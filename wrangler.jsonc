@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "daily-tool",
+  "main": ".open-next/worker.js",
+  // nodejs_compat is required: the CopilotKit runtime and the AI SDK rely on
+  // Node-shaped APIs that the Workers runtime only exposes under this flag.
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Plaintext deploy var. Gemini is the deployed default: it matches the
+  // in-room onboarding docs and follows design rules more sharply than scout.
+  // For the Workers-AI path, set this to "@cf/meta/llama-4-scout-17b-16e-instruct".
+  "vars": {
+    "MODEL": "google/gemini-2.5-flash"
+  }
+
+  // Secrets (NOT stored here — set at deploy time via the Deploy-to-Cloudflare
+  // button prompt, the dashboard, or `wrangler secret put`). The deploy button
+  // reads the field names from .dev.vars.example and prompts for each:
+  //   Gemini path      -> GOOGLE_API_KEY
+  //   Workers-AI path  -> CF_ACCOUNT_ID, CF_API_TOKEN
+}

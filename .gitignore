@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# env files — your API key lives here and must never be committed
+.env
+.env.local
+.env*.local
+
+# cloudflare / opennext build artifacts and local secrets
+/.open-next/
+/.wrangler/
+.dev.vars
+cloudflare-env.d.ts
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts

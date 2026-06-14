@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Design tokens — the Style tab (Pass 3) edits these as a visual form.
+     Every catalog primitive reads from them; change a token and the whole
+     interface re-renders. Keep components token-driven, never hard-coded. */
+  --dt-brand: #1d4ed8;
+  --dt-brand-contrast: #ffffff;
+  --dt-border: #e5e5e5;
+  --dt-radius: 8px;
+  --dt-gap: 12px;
+
+  --dt-tone-neutral-bg: #f5f5f5;
+  --dt-tone-neutral-fg: #404040;
+  --dt-tone-success-bg: #dcfce7;
+  --dt-tone-success-fg: #166534;
+  --dt-tone-warning-bg: #fef9c3;
+  --dt-tone-warning-fg: #854d0e;
+  --dt-tone-danger-bg: #fee2e2;
+  --dt-tone-danger-fg: #991b1b;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
