@@ -11,8 +11,8 @@ import type { ReactNode } from "react";
 export function DTHeading({ text, level = 2 }: { text: string; level?: number }) {
   const Tag = (level === 1 ? "h1" : level === 3 ? "h3" : "h2") as "h1" | "h2" | "h3";
   const size =
-    level === 1 ? "text-2xl" : level === 3 ? "text-base" : "text-lg";
-  return <Tag className={`${size} font-semibold tracking-tight`}>{text}</Tag>;
+    level === 1 ? "text-2xl" : level === 3 ? "text-base" : "text-xl";
+  return <Tag className={`${size} font-serif font-medium tracking-tight`}>{text}</Tag>;
 }
 
 export function DTCard({
@@ -28,15 +28,15 @@ export function DTCard({
 }) {
   return (
     <div
-      className="border bg-white p-[var(--dt-gap)]"
+      className="border bg-[var(--surface)] p-[var(--dt-gap)]"
       style={{
         borderRadius: "var(--dt-radius)",
         borderColor: accent === "brand" ? "var(--dt-brand)" : "var(--dt-border)",
         borderLeftWidth: accent === "brand" ? 4 : 1,
       }}
     >
-      <div className="text-sm font-semibold">{title}</div>
-      {body ? <div className="mt-1 text-sm text-neutral-600">{body}</div> : null}
+      <div className="font-serif text-base font-medium">{title}</div>
+      {body ? <div className="mt-1 text-sm text-[var(--muted)]">{body}</div> : null}
       {children}
     </div>
   );
@@ -79,9 +79,9 @@ export function DTList({
   const ListTag = ordered ? "ol" : "ul";
   return (
     <div>
-      {title ? <div className="mb-1 text-sm font-semibold">{title}</div> : null}
+      {title ? <div className="mb-1 font-serif text-base font-medium">{title}</div> : null}
       <ListTag
-        className={`${ordered ? "list-decimal" : "list-disc"} space-y-1 pl-5 text-sm text-neutral-700`}
+        className={`${ordered ? "list-decimal" : "list-disc"} space-y-1 pl-5 text-sm text-[var(--ink)]`}
       >
         {items.map((item, i) => (
           <li key={i}>{item}</li>
@@ -183,9 +183,9 @@ export function DTPieChart({
 
   return (
     <div>
-      {title ? <div className="mb-1 text-sm font-semibold">{title}</div> : null}
+      {title ? <div className="mb-1 font-serif text-base font-medium">{title}</div> : null}
       {total === 0 ? (
-        <div className="text-sm text-neutral-400">No values to chart.</div>
+        <div className="text-sm text-[var(--faint)]">No values to chart.</div>
       ) : (
         <div className="flex items-center gap-4">
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img">
@@ -195,7 +195,7 @@ export function DTPieChart({
               slices.map((s, i) => <path key={i} d={s.d} fill={s.fill} />)
             )}
           </svg>
-          <ul className="space-y-1 text-xs text-neutral-600">
+          <ul className="space-y-1 text-xs text-[var(--muted)]">
             {data.map((d, i) => (
               <li key={i} className="flex items-center gap-1.5">
                 <span

@@ -31,7 +31,7 @@ export function CatalogTab({
           return (
             <div
               key={entry.name}
-              className="flex items-start justify-between gap-4 rounded-lg border border-neutral-200 p-3"
+              className="flex items-start justify-between gap-4 rounded-lg border border-[var(--line)] p-3"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">

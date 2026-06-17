@@ -20,7 +20,7 @@ export function RulesTab({
         here binds the agent on the next run.
       </p>
       <textarea
-        className="min-h-0 flex-1 resize-none rounded-lg border border-neutral-200 p-3 font-mono text-sm outline-none focus:border-neutral-400"
+        className="min-h-0 flex-1 resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="# My design rules…"

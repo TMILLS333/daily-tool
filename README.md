@@ -6,13 +6,16 @@ A small app where an AI agent turns your daily pile of text — interview
 quotes, audit findings, campaign briefs — into a working interface, within
 design rules **you** write. You design the grammar; the agent speaks it.
 
-The core loop is live: paste anything into the **Data** tab, write plain-English
-design policy in the **Rules** tab, then run the same request through three
-render patterns — **Static** (the agent fills components you pre-built),
-**Declarative** (the agent emits a spec; your catalog decides what renders,
-A2UI-style), and **Open-Ended** (the agent invents the surface, sandboxed).
-The "Why this render" panel reports which rules fired and which components
-were allowed. Catalog toggles and the Style tab arrive next.
+The core loop is live: drop data into the **Data** tab — paste anything, load
+one of five sample CSVs, or upload your own `.csv`/`.tsv`/`.txt` (it's never
+parsed; the agent does the structuring) — write plain-English design policy in
+the **Rules** tab, then run the same request through three render patterns —
+**Controlled** (the agent fills components you pre-built), **Declarative** (the
+agent emits a spec; your catalog decides what renders, A2UI-style), and
+**Open-Ended** (the agent invents the surface, sandboxed). Tune the agent's
+latitude in the **Catalog** tab (which components it may use), the **Style** tab
+(your design tokens). The "Why this render" panel
+reports which rules fired and which components were allowed.
 
 ## Open it in the browser (recommended for the workshop)
 

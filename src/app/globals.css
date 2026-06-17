@@ -1,30 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Editorial type system. next/font (layout.tsx) sets --font-spectral /
+   --font-inter / --font-jetbrains on <html>; these map them onto Tailwind's
+   font-serif / font-sans / font-mono utilities. @theme inline keeps the
+   reference (not the resolved value) so the runtime next/font vars win. */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-spectral), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+}
 
-  /* Design tokens — the Style tab (Pass 3) edits these as a visual form.
-     Every catalog primitive reads from them; change a token and the whole
-     interface re-renders. Keep components token-driven, never hard-coded. */
-  --dt-brand: #1d4ed8;
+:root {
+  /* Editorial chrome palette — fixed, near-monochrome. The chrome stays quiet
+     so attendee Style tokens (the --dt-* group below) lead in the output. */
+  --paper: #f3ede2;
+  --surface: #fffdf9;
+  --ink: #1f1c16;
+  --muted: #6f6a5f;
+  --faint: #9c9587;
+  --line: rgba(31, 28, 22, 0.1);
+  --line-strong: rgba(31, 28, 22, 0.2);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+
+  /* Design tokens — the Style tab edits these as a visual form, and they drive
+     the rendered OUTPUT (catalog primitives), not the chrome. Defaults are the
+     "Editorial" preset; attendee edits override live so their choices lead.
+     Keep components token-driven, never hard-coded. */
+  --dt-brand: #1f5d59;
   --dt-brand-contrast: #ffffff;
-  --dt-border: #e5e5e5;
-  --dt-radius: 8px;
+  --dt-border: #e3dccf;
+  --dt-radius: 10px;
   --dt-gap: 12px;
 
-  --dt-tone-neutral-bg: #f5f5f5;
-  --dt-tone-neutral-fg: #404040;
-  --dt-tone-success-bg: #dcfce7;
-  --dt-tone-success-fg: #166534;
-  --dt-tone-warning-bg: #fef9c3;
-  --dt-tone-warning-fg: #854d0e;
-  --dt-tone-danger-bg: #fee2e2;
-  --dt-tone-danger-fg: #991b1b;
+  --dt-tone-neutral-bg: #efe9dd;
+  --dt-tone-neutral-fg: #5f5a4f;
+  --dt-tone-success-bg: #e9f0ea;
+  --dt-tone-success-fg: #3b6d4f;
+  --dt-tone-warning-bg: #f6edd9;
+  --dt-tone-warning-fg: #7a5a1e;
+  --dt-tone-danger-bg: #f4e9e7;
+  --dt-tone-danger-fg: #9c3b32;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Range sliders (creativity lever, Style tab) stay monochrome ink — the brand
+   accent is reserved for the active pattern card and the Run button. */
+input[type="range"] {
+  accent-color: var(--ink);
 }

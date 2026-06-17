@@ -183,9 +183,8 @@ const agent = new BuiltInAgent({
   // The front end sets toolChoice per pattern: "auto" for static (tool
   // calls ARE the pattern), "none" for declarative and open-ended (text-only
   // patterns; also stops smaller models drifting into the built-in AGUI
-  // state tools instead of emitting the spec). temperature is the creativity
-  // lever (Pass 3a): the front end overrides the 0.4 default per run.
-  overridableProperties: ["toolChoice", "temperature"],
+  // state tools instead of emitting the spec).
+  overridableProperties: ["toolChoice"],
 });
 
 const runtime = new CopilotRuntime({

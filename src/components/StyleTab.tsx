@@ -10,26 +10,53 @@ export type StyleTokens = {
   gap: string;
 };
 
-/** Matches the :root defaults in globals.css (which stay intact as fallback). */
+/** The "Editorial" baseline — matches the :root --dt-* defaults in globals.css.
+   This is the beautiful starting point attendees restyle FROM; their edits
+   override it live, so their choices lead in the rendered output. */
 export const DEFAULT_TOKENS: StyleTokens = {
-  brand: "#1d4ed8",
+  brand: "#1f5d59",
   brandContrast: "#ffffff",
-  border: "#e5e5e5",
-  radius: "8px",
+  border: "#e3dccf",
+  radius: "10px",
   gap: "12px",
 };
 
-export const STYLE_PRESETS: { name: string; tokens: StyleTokens }[] = [
-  { name: "Default", tokens: DEFAULT_TOKENS },
+/**
+ * Style sets — named bundles of the --dt-* tokens. A designer picks one and
+ * every rendered block re-skins (Studio Slice 2). The same sets power both the
+ * Style authoring tab and the surfaced style-set lever in the Preview rail.
+ * Editorial equals the globals.css :root default (the reset baseline). The
+ * sets vary the STYLISTIC axes (brand, border, shape, density) only; semantic
+ * tone colors stay stable on purpose.
+ */
+export const STYLE_SETS: { name: string; tokens: StyleTokens }[] = [
+  { name: "Editorial", tokens: DEFAULT_TOKENS },
   {
-    name: "Midnight",
-    tokens: { brand: "#6366f1", brandContrast: "#ffffff", border: "#cbd5e1", radius: "14px", gap: "16px" },
+    name: "Modern",
+    tokens: { brand: "#2f6f8f", brandContrast: "#ffffff", border: "#dfe4ea", radius: "16px", gap: "16px" },
   },
   {
-    name: "Warm",
-    tokens: { brand: "#ea580c", brandContrast: "#ffffff", border: "#e7e5e4", radius: "4px", gap: "10px" },
+    name: "Square",
+    tokens: { brand: "#1f5d59", brandContrast: "#ffffff", border: "#5f5a4f", radius: "0px", gap: "8px" },
   },
 ];
+
+/**
+ * Which named set the current tokens match, or null when the designer has
+ * fine-tuned away from any set ("custom"). Shared by the Style tab and the
+ * Preview-rail lever so the active-set indication stays honest.
+ */
+export function activeStyleSetName(tokens: StyleTokens): string | null {
+  const match = STYLE_SETS.find(
+    (s) =>
+      s.tokens.brand === tokens.brand &&
+      s.tokens.brandContrast === tokens.brandContrast &&
+      s.tokens.border === tokens.border &&
+      s.tokens.radius === tokens.radius &&
+      s.tokens.gap === tokens.gap
+  );
+  return match ? match.name : null;
+}
 
 function px(value: string) {
   return parseInt(value, 10) || 0;
@@ -50,6 +77,7 @@ export function StyleTab({
   onChange: (next: StyleTokens) => void;
 }) {
   const set = (patch: Partial<StyleTokens>) => onChange({ ...tokens, ...patch });
+  const activeSet = activeStyleSetName(tokens);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
@@ -60,18 +88,31 @@ export function StyleTab({
       </p>
 
       <div>
-        <div className="mb-1 text-xs font-medium text-neutral-700">Presets</div>
+        <div className="mb-1 flex items-baseline justify-between">
+          <span className="text-xs font-medium text-neutral-700">Style sets</span>
+          <span className="text-xs text-neutral-400">
+            {activeSet ?? "Custom"}
+          </span>
+        </div>
         <div className="flex flex-wrap gap-2">
-          {STYLE_PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              onClick={() => onChange(p.tokens)}
-              className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm hover:border-neutral-400"
-            >
-              {p.name}
-            </button>
-          ))}
+          {STYLE_SETS.map((p) => {
+            const on = activeSet === p.name;
+            return (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => onChange(p.tokens)}
+                aria-pressed={on}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                  on
+                    ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                    : "border-[var(--line)] hover:border-neutral-400"
+                }`}
+              >
+                {p.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -108,7 +149,7 @@ function Color({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm">
+    <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--line)] px-3 py-2 text-sm">
       <span className="text-neutral-700">{label}</span>
       <span className="flex items-center gap-2">
         <span className="text-xs text-neutral-400">{value}</span>
@@ -137,7 +178,7 @@ function Range({
   onChange: (n: number) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm">
+    <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--line)] px-3 py-2 text-sm">
       <span className="text-neutral-700">{label}</span>
       <span className="flex items-center gap-2">
         <span className="w-9 text-right text-xs text-neutral-400">{value}px</span>

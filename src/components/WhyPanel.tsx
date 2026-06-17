@@ -3,8 +3,9 @@
 import type { WhyAccount } from "@/lib/catalog";
 
 /**
- * The why-panel. Two sources, kept honest and distinct:
- *   - Pattern, rules applied, and decisions are the model's own account.
+ * The why-strip — a quiet band beneath the rendered output (the output is the
+ * focal point; this explains it without competing). Two sources, kept honest:
+ *   - Pattern and rules applied are the model's own account.
  *   - Components allowed is app truth (allowedComponentNames), passed in as a
  *     prop, NOT the model's self-report — small models hallucinate that list.
  */
@@ -16,73 +17,54 @@ export function WhyPanel({
   /** App truth: components actually allowed in this pattern, not a model claim. */
   componentsAllowed: string[];
 }) {
-  return (
-    <aside className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Why this render</h2>
-        <span className="text-xs text-neutral-400">
-          the model&apos;s own account of rules and decisions
-        </span>
-      </div>
+  const label = "text-[11px] uppercase tracking-wide text-[var(--faint)]";
 
+  return (
+    <aside className="rounded-[var(--dt-radius)] border border-[var(--line)] px-4 py-3">
       {!why ? (
-        <p className="mt-2 text-sm text-neutral-500">
-          Run a request and the agent reports here: the pattern it used, the
-          rules it applied, and the components it was allowed to touch.
+        <p className="text-sm text-[var(--faint)]">
+          <span className="font-medium text-[var(--muted)]">Why this render</span>{" "}
+          — run a request and the agent reports the pattern it used, the rules it
+          applied, and the components it was allowed to touch.
         </p>
       ) : (
-        <dl className="mt-3 space-y-3 text-sm">
-          <div>
-            <dt className="font-medium text-neutral-700">Pattern</dt>
-            <dd className="text-neutral-600">{why.pattern}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-neutral-700">Rules applied</dt>
-            <dd>
-              {why.rulesApplied.length === 0 ? (
-                <span className="text-neutral-500">none reported</span>
-              ) : (
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-neutral-600">
-                  {why.rulesApplied.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-medium text-neutral-700">
-              Components allowed{" "}
-              <span className="font-normal text-neutral-400">
-                (from your catalog, not the model)
-              </span>
-            </dt>
-            <dd className="mt-1 flex flex-wrap gap-1">
-              {componentsAllowed.length === 0 ? (
-                <span className="text-neutral-500">
-                  none — no catalog in this pattern, only your rules
-                </span>
-              ) : (
-                componentsAllowed.map((c, i) => (
-                  <code
-                    key={i}
-                    className="rounded bg-white px-1.5 py-0.5 text-xs text-neutral-700 ring-1 ring-neutral-200"
-                  >
-                    {c}
-                  </code>
-                ))
-              )}
-            </dd>
+        <>
+          <div className="flex flex-wrap gap-x-10 gap-y-3">
+            <div>
+              <div className={label}>Pattern</div>
+              {/* The model still reports the legacy key "static" in its
+                  why-account; show the current name, Controlled. */}
+              <div className="font-serif text-[15px] capitalize">
+                {why.pattern === "static" ? "Controlled" : why.pattern}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className={label}>Rules fired</div>
+              <div className="text-sm text-[var(--ink)]">
+                {why.rulesApplied.length === 0
+                  ? <span className="text-[var(--faint)]">none reported</span>
+                  : why.rulesApplied.join(" · ")}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className={label}>
+                Components allowed{" "}
+                <span className="normal-case text-[var(--faint)]">(from your catalog)</span>
+              </div>
+              <div className="text-sm text-[var(--ink)]">
+                {componentsAllowed.length === 0
+                  ? <span className="text-[var(--faint)]">none — rules only</span>
+                  : componentsAllowed.join(" · ")}
+              </div>
+            </div>
           </div>
           {why.notes ? (
-            <div>
-              <dt className="font-medium text-neutral-700">
-                Decisions the rules didn&apos;t cover
-              </dt>
-              <dd className="text-neutral-600">{why.notes}</dd>
+            <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
+              <span className="text-[var(--faint)]">Decisions the rules didn&apos;t cover: </span>
+              {why.notes}
             </div>
           ) : null}
-        </dl>
+        </>
       )}
     </aside>
   );

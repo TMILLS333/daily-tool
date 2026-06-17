@@ -17,17 +17,29 @@ import {
 import { DataTab } from "@/components/DataTab";
 import { RulesTab } from "@/components/RulesTab";
 import { CatalogTab } from "@/components/CatalogTab";
-import { StyleTab, DEFAULT_TOKENS, type StyleTokens } from "@/components/StyleTab";
+import {
+  StyleTab,
+  STYLE_SETS,
+  activeStyleSetName,
+  DEFAULT_TOKENS,
+  type StyleTokens,
+} from "@/components/StyleTab";
 import { WhyPanel } from "@/components/WhyPanel";
+import { ChatPanel, type ChatTurn } from "@/components/ChatPanel";
 import { StaticPattern, type StaticBlock } from "@/components/StaticPattern";
 import { DeclarativePattern } from "@/components/DeclarativePattern";
+import { LegibilityView } from "@/components/LegibilityView";
+import { CatalogView } from "@/components/CatalogView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
 import {
   CATALOG,
   allowedComponentNames,
   catalogPromptText,
   commentaryOf,
+  declarativeSpecSchema,
+  parseFencedBlock,
   parseWhy,
+  type SpecNode,
 } from "@/lib/catalog";
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
 
@@ -42,16 +54,16 @@ if (typeof window !== "undefined") {
 
 const PATTERNS = ["static", "declarative", "open-ended"] as const;
 type Pattern = (typeof PATTERNS)[number];
-type Tab = "data" | "rules" | "catalog" | "style" | Pattern;
+type AuthoringTab = "data" | "rules" | "catalog" | "style";
+type Tab = AuthoringTab | "preview";
 
+const AUTHORING_TABS: AuthoringTab[] = ["data", "rules", "catalog", "style"];
 const TAB_LABELS: Record<Tab, string> = {
   data: "Data",
   rules: "Rules",
   catalog: "Catalog",
   style: "Style",
-  static: "Static",
-  declarative: "Declarative",
-  "open-ended": "Open-Ended",
+  preview: "Preview",
 };
 
 const LS = {
@@ -60,22 +72,22 @@ const LS = {
   request: "daily-tool:v1:request",
   catalog: "daily-tool:v1:catalog",
   style: "daily-tool:v1:style",
-  temperature: "daily-tool:v1:temperature",
 };
 
-/** One honest sentence per pattern: who designs, what constrains the agent. */
-const PATTERN_EXPLAINERS: Record<Pattern, { title: string; body: string }> = {
+/** One short line per pattern for the rail's selectable cards: who designs,
+    what constrains the agent. */
+const PATTERN_CARDS: Record<Pattern, { name: string; line: string }> = {
   static: {
-    title: "Static — you built the components, the agent fills them",
-    body: "The agent can only pick from your pre-built components and pour your data into them. Nothing you didn't build can appear. Most predictable, least flexible.",
+    name: "Controlled",
+    line: "You built the components. The agent fills them.",
   },
   declarative: {
-    title: "Declarative — the agent proposes, your catalog approves",
-    body: "The agent writes a UI spec; a trusted renderer assembles it from your component catalog. Anything outside the catalog is rejected — and you'll see the rejection. The middle path.",
+    name: "Declarative",
+    line: "The agent proposes a spec. Your catalog approves.",
   },
   "open-ended": {
-    title: "Open-Ended — the agent invents the surface",
-    body: "No catalog. The agent generates the interface itself (sandboxed), and only the rules you wrote constrain it. Most flexible, least guaranteed.",
+    name: "Open-ended",
+    line: "No catalog. The agent invents the surface.",
   },
 };
 
@@ -89,7 +101,7 @@ function DailyTool() {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent();
 
-  const [tab, setTab] = useState<Tab>("data");
+  const [tab, setTab] = useState<Tab>("preview");
   const [pattern, setPattern] = useState<Pattern>("static");
   const [data, setData] = useState(DEFAULT_DATA);
   const [rules, setRules] = useState(DEFAULT_RULES);
@@ -97,19 +109,17 @@ function DailyTool() {
   const [runState, setRunState] = useState<RunState>({ kind: "idle" });
   const [staticBlocks, setStaticBlocks] = useState<StaticBlock[]>([]);
   const [agentText, setAgentText] = useState<Partial<Record<Pattern, string>>>({});
+  const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
+  // Which reveal facet is showing for Declarative (Operations spec vs Catalog).
+  const [revealFacet, setRevealFacet] = useState<"spec" | "catalog">("spec");
 
   // --- the three levers (Pass 3a) -----------------------------------------
-  // Catalog breadth: which components the agent may use. Seeded from the
-  // catalog's static defaults; the Catalog tab flips entries at runtime.
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CATALOG.map((c) => [c.name, c.enabled]))
   );
-  // Visual style: design tokens, applied as CSS custom properties below.
   const [tokens, setTokens] = useState<StyleTokens>(DEFAULT_TOKENS);
-  // Temperature: how freely the agent varies its output (backend default 0.4).
-  const [temperature, setTemperature] = useState(0.4);
 
-  // --- persistence (survives reload; criterion 2 + Pass 3a persistence) ---
+  // --- persistence (survives reload) --------------------------------------
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     try {
@@ -142,11 +152,6 @@ function DailyTool() {
           /* ignore malformed */
         }
       }
-      const tmp = localStorage.getItem(LS.temperature);
-      if (tmp !== null) {
-        const n = Number(tmp);
-        if (!Number.isNaN(n)) setTemperature(n);
-      }
     } catch {
       // private mode etc. — run without persistence
     }
@@ -160,14 +165,11 @@ function DailyTool() {
       localStorage.setItem(LS.request, request);
       localStorage.setItem(LS.catalog, JSON.stringify(enabled));
       localStorage.setItem(LS.style, JSON.stringify(tokens));
-      localStorage.setItem(LS.temperature, String(temperature));
     } catch {
       /* non-fatal */
     }
-  }, [hydrated, data, rules, request, enabled, tokens, temperature]);
+  }, [hydrated, data, rules, request, enabled, tokens]);
 
-  // The enabled set, derived once per change — threaded everywhere catalog
-  // enablement is read so toggles are live, not load-time snapshots.
   const enabledNames = useMemo(
     () =>
       new Set(
@@ -183,10 +185,7 @@ function DailyTool() {
     () => catalogPromptText(enabledNames),
     [enabledNames]
   );
-  useAgentContext({
-    description: "Active pattern",
-    value: pattern,
-  });
+  useAgentContext({ description: "Active pattern", value: pattern });
   useAgentContext({
     description: "The user's data (the only source of facts)",
     value: data,
@@ -201,61 +200,123 @@ function DailyTool() {
   });
 
   // --- the run -------------------------------------------------------------
-  const run = useCallback(async () => {
-    if (runState.kind === "running" || !request.trim()) return;
-    setRunState({ kind: "running" });
-    if (pattern === "static") setStaticBlocks([]);
-    setAgentText((prev) => ({ ...prev, [pattern]: undefined }));
-    try {
-      agent.setMessages([]);
-      agent.addMessage({
-        id: crypto.randomUUID(),
-        role: "user",
-        content: request,
-      });
-      await copilotkit.runAgent({
-        agent,
-        // Static: tool calls ARE the pattern. Declarative / Open-Ended:
-        // text-only — blocking tools keeps smaller models from drifting
-        // into the built-in state tools instead of emitting the spec.
-        // temperature is the creativity lever (overridable on the agent).
-        forwardedProps: {
-          toolChoice: pattern === "static" ? "auto" : "none",
-          temperature,
-        },
-      });
-      const lastAssistant = [...agent.messages]
-        .reverse()
-        .find(
-          (m) =>
-            m.role === "assistant" &&
-            typeof m.content === "string" &&
-            m.content.trim()
-        );
-      setAgentText((prev) => ({
-        ...prev,
-        [pattern]: (lastAssistant?.content as string) ?? "",
-      }));
-      setRunState({ kind: "idle" });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(message)) {
-        setRunState({ kind: "rate-limited" });
-      } else {
-        setRunState({ kind: "error", message });
+  // Shared send path for both drivers (the Run button and the chat). Each send
+  // starts from a clean agent thread: carrying prior turns forward made the
+  // runtime replay stale tool-call history and fire several model calls for one
+  // message, so every render runs from a known, minimal prompt. The visible
+  // chat transcript still accumulates; only the agent thread resets. Per-pattern
+  // toolChoice is applied; sampling is left to the agent's own default (the
+  // creativity lever was dropped). Returns the assistant's raw reply, or null
+  // if the run did not complete.
+  const runMessage = useCallback(
+    async (text: string): Promise<string | null> => {
+      if (runState.kind === "running" || !text.trim()) return null;
+      setRunState({ kind: "running" });
+      if (pattern === "static") setStaticBlocks([]);
+      setAgentText((prev) => ({ ...prev, [pattern]: undefined }));
+      try {
+        agent.setMessages([]);
+        agent.addMessage({
+          id: crypto.randomUUID(),
+          role: "user",
+          content: text,
+        });
+        await copilotkit.runAgent({
+          agent,
+          // Static: tool calls ARE the pattern. Declarative / Open-Ended:
+          // text-only; blocking tools keeps smaller models from drifting
+          // into the built-in state tools instead of emitting the spec.
+          forwardedProps: {
+            toolChoice: pattern === "static" ? "auto" : "none",
+          },
+        });
+        const lastAssistant = [...agent.messages]
+          .reverse()
+          .find(
+            (m) =>
+              m.role === "assistant" &&
+              typeof m.content === "string" &&
+              m.content.trim()
+          );
+        const reply = (lastAssistant?.content as string) ?? "";
+        setAgentText((prev) => ({ ...prev, [pattern]: reply }));
+        setRunState({ kind: "idle" });
+        return reply;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(message)) {
+          setRunState({ kind: "rate-limited" });
+        } else {
+          setRunState({ kind: "error", message });
+        }
+        return null;
       }
-    }
-  }, [agent, copilotkit, pattern, request, runState.kind, temperature]);
+    },
+    [agent, copilotkit, pattern, runState.kind]
+  );
 
-  const isPatternTab = PATTERNS.includes(tab as Pattern);
+  // Run button: clears the chat transcript so the canvas reflects exactly this
+  // request, then runs it through the shared path.
+  const run = useCallback(() => {
+    if (!request.trim()) return;
+    setChatTurns([]);
+    void runMessage(request);
+  }, [request, runMessage]);
+
+  // Chat: appends each exchange to the transcript and renders into the same
+  // canvas through the shared path.
+  const chatSend = useCallback(
+    (text: string) => {
+      setChatTurns((prev) => [...prev, { role: "user", text }]);
+      void runMessage(text).then((reply) => {
+        const line =
+          reply === null
+            ? "That run did not complete. Check the canvas note and try again."
+            : commentaryOf(reply) || "Rendered into the canvas.";
+        setChatTurns((prev) => [...prev, { role: "assistant", text: line }]);
+      });
+    },
+    [runMessage]
+  );
+
   const activeText = agentText[pattern] ?? null;
   const why = activeText ? parseWhy(activeText) : null;
   const commentary = activeText ? commentaryOf(activeText) : "";
   // App truth, not the model's claim: what this pattern actually allows.
   const allowed = allowedComponentNames(pattern, enabledNames);
+  // App truth: which catalog entries the CURRENT render used. Controlled reads
+  // the rendered blocks; Declarative walks the emitted spec. Drives the Catalog
+  // facet's "used" marks. Open-Ended has no catalog, so the set stays empty.
+  const usedNames = useMemo<Set<string>>(() => {
+    if (pattern === "static") {
+      return new Set(staticBlocks.map((b) => b.component));
+    }
+    if (pattern === "declarative" && activeText) {
+      const raw = parseFencedBlock(activeText, "json");
+      if (!raw) return new Set();
+      try {
+        const parsed = declarativeSpecSchema.safeParse(JSON.parse(raw));
+        if (!parsed.success) return new Set();
+        const names = new Set<string>();
+        const walk = (n: SpecNode) => {
+          names.add(n.component);
+          (n.children ?? []).forEach(walk);
+        };
+        walk(parsed.data.root);
+        return names;
+      } catch {
+        return new Set();
+      }
+    }
+    return new Set();
+  }, [pattern, staticBlocks, activeText]);
+  // Which named style set is active, or null ("custom") once tokens diverge.
+  const activeSet = activeStyleSetName(tokens);
 
-  // Style tokens applied as CSS custom properties on the app root. The
-  // globals.css :root defaults remain as the reset baseline.
+  // Style tokens applied as CSS custom properties on the app root. They drive
+  // the rendered OUTPUT (catalog primitives); attendee edits override the
+  // editorial defaults live, so their choices lead. globals.css :root holds
+  // the chrome palette and the token fallbacks.
   const tokenStyle = {
     "--dt-brand": tokens.brand,
     "--dt-brand-contrast": tokens.brandContrast,
@@ -264,36 +325,39 @@ function DailyTool() {
     "--dt-gap": tokens.gap,
   } as CSSProperties;
 
+  const railLabel = "mb-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]";
+
   return (
     <main
-      className="mx-auto flex h-dvh max-w-5xl flex-col px-4 py-6"
+      className="mx-auto flex h-dvh max-w-5xl flex-col px-5 py-6"
       style={tokenStyle}
     >
-      <header className="mb-4">
-        <h1 className="text-xl font-semibold">Daily Tool</h1>
-        <p className="text-sm text-neutral-500">
-          Your data, your rules — three ways an agent can render the same
-          request. Coffee &amp; Claude: GenUI Challenge.
-        </p>
+      {/* Header */}
+      <header className="flex items-baseline justify-between border-b border-[var(--line)] pb-3">
+        <div className="flex items-baseline gap-2.5">
+          <span className="font-serif text-xl font-medium tracking-tight">
+            GenUI Studio
+          </span>
+          <span className="text-sm text-[var(--faint)]">Daily Tool</span>
+        </div>
+        <span className="text-sm text-[var(--faint)]">
+          Coffee &amp; Claude: GenUI Challenge
+        </span>
       </header>
 
-      {/* Tab row */}
-      <nav className="mb-4 flex gap-1 border-b border-neutral-200">
+      {/* Tab row — authoring tabs + the Preview playground */}
+      <nav className="mt-3 flex gap-6 border-b border-[var(--line)]">
         {(Object.keys(TAB_LABELS) as Tab[]).map((t) => {
-          const isPattern = PATTERNS.includes(t as Pattern);
           const active = tab === t;
           return (
             <button
               key={t}
               type="button"
-              onClick={() => {
-                setTab(t);
-                if (isPattern) setPattern(t as Pattern);
-              }}
-              className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
+              onClick={() => setTab(t)}
+              className={`-mb-px border-b-2 pb-2.5 text-sm transition-colors ${
                 active
-                  ? "border-[var(--dt-brand)] text-neutral-900"
-                  : "border-transparent text-neutral-500 hover:text-neutral-700"
+                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
               }`}
             >
               {TAB_LABELS[t]}
@@ -302,132 +366,143 @@ function DailyTool() {
         })}
       </nav>
 
-      <div className="min-h-0 flex-1">
-        {tab === "data" && <DataTab value={data} onChange={setData} />}
-        {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
-        {tab === "catalog" && (
-          <CatalogTab
-            enabled={enabled}
-            onToggle={(name, next) =>
-              setEnabled((prev) => ({ ...prev, [name]: next }))
-            }
-          />
-        )}
-        {tab === "style" && <StyleTab tokens={tokens} onChange={setTokens} />}
-
-        {isPatternTab && (
-          <div className="flex h-full min-h-0 flex-col gap-4">
-            {/* Pattern explainer */}
-            <div className="rounded-lg bg-neutral-50 px-4 py-3">
-              <div className="text-sm font-semibold">
-                {PATTERN_EXPLAINERS[pattern].title}
-              </div>
-              <p className="mt-0.5 text-sm text-neutral-600">
-                {PATTERN_EXPLAINERS[pattern].body}
-              </p>
-            </div>
-
-            {/* Request bar */}
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void run();
-              }}
-            >
-              <input
-                className="flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400"
-                value={request}
-                onChange={(e) => setRequest(e.target.value)}
-                placeholder={DEFAULT_REQUEST}
+      <div className="mt-5 min-h-0 flex-1">
+        {/* Authoring tabs */}
+        {AUTHORING_TABS.includes(tab as AuthoringTab) && (
+          <div className="h-full min-h-0">
+            {tab === "data" && <DataTab value={data} onChange={setData} />}
+            {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
+            {tab === "catalog" && (
+              <CatalogTab
+                enabled={enabled}
+                onToggle={(name, next) =>
+                  setEnabled((prev) => ({ ...prev, [name]: next }))
+                }
               />
+            )}
+            {tab === "style" && <StyleTab tokens={tokens} onChange={setTokens} />}
+          </div>
+        )}
+
+        {/* Preview playground — config rail + output canvas */}
+        {tab === "preview" && (
+          <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[224px_1fr_280px]">
+            {/* Config rail: pattern -> style -> request -> Run */}
+            <div className="flex min-h-0 flex-col gap-6 overflow-y-auto pr-1">
+              <div>
+                <div className={railLabel}>Render pattern</div>
+                <div className="flex flex-col gap-2">
+                  {PATTERNS.map((p) => {
+                    const on = pattern === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPattern(p)}
+                        className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
+                          on
+                            ? "border-[var(--ink)]"
+                            : "border-[var(--line)] hover:border-[var(--line-strong)]"
+                        }`}
+                      >
+                        {on && (
+                          <span
+                            className="absolute inset-y-0 left-0 w-[3px]"
+                            style={{ background: "var(--dt-brand)" }}
+                            aria-hidden
+                          />
+                        )}
+                        <div className="font-serif text-[15px] font-medium">
+                          {PATTERN_CARDS[p].name}
+                        </div>
+                        <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
+                          {PATTERN_CARDS[p].line}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-baseline justify-between">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+                    Style set
+                  </span>
+                  <span className="text-xs text-[var(--muted)]">
+                    {activeSet ?? "Custom"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {STYLE_SETS.map((s) => {
+                    const on = activeSet === s.name;
+                    return (
+                      <button
+                        key={s.name}
+                        type="button"
+                        onClick={() => setTokens(s.tokens)}
+                        aria-pressed={on}
+                        className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
+                          on
+                            ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                            : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className={railLabel}>Request</div>
+                <textarea
+                  className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
+                  rows={3}
+                  value={request}
+                  onChange={(e) => setRequest(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      void run();
+                    }
+                  }}
+                  placeholder={DEFAULT_REQUEST}
+                  spellCheck={false}
+                />
+              </div>
+
               <button
-                type="submit"
+                type="button"
+                onClick={() => void run()}
                 disabled={runState.kind === "running"}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--dt-brand-contrast)] disabled:opacity-50"
-                style={{ background: "var(--dt-brand)" }}
+                className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
+                style={{
+                  background: "var(--dt-brand)",
+                  color: "var(--dt-brand-contrast)",
+                }}
               >
                 {runState.kind === "running" ? "Rendering…" : "Run"}
               </button>
-            </form>
-
-            {/* Temperature — lever 3 of 3 (creativity) */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-              <label className="flex items-center gap-2">
-                <span className="font-medium text-neutral-700">
-                  Creativity (temperature)
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  value={temperature}
-                  onChange={(e) => setTemperature(Number(e.target.value))}
-                  aria-label="Temperature: how freely the agent varies its output"
-                />
-                <span className="w-6 tabular-nums">{temperature.toFixed(1)}</span>
-              </label>
-              <span>
-                Lower = predictable and repeatable. Higher = more variation. The
-                same lever the agent uses to play versus converge.
-              </span>
             </div>
 
-            {/* What this run tests */}
-            <p className="text-xs text-neutral-500">
-              This run tests{" "}
-              <button
-                type="button"
-                className="underline decoration-dotted underline-offset-2"
-                onClick={() => setTab("rules")}
-              >
-                {rules.split("\n").filter((l) => l.trim().startsWith("-")).length}{" "}
-                rules
-              </button>{" "}
-              against{" "}
-              <button
-                type="button"
-                className="underline decoration-dotted underline-offset-2"
-                onClick={() => setTab("data")}
-              >
-                your data ({data.trim() ? data.trim().split("\n").length : 0} lines)
-              </button>
-              {pattern !== "open-ended" ? (
-                <>
-                  {" "}
-                  with{" "}
-                  <button
-                    type="button"
-                    className="underline decoration-dotted underline-offset-2"
-                    onClick={() => setTab("catalog")}
-                  >
-                    {allowed.length} allowed components
-                  </button>
-                </>
-              ) : (
-                <> with no catalog — rules only</>
+            {/* Output canvas — the focal point (the hero, middle zone) */}
+            <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
+              {runState.kind === "rate-limited" && (
+                <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  Free-tier rate limit reached (about 10 requests per minute).
+                  Wait a few seconds and run again — nothing is broken.
+                </div>
               )}
-              . Same request, different tab, different contract.
-            </p>
+              {runState.kind === "error" && (
+                <div className="rounded-[var(--dt-radius)] border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  The run failed: {runState.message}
+                </div>
+              )}
 
-            {/* Run status (criterion 6: rate limits surface, never a silent hang) */}
-            {runState.kind === "rate-limited" && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                Free-tier rate limit reached (about 10 requests per minute).
-                Wait a few seconds and run again — nothing is broken.
-              </div>
-            )}
-            {runState.kind === "error" && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                The run failed: {runState.message}
-              </div>
-            )}
-
-            {/* Preview + why panel */}
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-3">
-              <section className="md:col-span-2">
-                <div className="rounded-lg border border-neutral-200 p-4">
+              <section>
+                <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
                   {pattern === "static" && (
                     <StaticPattern
                       blocks={staticBlocks}
@@ -446,11 +521,56 @@ function DailyTool() {
                   )}
                 </div>
                 {commentary ? (
-                  <p className="mt-2 text-xs text-neutral-500">{commentary}</p>
+                  <p className="mt-2 text-xs text-[var(--muted)]">{commentary}</p>
                 ) : null}
               </section>
+
+              {/* Reveal facets: the emitted operations (Declarative) and the
+                  catalog the agent could reach for (Controlled + Declarative).
+                  Display-only, derived from activeText / blocks — flake-proof. */}
+              {(pattern === "declarative" || pattern === "static") && (
+                <div className="flex flex-col gap-2">
+                  {pattern === "declarative" && (
+                    <div className="flex gap-2">
+                      {(["spec", "catalog"] as const).map((f) => {
+                        const on = revealFacet === f;
+                        return (
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => setRevealFacet(f)}
+                            aria-pressed={on}
+                            className={`rounded-[var(--dt-radius)] border px-2.5 py-1 text-xs transition-colors ${
+                              on
+                                ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                                : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
+                            }`}
+                          >
+                            {f === "spec" ? "Operations" : "Catalog"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {pattern === "declarative" && revealFacet === "spec" && (
+                    <LegibilityView agentText={activeText} />
+                  )}
+                  {(pattern === "static" ||
+                    (pattern === "declarative" && revealFacet === "catalog")) && (
+                    <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
+                  )}
+                </div>
+              )}
+
               <WhyPanel why={why} componentsAllowed={allowed} />
             </div>
+
+            {/* Chat driver: conversational path into the same canvas. */}
+            <ChatPanel
+              turns={chatTurns}
+              onSend={chatSend}
+              disabled={runState.kind === "running"}
+            />
           </div>
         )}
       </div>
