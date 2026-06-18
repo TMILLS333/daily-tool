@@ -211,3 +211,245 @@ export function DTPieChart({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Structured-data components (Slice A). Each tolerates ragged or mismatched
+// model output: missing cells render empty, mismatched array lengths are
+// clamped, and an empty payload shows a quiet placeholder instead of throwing.
+// All visuals read --dt-* tokens, so they re-skin with the Style sets.
+// ---------------------------------------------------------------------------
+
+/** Clamp a model-supplied score to the 0-100 plotting range; default to the
+    midpoint when the value is missing or not a number. */
+function clamp01to100(n: unknown): number {
+  const v = Number(n);
+  return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 50;
+}
+
+export function DTTable({
+  columns,
+  rows,
+  caption,
+}: {
+  columns: string[];
+  rows: string[][];
+  caption?: string;
+}) {
+  const cols = columns ?? [];
+  const body = (rows ?? []).filter((r) => Array.isArray(r));
+  if (cols.length === 0) {
+    return <div className="text-sm text-[var(--faint)]">No columns to show.</div>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      {caption ? (
+        <div className="mb-1 font-serif text-base font-medium">{caption}</div>
+      ) : null}
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            {cols.map((c, i) => (
+              <th
+                key={i}
+                className="border-b px-2 py-1.5 text-left font-serif font-medium text-[var(--ink)]"
+                style={{ borderColor: "var(--dt-border)" }}
+              >
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, r) => (
+            <tr key={r}>
+              {cols.map((_, c) => (
+                <td
+                  key={c}
+                  className="border-b px-2 py-1.5 align-top text-[var(--muted)]"
+                  style={{ borderColor: "var(--dt-border)" }}
+                >
+                  {row[c] ?? ""}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function DTTimeline({
+  title,
+  dates,
+  events,
+}: {
+  title?: string;
+  dates: string[];
+  events: string[];
+}) {
+  const items = (events ?? []).map((event, i) => ({
+    date: dates?.[i] ?? "",
+    event,
+  }));
+  if (items.length === 0) {
+    return <div className="text-sm text-[var(--faint)]">No events to show.</div>;
+  }
+  return (
+    <div>
+      {title ? (
+        <div className="mb-2 font-serif text-base font-medium">{title}</div>
+      ) : null}
+      <ol className="flex flex-col gap-3">
+        {items.map((it, i) => (
+          <li key={i} className="flex gap-3">
+            <div className="w-24 shrink-0 text-xs font-medium text-[var(--muted)]">
+              {it.date}
+            </div>
+            <div className="flex flex-col items-center pt-1">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: "var(--dt-brand)" }}
+                aria-hidden
+              />
+              {i < items.length - 1 ? (
+                <span
+                  className="mt-1 w-px flex-1"
+                  style={{ background: "var(--dt-border)" }}
+                  aria-hidden
+                />
+              ) : null}
+            </div>
+            <div className="flex-1 pb-1 text-sm text-[var(--ink)]">{it.event}</div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function DTKanban({
+  columnTitles,
+  columnCards,
+}: {
+  columnTitles: string[];
+  columnCards: string[][];
+}) {
+  const titles = columnTitles ?? [];
+  if (titles.length === 0) {
+    return <div className="text-sm text-[var(--faint)]">No columns to show.</div>;
+  }
+  return (
+    <div className="flex gap-3 overflow-x-auto">
+      {titles.map((title, i) => {
+        const cards = Array.isArray(columnCards?.[i]) ? columnCards[i] : [];
+        return (
+          <div key={i} className="min-w-[150px] flex-1">
+            <div className="mb-2 flex items-baseline justify-between">
+              <span className="font-serif text-sm font-medium text-[var(--ink)]">
+                {title}
+              </span>
+              <span className="text-xs text-[var(--faint)]">{cards.length}</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {cards.length === 0 ? (
+                <div className="text-xs text-[var(--faint)]">—</div>
+              ) : (
+                cards.map((card, c) => (
+                  <div
+                    key={c}
+                    className="border bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--ink)]"
+                    style={{
+                      borderRadius: "var(--dt-radius)",
+                      borderColor: "var(--dt-border)",
+                    }}
+                  >
+                    {card}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function DTMatrix({
+  title,
+  xAxis,
+  yAxis,
+  items,
+  x,
+  y,
+}: {
+  title?: string;
+  xAxis: string;
+  yAxis: string;
+  items: string[];
+  x: number[];
+  y: number[];
+}) {
+  const pts = (items ?? []).map((label, i) => ({
+    label,
+    x: clamp01to100(x?.[i]),
+    y: clamp01to100(y?.[i]),
+  }));
+  const SIZE = 240;
+  return (
+    <div>
+      {title ? (
+        <div className="mb-2 font-serif text-base font-medium">{title}</div>
+      ) : null}
+      <div className="flex gap-2">
+        <div className="flex items-center">
+          <span
+            className="text-xs text-[var(--muted)]"
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+          >
+            {yAxis}
+          </span>
+        </div>
+        <div>
+          <div
+            className="relative border"
+            style={{
+              width: SIZE,
+              height: SIZE,
+              borderColor: "var(--dt-border)",
+              borderRadius: "var(--dt-radius)",
+            }}
+          >
+            <span
+              className="absolute left-1/2 top-0 h-full w-px"
+              style={{ background: "var(--dt-border)" }}
+              aria-hidden
+            />
+            <span
+              className="absolute left-0 top-1/2 h-px w-full"
+              style={{ background: "var(--dt-border)" }}
+              aria-hidden
+            />
+            {pts.map((p, i) => (
+              <div
+                key={i}
+                className="absolute flex -translate-y-1/2 items-center gap-1"
+                style={{ left: `${p.x}%`, top: `${100 - p.y}%` }}
+              >
+                <span
+                  className="block h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: "var(--dt-brand)" }}
+                />
+                <span className="whitespace-nowrap text-[10px] leading-none text-[var(--ink)]">
+                  {p.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-1 text-center text-xs text-[var(--muted)]">{xAxis}</div>
+        </div>
+      </div>
+    </div>
+  );
+}

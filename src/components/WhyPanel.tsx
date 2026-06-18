@@ -58,6 +58,12 @@ export function WhyPanel({
               </div>
             </div>
           </div>
+          {why.structure ? (
+            <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
+              <span className="text-[var(--faint)]">Structure inferred: </span>
+              {why.structure}
+            </div>
+          ) : null}
           {why.notes ? (
             <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
               <span className="text-[var(--faint)]">Decisions the rules didn&apos;t cover: </span>

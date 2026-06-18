@@ -100,4 +100,18 @@ Icon set cleanup,Ari,todo,low,Nice to have
 Pricing page a11y fixes,Sam,in progress,medium,Two issues remain
 `,
   },
+  {
+    id: "prioritization",
+    label: "Prioritization grid",
+    description: "Initiatives scored by effort and impact (0-100), with status.",
+    filename: "prioritization.csv",
+    csv: `initiative,effort,impact,status,owner
+Search filter rework,30,85,open,Lee
+Icon set cleanup,20,25,open,Ari
+Onboarding redesign,75,80,open,Sam
+Token migration,60,40,in progress,Dana
+Empty-state polish,25,55,open,Ari
+Pricing page a11y,35,45,open,Sam
+`,
+  },
 ];

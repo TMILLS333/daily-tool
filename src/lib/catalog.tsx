@@ -22,9 +22,13 @@ import {
   DTButton,
   DTCard,
   DTHeading,
+  DTKanban,
   DTList,
+  DTMatrix,
   DTPieChart,
   DTStack,
+  DTTable,
+  DTTimeline,
 } from "@/components/catalog-primitives";
 
 // ---------------------------------------------------------------------------
@@ -124,6 +128,56 @@ export const CATALOG: CatalogEntry[] = [
     enabled: false,
     Component: DTPieChart,
   },
+  {
+    name: "Table",
+    description:
+      "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items. Off by default.",
+    props: z.object({
+      columns: z.array(z.string()),
+      rows: z.array(z.array(z.string())),
+      caption: z.string().optional(),
+    }),
+    enabled: false,
+    Component: DTTable,
+  },
+  {
+    name: "Timeline",
+    description:
+      "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates. Off by default.",
+    props: z.object({
+      title: z.string().optional(),
+      dates: z.array(z.string()),
+      events: z.array(z.string()),
+    }),
+    enabled: false,
+    Component: DTTimeline,
+  },
+  {
+    name: "Kanban",
+    description:
+      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]). Use ONLY when the data has a status or stage to group by. Off by default.",
+    props: z.object({
+      columnTitles: z.array(z.string()),
+      columnCards: z.array(z.array(z.string())),
+    }),
+    enabled: false,
+    Component: DTKanban,
+  },
+  {
+    name: "Matrix",
+    description:
+      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items). Use ONLY when you can justify two rateable axes from the data; do not invent scores. Off by default.",
+    props: z.object({
+      title: z.string().optional(),
+      xAxis: z.string(),
+      yAxis: z.string(),
+      items: z.array(z.string()),
+      x: z.array(z.number()),
+      y: z.array(z.number()),
+    }),
+    enabled: false,
+    Component: DTMatrix,
+  },
 ];
 
 /** Representative props for the Catalog tab's live samples. */
@@ -138,6 +192,37 @@ export const CATALOG_SAMPLES: Record<
   Button: { props: { label: "Action", intent: "primary" } },
   Stack: { props: { direction: "horizontal" }, childrenSample: true },
   PieChart: { props: { title: "Sources", labels: ["A", "B", "C"], values: [50, 30, 20] } },
+  Table: {
+    props: {
+      columns: ["Task", "Owner", "Status"],
+      rows: [
+        ["Redesign empty states", "Ari", "In progress"],
+        ["Token migration QA", "Dana", "Blocked"],
+      ],
+    },
+  },
+  Timeline: {
+    props: {
+      title: "Launch plan",
+      dates: ["Jul 1", "Jul 8", "Jul 15"],
+      events: ["Product roundup", "GenUI explainer", "Workshop recap"],
+    },
+  },
+  Kanban: {
+    props: {
+      columnTitles: ["To do", "In progress", "Done"],
+      columnCards: [["Icon cleanup"], ["Empty states"], ["Onboarding copy"]],
+    },
+  },
+  Matrix: {
+    props: {
+      xAxis: "Effort",
+      yAxis: "Impact",
+      items: ["Search fix", "Icon cleanup"],
+      x: [30, 20],
+      y: [85, 25],
+    },
+  },
 };
 
 /** The set of component names enabled by default (seed for the Catalog tab). */
@@ -282,6 +367,11 @@ export function parseFencedBlock(text: string, lang: string): string | null {
 export const whySchema = z.object({
   pattern: z.string(),
   rulesApplied: z.array(z.string()),
+  /** The data dimension the agent arranged into a structure (columns, axes, a
+      timeline), and how it was inferred — or a note that a component was
+      avoided because the data lacked its dimension. The structure-honesty
+      account; surfaced in the Why panel. */
+  structure: z.string().optional(),
   notes: z.string().optional(),
 });
 

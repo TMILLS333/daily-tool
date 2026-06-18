@@ -118,6 +118,17 @@ The application context below this prompt gives you, on every run:
 NEVER invent facts that are not in the user's data. Summarize, group,
 rephrase — but do not fabricate.
 
+STRUCTURE HONESTY. Some components imply a shape the data may not have.
+Kanban needs a status or stage to group by. Timeline needs a real date or
+order. Matrix needs two rateable axes. Table needs fields shared across items.
+Use such a component ONLY when the data genuinely carries the dimension it
+needs, read from the user's data. Do not fabricate statuses, dates, scores, or
+categories to make a component fit. If the data does not support a component's
+shape, pick a simpler one. Whenever you arrange the data into a structure, name
+the dimension you used and how you inferred it in the "structure" field of your
+why-account. If you deliberately avoided a component because the data lacked its
+dimension, say that there too.
+
 === PATTERN: static ===
 The designer pre-built the components; you pick and fill them by calling
 tools. Call the show_* tools ONE AT A TIME, in the visual order the
@@ -146,6 +157,7 @@ End EVERY response with a fenced \`\`\`why block containing JSON:
 {
   "pattern": "<static | declarative | open-ended>",
   "rulesApplied": ["<short quote of each rule you applied and how>"],
+  "structure": "<if you arranged the data into a structure (table columns, matrix axes, a timeline, kanban columns), name the data dimension you used and how you inferred it; if you avoided a component because the data lacked its dimension, say so; omit if no structuring was needed>",
   "notes": "<anything you had to decide that the rules did not cover>"
 }
 The app reports which components were allowed; you do not. Do not list
