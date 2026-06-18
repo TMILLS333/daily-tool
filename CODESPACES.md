@@ -31,18 +31,22 @@ it lives in the same file.
 Your key stays on the server side of the app inside your own Codespace. It is
 never committed (the repo ignores `.env`) and never sent to the browser.
 
-## 3. The app starts itself
+## 3. Start the app (and restart after adding your key)
 
-When the Codespace opens, it runs the app for you. Watch the terminal at the
-bottom for a line that says the server is **Ready**. A small popup will offer to
+When the Codespace opens, it starts the app for you. The app reads your key only
+at startup, so the copy that started before you added your key (step 2) will not
+see it yet. After you save your key, restart the app:
+
+1. In the terminal at the bottom, stop the running app (click the trash/stop
+   icon on its task, or press Ctrl+C in that terminal).
+2. Start it again with:
+
+```
+npm run start
+```
+
+Watch for the line that says the server is **Ready**. A small popup will offer to
 open the app; open it and go to any pattern tab, then press **Run**.
-
-If the app is not running (for example after you added the key), start it from
-the terminal with:
-
-```
-npm run dev
-```
 
 A faster check that your key and the engine work, straight from the terminal:
 
@@ -73,11 +77,12 @@ Deploy-to-Cloudflare take-home in the [README](./README.md).
 
 ## If something's wrong
 
-- **No reply / error about a key** — your `.env` file is missing or the key was
-  not pasted. Re-check step 2.
+- **No reply / error about a key** — your `.env` file is missing, the key was
+  not pasted, or you added the key but did not restart the app. Re-check step 2,
+  then restart (step 3).
 - **"Rate limit" message** — the free tier allows about 10 requests per minute.
   Wait a few seconds and try again.
-- **The app did not start** — run `npm run dev` in the terminal (step 3).
+- **The app did not start** — run `npm run start` in the terminal (step 3).
 
 ---
 

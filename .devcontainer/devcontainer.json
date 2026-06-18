@@ -8,10 +8,14 @@
   // the editor work out of the box.
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
 
-  // Install dependencies. This runs DURING a prebuild, so a prebuilt codespace
-  // already has node_modules and a fresh account boots fast. Keep heavy install
-  // work here (onCreate), not in postCreate, or the prebuild will not cache it.
-  "onCreateCommand": "npm install",
+  // Install dependencies and build the production bundle. Both run DURING a
+  // prebuild, so a prebuilt codespace already has node_modules + .next and a
+  // fresh account boots fast. Keep heavy work here (onCreate), not in
+  // postCreate, or the prebuild will not cache it. We build here because
+  // `next start` needs .next to exist, and we run the production server (not
+  // `next dev`) because the Turbopack dev runtime breaks the agent run with a
+  // browser fetch "Illegal invocation" error.
+  "onCreateCommand": "npm install && npm run build",
 
   // The app's dev port. forwardPorts surfaces it immediately regardless of the
   // dev server's bind address. The attendee sets it to Public from the Ports
@@ -24,8 +28,10 @@
     }
   },
 
-  // Start the app whenever the codespace is (re)attached, so it boots straight
-  // to a running tool with no terminal step. To stop and restart it, use the
-  // documented `npm run dev`.
-  "postAttachCommand": "npm run dev"
+  // Start the production server whenever the codespace is (re)attached, so it
+  // boots straight to a running tool with no terminal step. `next start` reads
+  // .env only at boot, so after pasting your key (see CODESPACES.md) stop this
+  // task and run `npm run start` again. Production server is deliberate: the
+  // Turbopack dev runtime (`next dev`) breaks the agent run in the browser.
+  "postAttachCommand": "npm run start"
 }
