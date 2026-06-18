@@ -1,0 +1,96 @@
+/**
+ * A2UI spike — agent backend (dev-only, isolated).
+ *
+ * A separate CopilotKit runtime from the shipped /api/copilotkit route, mounted
+ * at /api/copilotkit-a2ui-spike. The one new thing versus the main route: the
+ * runtime declares the `a2ui` middleware, so /info advertises A2UI and the
+ * client renderer auto-mounts. `a2ui.schema` tells the agent which components it
+ * may emit. The agent emits REAL A2UI operations; nothing in the shipped app is
+ * touched.
+ *
+ * Note: the schema is declared inline as plain data, NOT imported from the
+ * client catalog adapter. @copilotkit/a2ui-renderer calls React.createContext at
+ * load and cannot be imported into a server route — these names + descriptions
+ * mirror the renderer catalog in a2ui-spike-catalog.tsx.
+ */
+
+import {
+  BuiltInAgent,
+  CopilotRuntime,
+  createCopilotEndpoint,
+  InMemoryAgentRunner,
+} from "@copilotkit/runtime/v2";
+import { handle } from "hono/vercel";
+
+// Same key shim as the main route: our .env uses the short GOOGLE_API_KEY, while
+// the underlying Google SDK looks for GOOGLE_GENERATIVE_AI_API_KEY.
+if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && process.env.GOOGLE_API_KEY) {
+  process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GOOGLE_API_KEY;
+}
+
+// Gemini on the paid key (the big-screen model). The spike is Gemini-only, so a
+// stray MODEL=@cf/... override meant for the main app is ignored here.
+const MODEL_ID =
+  process.env.MODEL && process.env.MODEL.startsWith("google/")
+    ? process.env.MODEL
+    : "google/gemini-2.5-flash";
+
+// The catalog advertised to the agent. Plain data (no a2ui-renderer import).
+// The prose lists each component's props so the model emits them correctly; the
+// names + prop names mirror the renderer catalog in a2ui-spike-catalog.tsx.
+const A2UI_SCHEMA = [
+  {
+    name: "Heading",
+    description: "A section heading. Props: text (string), level (1, 2 or 3).",
+  },
+  {
+    name: "Card",
+    description:
+      "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand').",
+  },
+  {
+    name: "Badge",
+    description:
+      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger').",
+  },
+  {
+    name: "Stack",
+    description:
+      "A layout container. Props: direction ('vertical' | 'horizontal'), childIds (array of child component IDs to place in order).",
+  },
+];
+
+const PROMPT = `You build a small UI that answers the user's request, using ONLY
+the components in the provided A2UI catalog. The user's text is your only source
+of facts; never invent data. Reach for Heading, Card, Badge and Stack to present
+the information clearly and concisely.`;
+
+const agent = new BuiltInAgent({
+  model: MODEL_ID,
+  prompt: PROMPT,
+  // Low temperature for repeatable spike runs.
+  temperature: 0.2,
+  maxOutputTokens: 4096,
+  maxSteps: 10,
+  maxRetries: 0,
+});
+
+const runtime = new CopilotRuntime({
+  agents: { default: agent },
+  runner: new InMemoryAgentRunner(),
+  // Enabling a2ui advertises A2UI on /info (so the client renderer auto-mounts)
+  // and injects the catalog schema so the agent emits these components.
+  a2ui: { schema: A2UI_SCHEMA },
+});
+
+// Multi-route mode, mirroring the shipped /api/copilotkit endpoint, which is the
+// configuration proven to run agents in a production build. (The single-route
+// path routes runs through the core's unbound this.fetch and throws "Illegal
+// invocation" in both dev and prod; the multi-route ag-ui path works in prod.)
+const app = createCopilotEndpoint({
+  runtime,
+  basePath: "/api/copilotkit-a2ui-spike",
+});
+
+export const GET = handle(app);
+export const POST = handle(app);
