@@ -9,12 +9,18 @@ import { STARTER_DATASETS } from "@/lib/starter-data";
  * tab never parses it. Samples and uploads are just text poured into the box,
  * so they ride the same `onChange` and persistence as typed input.
  */
+export type DataContext = { audience: string; role: string; goal: string };
+
 export function DataTab({
   value,
   onChange,
+  context,
+  onContextChange,
 }: {
   value: string;
   onChange: (next: string) => void;
+  context: DataContext;
+  onContextChange: (next: DataContext) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +83,35 @@ export function DataTab({
       <p className="text-xs text-neutral-400">
         Loading a sample or a file replaces the box below.
       </p>
+
+      {/* Optional context: who the UI is for. Shapes tone and emphasis; never
+          required, and never a source of facts. */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {(
+          [
+            ["audience", "Audience", "e.g. busy execs"],
+            ["role", "Your role / voice", "e.g. design lead"],
+            ["goal", "Goal", "e.g. decide what to cut"],
+          ] as const
+        ).map(([key, labelText, placeholder]) => (
+          <label key={key} className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-neutral-700">
+              {labelText}{" "}
+              <span className="font-normal text-neutral-400">(optional)</span>
+            </span>
+            <input
+              type="text"
+              value={context[key]}
+              onChange={(e) =>
+                onContextChange({ ...context, [key]: e.target.value })
+              }
+              placeholder={placeholder}
+              className="rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-2.5 py-1.5 text-sm outline-none focus:border-[var(--ink)]"
+              spellCheck={false}
+            />
+          </label>
+        ))}
+      </div>
 
       <textarea
         className="min-h-0 flex-1 resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"

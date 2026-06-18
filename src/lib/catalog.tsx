@@ -372,6 +372,10 @@ export const whySchema = z.object({
       avoided because the data lacked its dimension. The structure-honesty
       account; surfaced in the Why panel. */
   structure: z.string().optional(),
+  /** What the agent was trying to achieve for the stated audience/goal. */
+  intent: z.string().optional(),
+  /** Which part(s) of the user's data backed the output (traceability). */
+  source: z.string().optional(),
   notes: z.string().optional(),
 });
 

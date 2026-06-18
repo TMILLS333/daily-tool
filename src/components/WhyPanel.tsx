@@ -12,10 +12,13 @@ import type { WhyAccount } from "@/lib/catalog";
 export function WhyPanel({
   why,
   componentsAllowed,
+  freedom,
 }: {
   why: WhyAccount | null;
   /** App truth: components actually allowed in this pattern, not a model claim. */
   componentsAllowed: string[];
+  /** App-derived AI-freedom level for the active pattern (Low / Medium / High). */
+  freedom: string;
 }) {
   const label = "text-[11px] uppercase tracking-wide text-[var(--faint)]";
 
@@ -36,6 +39,9 @@ export function WhyPanel({
                   why-account; show the current name, Controlled. */}
               <div className="font-serif text-[15px] capitalize">
                 {why.pattern === "static" ? "Controlled" : why.pattern}
+              </div>
+              <div className="mt-0.5 text-[11px] text-[var(--faint)]">
+                {freedom} AI freedom
               </div>
             </div>
             <div className="min-w-0">
@@ -58,10 +64,22 @@ export function WhyPanel({
               </div>
             </div>
           </div>
+          {why.intent ? (
+            <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
+              <span className="text-[var(--faint)]">Intent: </span>
+              {why.intent}
+            </div>
+          ) : null}
           {why.structure ? (
             <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
               <span className="text-[var(--faint)]">Structure inferred: </span>
               {why.structure}
+            </div>
+          ) : null}
+          {why.source ? (
+            <div className="mt-3 border-t border-[var(--line)] pt-2 text-sm text-[var(--muted)]">
+              <span className="text-[var(--faint)]">Drawn from: </span>
+              {why.source}
             </div>
           ) : null}
           {why.notes ? (

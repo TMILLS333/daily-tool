@@ -14,7 +14,7 @@ import {
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
 
-import { DataTab } from "@/components/DataTab";
+import { DataTab, type DataContext } from "@/components/DataTab";
 import { RulesTab } from "@/components/RulesTab";
 import { CatalogTab } from "@/components/CatalogTab";
 import {
@@ -72,22 +72,29 @@ const LS = {
   request: "daily-tool:v1:request",
   catalog: "daily-tool:v1:catalog",
   style: "daily-tool:v1:style",
+  context: "daily-tool:v1:context",
 };
 
 /** One short line per pattern for the rail's selectable cards: who designs,
     what constrains the agent. */
-const PATTERN_CARDS: Record<Pattern, { name: string; line: string }> = {
+const PATTERN_CARDS: Record<
+  Pattern,
+  { name: string; line: string; freedom: string }
+> = {
   static: {
     name: "Controlled",
     line: "You built the components. The agent fills them.",
+    freedom: "Low",
   },
   declarative: {
     name: "Declarative",
     line: "The agent proposes a spec. Your catalog approves.",
+    freedom: "Medium",
   },
   "open-ended": {
     name: "Open-ended",
     line: "No catalog. The agent invents the surface.",
+    freedom: "High",
   },
 };
 
@@ -106,6 +113,11 @@ function DailyTool() {
   const [data, setData] = useState(DEFAULT_DATA);
   const [rules, setRules] = useState(DEFAULT_RULES);
   const [request, setRequest] = useState(DEFAULT_REQUEST);
+  const [context, setContext] = useState<DataContext>({
+    audience: "",
+    role: "",
+    goal: "",
+  });
   const [runState, setRunState] = useState<RunState>({ kind: "idle" });
   const [staticBlocks, setStaticBlocks] = useState<StaticBlock[]>([]);
   const [agentText, setAgentText] = useState<Partial<Record<Pattern, string>>>({});
@@ -152,6 +164,17 @@ function DailyTool() {
           /* ignore malformed */
         }
       }
+      const ctx = localStorage.getItem(LS.context);
+      if (ctx) {
+        try {
+          const parsed = JSON.parse(ctx);
+          if (parsed && typeof parsed === "object") {
+            setContext((prev) => ({ ...prev, ...parsed }));
+          }
+        } catch {
+          /* ignore malformed */
+        }
+      }
     } catch {
       // private mode etc. — run without persistence
     }
@@ -165,10 +188,11 @@ function DailyTool() {
       localStorage.setItem(LS.request, request);
       localStorage.setItem(LS.catalog, JSON.stringify(enabled));
       localStorage.setItem(LS.style, JSON.stringify(tokens));
+      localStorage.setItem(LS.context, JSON.stringify(context));
     } catch {
       /* non-fatal */
     }
-  }, [hydrated, data, rules, request, enabled, tokens]);
+  }, [hydrated, data, rules, request, enabled, tokens, context]);
 
   const enabledNames = useMemo(
     () =>
@@ -197,6 +221,18 @@ function DailyTool() {
   useAgentContext({
     description: "Component catalog (the allowed vocabulary)",
     value: catalogText,
+  });
+  const contextText = useMemo(() => {
+    const parts: string[] = [];
+    if (context.audience.trim()) parts.push(`Audience: ${context.audience.trim()}`);
+    if (context.role.trim()) parts.push(`Designer role/voice: ${context.role.trim()}`);
+    if (context.goal.trim()) parts.push(`Goal: ${context.goal.trim()}`);
+    return parts.join("\n");
+  }, [context]);
+  useAgentContext({
+    description:
+      "Audience and goal (optional; shape tone and emphasis, never a source of facts)",
+    value: contextText,
   });
 
   // --- the run -------------------------------------------------------------
@@ -370,7 +406,14 @@ function DailyTool() {
         {/* Authoring tabs */}
         {AUTHORING_TABS.includes(tab as AuthoringTab) && (
           <div className="h-full min-h-0">
-            {tab === "data" && <DataTab value={data} onChange={setData} />}
+            {tab === "data" && (
+              <DataTab
+                value={data}
+                onChange={setData}
+                context={context}
+                onContextChange={setContext}
+              />
+            )}
             {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
             {tab === "catalog" && (
               <CatalogTab
@@ -412,8 +455,13 @@ function DailyTool() {
                             aria-hidden
                           />
                         )}
-                        <div className="font-serif text-[15px] font-medium">
-                          {PATTERN_CARDS[p].name}
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="font-serif text-[15px] font-medium">
+                            {PATTERN_CARDS[p].name}
+                          </span>
+                          <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
+                            {PATTERN_CARDS[p].freedom} freedom
+                          </span>
                         </div>
                         <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
                           {PATTERN_CARDS[p].line}
@@ -562,7 +610,11 @@ function DailyTool() {
                 </div>
               )}
 
-              <WhyPanel why={why} componentsAllowed={allowed} />
+              <WhyPanel
+                why={why}
+                componentsAllowed={allowed}
+                freedom={PATTERN_CARDS[pattern].freedom}
+              />
             </div>
 
             {/* Chat driver: conversational path into the same canvas. */}
