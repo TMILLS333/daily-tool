@@ -24,9 +24,16 @@ import { z } from "zod";
 import { createCatalog, type CatalogDefinitions } from "@copilotkit/a2ui-renderer";
 import {
   DTBadge,
+  DTButton,
   DTCard,
   DTHeading,
+  DTKanban,
+  DTList,
+  DTMatrix,
+  DTPieChart,
   DTStack,
+  DTTable,
+  DTTimeline,
 } from "@/components/catalog-primitives";
 
 const definitions = {
@@ -62,6 +69,70 @@ const definitions = {
       childIds: z.array(z.string()).optional(),
     }),
   },
+  List: {
+    description:
+      "A short list of items. Props: title (string, optional), items (array of strings), ordered (boolean).",
+    props: z.object({
+      title: z.string().optional(),
+      items: z.array(z.string()),
+      ordered: z.boolean().optional(),
+    }),
+  },
+  Button: {
+    description:
+      "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version.",
+    props: z.object({
+      label: z.string(),
+      intent: z.enum(["primary", "secondary"]).optional(),
+    }),
+  },
+  PieChart: {
+    description:
+      "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels).",
+    props: z.object({
+      title: z.string().optional(),
+      labels: z.array(z.string()),
+      values: z.array(z.number()),
+    }),
+  },
+  Table: {
+    description:
+      "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items.",
+    props: z.object({
+      columns: z.array(z.string()),
+      rows: z.array(z.array(z.string())),
+      caption: z.string().optional(),
+    }),
+  },
+  Timeline: {
+    description:
+      "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates.",
+    props: z.object({
+      title: z.string().optional(),
+      dates: z.array(z.string()),
+      events: z.array(z.string()),
+    }),
+  },
+  Kanban: {
+    description:
+      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]). Use ONLY when the data has a status or stage to group by.",
+    props: z.object({
+      columnTitles: z.array(z.string()),
+      columnCards: z.array(z.array(z.string())),
+    }),
+  },
+  Matrix: {
+    description:
+      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items). Use ONLY when you can justify two rateable axes from the data; do not invent scores.",
+    props: z.object({
+      title: z.string().optional(),
+      xAxis: z.string(),
+      yAxis: z.string(),
+      items: z.array(z.string()),
+      x: z.array(z.number()),
+      y: z.array(z.number()),
+    }),
+  },
 } satisfies CatalogDefinitions;
 
 /** React catalog the A2UI renderer uses to paint the agent's emitted operations. */
@@ -79,6 +150,32 @@ export const catalog = createCatalog(
           <Fragment key={id}>{children(id)}</Fragment>
         ))}
       </DTStack>
+    ),
+    List: ({ props }) => (
+      <DTList title={props.title} items={props.items} ordered={props.ordered} />
+    ),
+    Button: ({ props }) => <DTButton label={props.label} intent={props.intent} />,
+    PieChart: ({ props }) => (
+      <DTPieChart title={props.title} labels={props.labels} values={props.values} />
+    ),
+    Table: ({ props }) => (
+      <DTTable columns={props.columns} rows={props.rows} caption={props.caption} />
+    ),
+    Timeline: ({ props }) => (
+      <DTTimeline title={props.title} dates={props.dates} events={props.events} />
+    ),
+    Kanban: ({ props }) => (
+      <DTKanban columnTitles={props.columnTitles} columnCards={props.columnCards} />
+    ),
+    Matrix: ({ props }) => (
+      <DTMatrix
+        title={props.title}
+        xAxis={props.xAxis}
+        yAxis={props.yAxis}
+        items={props.items}
+        x={props.x}
+        y={props.y}
+      />
     ),
   },
   {
