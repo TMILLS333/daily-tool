@@ -81,5 +81,18 @@ export const catalog = createCatalog(
       </DTStack>
     ),
   },
-  { includeBasicCatalog: true },
+  {
+    includeBasicCatalog: true,
+    // FIX (2026-06-18, verified on a prod run): the agent's emitted surface
+    // references the A2UI basic catalog by its URL, but createCatalog defaults this
+    // catalog's id to "copilotkit://custom-catalog", so the renderer threw
+    // "Catalog not found: .../basic_catalog.json". Registering under the basic URL
+    // aligns the id the agent references with the one we register, and the surface
+    // paints (Heading + 3 Cards + severity Badges, DT primitives, zero console
+    // errors). Pragmatic id-alignment; a dedicated custom-catalog id advertised via
+    // an extractSchema-equivalent is the cleaner long-term form. The root cause: the
+    // runtime schema is hand-written plain data (a2ui-renderer is client-only, can't
+    // run extractSchema server-side), so the agent falls back to the basic catalog.
+    catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json",
+  },
 );
