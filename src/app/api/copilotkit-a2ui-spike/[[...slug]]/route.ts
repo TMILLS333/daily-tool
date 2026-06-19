@@ -117,7 +117,12 @@ const runtime = new CopilotRuntime({
   runner: new InMemoryAgentRunner(),
   // Enabling a2ui advertises A2UI on /info (so the client renderer auto-mounts)
   // and injects the catalog schema so the agent emits these components.
-  a2ui: { schema: A2UI_SCHEMA },
+  // injectA2UITool registers render_a2ui as a real callable tool. Without it the
+  // model is told to call a tool it does not have, so it emits the operations as
+  // TEXT (an apology or a raw-JSON code block) and re-emits the surface
+  // (double-render). Registering the tool gives a clean single tool-call path.
+  // Proven live in prod 2026-06-19 (apology + JSON dump + duplicate all gone).
+  a2ui: { schema: A2UI_SCHEMA, injectA2UITool: true },
 });
 
 // Multi-route mode, mirroring the shipped /api/copilotkit endpoint, which is the
