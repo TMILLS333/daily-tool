@@ -190,8 +190,11 @@ const agent = new BuiltInAgent({
   temperature: 0.4,
   // Explicit output budget: Workers AI defaults to a very small max_tokens
   // when none is sent (observed truncation at ~240 chars), and specs + why
-  // accounts need room. Harmless on Gemini.
-  maxOutputTokens: 4096,
+  // accounts need room. Raised 4096 -> 8192 because open-ended HTML pages and
+  // larger declarative specs were truncating mid-block; the unclosed fence is
+  // now handled gracefully (catalog.tsx), but more headroom means it happens
+  // far less. Harmless on Gemini 2.5 Flash, which allows far more output.
+  maxOutputTokens: 8192,
   maxSteps: 10, // sequential tool calls for the static pattern + final text
   // No SDK retries: free-tier 429 cooldowns (20-60s) far exceed any backoff,
   // and silent retries burn quota and delay the UI's rate-limit banner.

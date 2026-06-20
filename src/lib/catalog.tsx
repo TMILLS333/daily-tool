@@ -353,11 +353,24 @@ export function CatalogRenderer({
 // Agent output parsing (fenced blocks + the "why" account)
 // ---------------------------------------------------------------------------
 
-/** Extract the first fenced block of a given language from model text. */
+/**
+ * Extract the first fenced block of a given language from model text.
+ *
+ * Resilient to truncation: if the output was cut off mid-block (an opening
+ * ```lang fence with no closing fence, e.g. when the token budget is hit),
+ * fall back to capturing from the opening fence to the end of the text and
+ * return that partial body instead of null. A well-formed (closed) block always
+ * wins, so the normal path is unchanged; the fallback only fires when no closed
+ * block of this language exists.
+ */
 export function parseFencedBlock(text: string, lang: string): string | null {
-  const re = new RegExp("```" + lang + "\\s*\\n([\\s\\S]*?)```", "i");
-  const m = text.match(re);
-  return m ? m[1].trim() : null;
+  const closed = new RegExp("```" + lang + "\\s*\\n([\\s\\S]*?)```", "i");
+  const m = text.match(closed);
+  if (m) return m[1].trim();
+  // Truncated: opening fence present, closing fence lost to the token budget.
+  const open = new RegExp("```" + lang + "\\s*\\n([\\s\\S]*)$", "i");
+  const partial = text.match(open);
+  return partial ? partial[1].trim() : null;
 }
 
 // Note: componentsAllowed is intentionally NOT in this schema. The app owns
@@ -393,9 +406,19 @@ export function parseWhy(text: string): WhyAccount | null {
   }
 }
 
-/** Model text with the machine blocks (why/json/html) stripped out. */
+/**
+ * Model text with the machine blocks (why/json/html) stripped out.
+ *
+ * First removes well-formed (closed) blocks. Then removes a trailing UNCLOSED
+ * block: when output is truncated the final ```html / ```json / ```why fence
+ * never closes, so the closed-block pass leaves it behind and raw markup would
+ * leak into the chat line. The second pass strips from that dangling fence to
+ * the end of the text. On well-formed output no dangling fence remains, so the
+ * second pass is a no-op and the normal path is unchanged.
+ */
 export function commentaryOf(text: string): string {
   return text
     .replace(/```(why|json|html)\s*\n[\s\S]*?```/gi, "")
+    .replace(/```(why|json|html)\b[\s\S]*$/i, "")
     .trim();
 }
