@@ -13,12 +13,17 @@
 :root {
   /* Editorial chrome palette — fixed, near-monochrome. The chrome stays quiet
      so attendee Style tokens (the --dt-* group below) lead in the output. */
+  /* Locked values: warm paper, ink, ONE fixed petrol accent, hairlines. Petrol
+     is chrome (the nav accent), kept separate from the swappable --dt-brand so
+     the chrome never flickers when a Style set is applied. Vellum = nav ground. */
   --paper: #f3ede2;
+  --vellum: #efe9da;
   --surface: #fffdf9;
   --ink: #1f1c16;
+  --petrol: #1f5d59;
   --muted: #6f6a5f;
-  --faint: #9c9587;
-  --line: rgba(31, 28, 22, 0.1);
+  --faint: #b4ab97;
+  --line: #e6dfce;
   --line-strong: rgba(31, 28, 22, 0.2);
 
   --background: var(--paper);

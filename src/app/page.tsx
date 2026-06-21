@@ -57,16 +57,37 @@ if (typeof window !== "undefined") {
 const PATTERNS = ["static", "declarative", "open-ended"] as const;
 type Pattern = (typeof PATTERNS)[number];
 type AuthoringTab = "data" | "rules" | "catalog" | "style";
-type Tab = AuthoringTab | "preview";
+type Tab = AuthoringTab | "preview" | "notes";
 
 const AUTHORING_TABS: AuthoringTab[] = ["data", "rules", "catalog", "style"];
-const TAB_LABELS: Record<Tab, string> = {
-  data: "Data",
-  rules: "Rules",
-  catalog: "Catalog",
-  style: "Style",
-  preview: "Preview",
+
+// Flat, dual-labeled nav: a designer-facing name plus a technical mono
+// sub-label, per surface. Authoring surfaces lead (the brief before the build),
+// then a divider, then Preview and the Design Notes placeholder.
+type NavItem = {
+  key: Tab;
+  name: string;
+  tech: string;
+  glyph: string;
+  soon?: boolean;
 };
+
+const PRIMARY_NAV: NavItem[] = [
+  { key: "data", name: "Data", tech: "source text", glyph: "▦" },
+  { key: "rules", name: "Rules", tech: "constraints", glyph: "☰" },
+  { key: "catalog", name: "Catalog", tech: "component registry", glyph: "▤" },
+  { key: "style", name: "Style", tech: "design tokens", glyph: "◑" },
+];
+const SECONDARY_NAV: NavItem[] = [
+  { key: "preview", name: "Preview", tech: "run + reveal", glyph: "▷" },
+  {
+    key: "notes",
+    name: "Design Notes",
+    tech: "decision log",
+    glyph: "✎",
+    soon: true,
+  },
+];
 
 const LS = {
   data: "daily-tool:v1:data",
@@ -461,308 +482,382 @@ function DailyTool() {
 
   const railLabel = "mb-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]";
 
+  // One flat nav row: glyph + dual labels + an optional status badge. Active
+  // row gets the fixed petrol accent (chrome, never the swappable --dt-brand).
+  const renderNavItem = (item: NavItem) => {
+    const on = tab === item.key;
+    const badge =
+      item.key === "catalog"
+        ? `${enabledNames.size}/${CATALOG.length}`
+        : item.key === "style"
+        ? activeSet ?? "Custom"
+        : item.key === "notes"
+        ? "soon"
+        : null;
+    return (
+      <button
+        key={item.key}
+        type="button"
+        onClick={() => setTab(item.key)}
+        className={`relative mb-0.5 flex w-full items-center gap-3 rounded-[9px] px-3 py-2 text-left transition-colors ${
+          on
+            ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+            : item.soon
+            ? "text-[var(--faint)] hover:bg-[rgba(255,253,248,0.6)]"
+            : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+        }`}
+      >
+        {on && (
+          <span
+            className="absolute -left-4 bottom-2 top-2 w-[3px] rounded-r bg-[var(--petrol)]"
+            aria-hidden
+          />
+        )}
+        <span
+          className={`w-4 shrink-0 text-center text-[13px] ${
+            on ? "text-[var(--petrol)]" : "text-[var(--faint)]"
+          }`}
+          aria-hidden
+        >
+          {item.glyph}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className={`text-[13px] ${on ? "font-semibold" : ""}`}>
+            {item.name}
+          </span>
+          <span className="font-mono text-[8.5px] tracking-tight text-[var(--faint)]">
+            {item.tech}
+          </span>
+        </span>
+        {badge && (
+          <span
+            className={`shrink-0 text-[9.5px] text-[var(--faint)] ${
+              item.soon ? "italic" : ""
+            }`}
+          >
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const isAuthoring = AUTHORING_TABS.includes(tab as AuthoringTab);
+
   return (
-    <main
-      className="mx-auto flex h-dvh max-w-5xl flex-col px-5 py-6"
+    <div
+      className="grid h-dvh grid-cols-[252px_1fr] overflow-hidden bg-[var(--paper)] text-[var(--ink)]"
       style={tokenStyle}
     >
-      {/* Header */}
-      <header className="flex items-baseline justify-between border-b border-[var(--line)] pb-3">
-        <div className="flex items-baseline gap-2.5">
-          <span className="font-serif text-xl font-medium tracking-tight">
-            GenUI Studio
-          </span>
-          <span className="text-sm text-[var(--faint)]">Daily Tool</span>
+      {/* NAV — flat, dual-labeled surfaces, a divider, parked chat, handoff */}
+      <nav className="flex h-dvh flex-col overflow-auto border-r border-[var(--line)] bg-[var(--vellum)] px-4 py-5">
+        <div className="mb-4 px-1.5">
+          <div className="font-serif text-[17px] leading-tight">
+            GenUI Studio{" "}
+            <span className="font-sans text-[11px] text-[var(--muted)]">
+              Daily Tool
+            </span>
+          </div>
         </div>
-        <span className="text-sm text-[var(--faint)]">
-          Coffee &amp; Claude: GenUI Challenge
-        </span>
-      </header>
 
-      {/* Tab row — authoring tabs + the Preview playground */}
-      <nav className="mt-3 flex gap-6 border-b border-[var(--line)]">
-        {(Object.keys(TAB_LABELS) as Tab[]).map((t) => {
-          const active = tab === t;
-          return (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={`-mb-px border-b-2 pb-2.5 text-sm transition-colors ${
-                active
-                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
-              }`}
-            >
-              {TAB_LABELS[t]}
-            </button>
-          );
-        })}
+        {PRIMARY_NAV.map(renderNavItem)}
+
+        <div className="mx-1.5 my-3 h-px bg-[var(--line)]" />
+
+        {SECONDARY_NAV.map(renderNavItem)}
+        {/* Handoff preserved: name what the designer owns and what still needs
+            engineering, so the tool never pretends "no code anywhere." */}
+        <div className="mt-4 rounded-[9px] border border-dashed border-[var(--line)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)]">
+          You author the{" "}
+          <b className="font-semibold text-[var(--ink)]">
+            vocabulary, constraints, and visual system
+          </b>
+          . A genuinely <b className="font-semibold text-[var(--ink)]">new</b>{" "}
+          primitive still needs engineering. Your work with the developers
+          continues.
+        </div>
       </nav>
 
-      <div className="mt-5 min-h-0 flex-1">
-        {/* Authoring tabs */}
-        {AUTHORING_TABS.includes(tab as AuthoringTab) && (
-          <div className="h-full min-h-0">
-            {tab === "data" && (
-              <DataTab
-                value={data}
-                onChange={setData}
-                context={context}
-                onContextChange={setContext}
-              />
-            )}
-            {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
-            {tab === "catalog" && (
-              <CatalogTab
-                enabled={enabled}
-                onToggle={(name, next) =>
-                  setEnabled((prev) => ({ ...prev, [name]: next }))
-                }
-              />
-            )}
-            {tab === "style" && <StyleTab tokens={tokens} onChange={setTokens} />}
-          </div>
-        )}
+      {/* MAIN — one surface at a time. Authoring + Notes route into a
+          max-width sheet; Preview keeps the full-width playground grid. */}
+      <div className="flex h-dvh min-h-0 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 px-10 py-8">
+          {isAuthoring && (
+            <div className="mx-auto h-full min-h-0 max-w-[820px]">
+              {tab === "data" && (
+                <DataTab
+                  value={data}
+                  onChange={setData}
+                  context={context}
+                  onContextChange={setContext}
+                />
+              )}
+              {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
+              {tab === "catalog" && (
+                <CatalogTab
+                  enabled={enabled}
+                  onToggle={(name, next) =>
+                    setEnabled((prev) => ({ ...prev, [name]: next }))
+                  }
+                />
+              )}
+              {tab === "style" && (
+                <StyleTab tokens={tokens} onChange={setTokens} />
+              )}
+            </div>
+          )}
 
-        {/* Preview playground — config rail + output canvas */}
-        {tab === "preview" && (
-          <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[224px_1fr_280px]">
-            {/* Config rail: pattern -> style -> request -> Run */}
-            <div className="flex min-h-0 flex-col gap-6 overflow-y-auto pr-1">
-              <div>
-                <div className={railLabel}>Render pattern</div>
-                <div className="flex flex-col gap-2">
-                  {PATTERNS.map((p) => {
-                    const on = pattern === p;
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPattern(p)}
-                        className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
-                          on
-                            ? "border-[var(--ink)]"
-                            : "border-[var(--line)] hover:border-[var(--line-strong)]"
-                        }`}
-                      >
-                        {on && (
-                          <span
-                            className="absolute inset-y-0 left-0 w-[3px]"
-                            style={{ background: "var(--dt-brand)" }}
-                            aria-hidden
-                          />
-                        )}
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="font-serif text-[15px] font-medium">
-                            {PATTERN_CARDS[p].name}
-                          </span>
-                          <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
-                            {PATTERN_CARDS[p].freedom} freedom
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
-                          {PATTERN_CARDS[p].line}
-                        </p>
-                      </button>
-                    );
-                  })}
+          {/* Preview playground — config rail + output canvas + chat. Behavior
+              unchanged from the pre-shell layout; the reveal recompose is Slice 3. */}
+          {tab === "preview" && (
+            <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[224px_1fr_280px]">
+              {/* Config rail: pattern -> style -> request -> Run */}
+              <div className="flex min-h-0 flex-col gap-6 overflow-y-auto pr-1">
+                <div>
+                  <div className={railLabel}>Render pattern</div>
+                  <div className="flex flex-col gap-2">
+                    {PATTERNS.map((p) => {
+                      const on = pattern === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setPattern(p)}
+                          className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
+                            on
+                              ? "border-[var(--ink)]"
+                              : "border-[var(--line)] hover:border-[var(--line-strong)]"
+                          }`}
+                        >
+                          {on && (
+                            <span
+                              className="absolute inset-y-0 left-0 w-[3px]"
+                              style={{ background: "var(--dt-brand)" }}
+                              aria-hidden
+                            />
+                          )}
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="font-serif text-[15px] font-medium">
+                              {PATTERN_CARDS[p].name}
+                            </span>
+                            <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
+                              {PATTERN_CARDS[p].freedom} freedom
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
+                            {PATTERN_CARDS[p].line}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <div className="mb-2 flex items-baseline justify-between">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-                    Style set
-                  </span>
-                  <span className="text-xs text-[var(--muted)]">
-                    {activeSet ?? "Custom"}
-                  </span>
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+                      Style set
+                    </span>
+                    <span className="text-xs text-[var(--muted)]">
+                      {activeSet ?? "Custom"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {STYLE_SETS.map((s) => {
+                      const on = activeSet === s.name;
+                      return (
+                        <button
+                          key={s.name}
+                          type="button"
+                          onClick={() => setTokens(s.tokens)}
+                          aria-pressed={on}
+                          className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
+                            on
+                              ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                              : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
+                          }`}
+                        >
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {STYLE_SETS.map((s) => {
-                    const on = activeSet === s.name;
-                    return (
-                      <button
-                        key={s.name}
-                        type="button"
-                        onClick={() => setTokens(s.tokens)}
-                        aria-pressed={on}
-                        className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
-                          on
-                            ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                            : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
-                        }`}
-                      >
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
-              <div>
-                <div className={railLabel}>Request</div>
-                <textarea
-                  className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
-                  rows={3}
-                  value={request}
-                  onChange={(e) => setRequest(e.target.value)}
-                  onKeyDown={(e) => {
-                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                      e.preventDefault();
-                      void run();
-                    }
+                <div>
+                  <div className={railLabel}>Request</div>
+                  <textarea
+                    className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
+                    rows={3}
+                    value={request}
+                    onChange={(e) => setRequest(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        void run();
+                      }
+                    }}
+                    placeholder={DEFAULT_REQUEST}
+                    spellCheck={false}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void run()}
+                  disabled={runState.kind === "running"}
+                  className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
+                  style={{
+                    background: "var(--dt-brand)",
+                    color: "var(--dt-brand-contrast)",
                   }}
-                  placeholder={DEFAULT_REQUEST}
-                  spellCheck={false}
+                >
+                  {runState.kind === "running" ? "Rendering…" : "Run"}
+                </button>
+              </div>
+
+              {/* Output canvas — the focal point (the hero, middle zone) */}
+              <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
+                {runState.kind === "rate-limited" && (
+                  <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    Free-tier rate limit reached (about 10 requests per minute).
+                    Wait a few seconds and run again — nothing is broken.
+                  </div>
+                )}
+                {runState.kind === "error" && (
+                  <div className="rounded-[var(--dt-radius)] border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                    The run failed: {runState.message}
+                  </div>
+                )}
+
+                <section>
+                  {pattern === "declarative" && (
+                    <label className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]">
+                      <input
+                        type="checkbox"
+                        checked={realA2UI}
+                        onChange={(e) => setRealA2UI(e.target.checked)}
+                      />
+                      Render with real A2UI{" "}
+                      <span className="text-[var(--faint)]">(experimental)</span>
+                    </label>
+                  )}
+                  <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
+                    {pattern === "static" && (
+                      <StaticPattern
+                        blocks={staticBlocks}
+                        onBlock={(b) => setStaticBlocks((prev) => [...prev, b])}
+                        enabledNames={enabledNames}
+                      />
+                    )}
+                    {pattern === "declarative" &&
+                      (realA2UI ? (
+                        <>
+                          <DeclarativeA2UILive
+                            request={a2uiRequest}
+                            runNonce={a2uiRunNonce}
+                            enabledNames={enabledNames}
+                            onReply={handleA2UIReply}
+                            onStatus={handleA2UIStatus}
+                            onSurface={setA2uiSurfacePresent}
+                            onOps={handleA2UIOps}
+                          />
+                          {a2uiRunNonce === 0 ? (
+                            <p className="text-sm text-[var(--faint)]">
+                              Real A2UI mode. Run a request to paint a live A2UI
+                              surface.
+                            </p>
+                          ) : runState.kind !== "running" && !a2uiSurfacePresent ? (
+                            <p className="text-sm text-[var(--faint)]">
+                              The run completed but produced no A2UI surface. Run
+                              again — small models occasionally skip the tool call.
+                            </p>
+                          ) : null}
+                        </>
+                      ) : (
+                        <DeclarativePattern
+                          agentText={activeText}
+                          enabledNames={enabledNames}
+                        />
+                      ))}
+                    {pattern === "open-ended" && (
+                      <OpenEndedPattern agentText={activeText} />
+                    )}
+                  </div>
+                  {commentary ? (
+                    <p className="mt-2 text-xs text-[var(--muted)]">{commentary}</p>
+                  ) : null}
+                </section>
+
+                {/* Reveal facets: the emitted operations (Declarative) and the
+                    catalog the agent could reach for (Controlled + Declarative).
+                    Display-only, derived from activeText / blocks — flake-proof. */}
+                {(pattern === "declarative" || pattern === "static") && (
+                  <div className="flex flex-col gap-2">
+                    {pattern === "declarative" && (
+                      <div className="flex gap-2">
+                        {(["spec", "catalog"] as const).map((f) => {
+                          const on = revealFacet === f;
+                          return (
+                            <button
+                              key={f}
+                              type="button"
+                              onClick={() => setRevealFacet(f)}
+                              aria-pressed={on}
+                              className={`rounded-[var(--dt-radius)] border px-2.5 py-1 text-xs transition-colors ${
+                                on
+                                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                                  : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
+                              }`}
+                            >
+                              {f === "spec" ? "Operations" : "Catalog"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {pattern === "declarative" && revealFacet === "spec" && (
+                      <LegibilityView
+                        agentText={a2uiActive ? null : activeText}
+                        ops={a2uiActive ? a2uiOps : undefined}
+                      />
+                    )}
+                    {(pattern === "static" ||
+                      (pattern === "declarative" && revealFacet === "catalog")) && (
+                      <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
+                    )}
+                  </div>
+                )}
+
+                <WhyPanel
+                  why={why}
+                  componentsAllowed={allowed}
+                  freedom={PATTERN_CARDS[pattern].freedom}
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => void run()}
+              {/* Chat driver: conversational path into the same canvas. */}
+              <ChatPanel
+                turns={chatTurns}
+                onSend={chatSend}
                 disabled={runState.kind === "running"}
-                className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
-                style={{
-                  background: "var(--dt-brand)",
-                  color: "var(--dt-brand-contrast)",
-                }}
-              >
-                {runState.kind === "running" ? "Rendering…" : "Run"}
-              </button>
-            </div>
-
-            {/* Output canvas — the focal point (the hero, middle zone) */}
-            <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
-              {runState.kind === "rate-limited" && (
-                <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                  Free-tier rate limit reached (about 10 requests per minute).
-                  Wait a few seconds and run again — nothing is broken.
-                </div>
-              )}
-              {runState.kind === "error" && (
-                <div className="rounded-[var(--dt-radius)] border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                  The run failed: {runState.message}
-                </div>
-              )}
-
-              <section>
-                {pattern === "declarative" && (
-                  <label className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]">
-                    <input
-                      type="checkbox"
-                      checked={realA2UI}
-                      onChange={(e) => setRealA2UI(e.target.checked)}
-                    />
-                    Render with real A2UI{" "}
-                    <span className="text-[var(--faint)]">(experimental)</span>
-                  </label>
-                )}
-                <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
-                  {pattern === "static" && (
-                    <StaticPattern
-                      blocks={staticBlocks}
-                      onBlock={(b) => setStaticBlocks((prev) => [...prev, b])}
-                      enabledNames={enabledNames}
-                    />
-                  )}
-                  {pattern === "declarative" &&
-                    (realA2UI ? (
-                      <>
-                        <DeclarativeA2UILive
-                          request={a2uiRequest}
-                          runNonce={a2uiRunNonce}
-                          enabledNames={enabledNames}
-                          onReply={handleA2UIReply}
-                          onStatus={handleA2UIStatus}
-                          onSurface={setA2uiSurfacePresent}
-                          onOps={handleA2UIOps}
-                        />
-                        {a2uiRunNonce === 0 ? (
-                          <p className="text-sm text-[var(--faint)]">
-                            Real A2UI mode. Run a request to paint a live A2UI
-                            surface.
-                          </p>
-                        ) : runState.kind !== "running" && !a2uiSurfacePresent ? (
-                          <p className="text-sm text-[var(--faint)]">
-                            The run completed but produced no A2UI surface. Run
-                            again — small models occasionally skip the tool call.
-                          </p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <DeclarativePattern
-                        agentText={activeText}
-                        enabledNames={enabledNames}
-                      />
-                    ))}
-                  {pattern === "open-ended" && (
-                    <OpenEndedPattern agentText={activeText} />
-                  )}
-                </div>
-                {commentary ? (
-                  <p className="mt-2 text-xs text-[var(--muted)]">{commentary}</p>
-                ) : null}
-              </section>
-
-              {/* Reveal facets: the emitted operations (Declarative) and the
-                  catalog the agent could reach for (Controlled + Declarative).
-                  Display-only, derived from activeText / blocks — flake-proof. */}
-              {(pattern === "declarative" || pattern === "static") && (
-                <div className="flex flex-col gap-2">
-                  {pattern === "declarative" && (
-                    <div className="flex gap-2">
-                      {(["spec", "catalog"] as const).map((f) => {
-                        const on = revealFacet === f;
-                        return (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => setRevealFacet(f)}
-                            aria-pressed={on}
-                            className={`rounded-[var(--dt-radius)] border px-2.5 py-1 text-xs transition-colors ${
-                              on
-                                ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                                : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
-                            }`}
-                          >
-                            {f === "spec" ? "Operations" : "Catalog"}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {pattern === "declarative" && revealFacet === "spec" && (
-                    <LegibilityView
-                      agentText={a2uiActive ? null : activeText}
-                      ops={a2uiActive ? a2uiOps : undefined}
-                    />
-                  )}
-                  {(pattern === "static" ||
-                    (pattern === "declarative" && revealFacet === "catalog")) && (
-                    <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
-                  )}
-                </div>
-              )}
-
-              <WhyPanel
-                why={why}
-                componentsAllowed={allowed}
-                freedom={PATTERN_CARDS[pattern].freedom}
               />
             </div>
+          )}
 
-            {/* Chat driver: conversational path into the same canvas. */}
-            <ChatPanel
-              turns={chatTurns}
-              onSend={chatSend}
-              disabled={runState.kind === "running"}
-            />
-          </div>
-        )}
+          {/* Design Notes — placeholder surface (the decision log lands later). */}
+          {tab === "notes" && (
+            <div className="mx-auto h-full min-h-0 max-w-[820px]">
+              <h2 className="font-serif text-2xl">Design Notes</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                A running narrative of the design decisions behind each render.{" "}
+                <span className="text-[var(--faint)]">After June 27.</span>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
 
