@@ -41,6 +41,7 @@ import {
   parseFencedBlock,
   parseWhy,
   type SpecNode,
+  type WhyAccount,
 } from "@/lib/catalog";
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
 
@@ -134,6 +135,12 @@ function DailyTool() {
   const [a2uiRunNonce, setA2uiRunNonce] = useState(0);
   const [a2uiRequest, setA2uiRequest] = useState("");
   const [a2uiSurfacePresent, setA2uiSurfacePresent] = useState(false);
+  // The emitted A2UI operations, lifted up from the island so the reveal panels
+  // (Operations / Catalog "used" / Why) read the real run, not the json/why text
+  // path. Null until a real run produces ops; cleared at the start of each run.
+  const [a2uiOps, setA2uiOps] = useState<ReadonlyArray<
+    Record<string, unknown>
+  > | null>(null);
 
   // --- the three levers (Pass 3a) -----------------------------------------
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
@@ -308,6 +315,7 @@ function DailyTool() {
     if (!text.trim()) return;
     setAgentText((prev) => ({ ...prev, declarative: undefined }));
     setA2uiSurfacePresent(false);
+    setA2uiOps(null);
     setA2uiRequest(text);
     setA2uiRunNonce((n) => n + 1);
   }, []);
@@ -329,10 +337,17 @@ function DailyTool() {
     []
   );
 
-  // The last assistant string (carries the ```why block) feeds the WhyPanel.
+  // The last assistant string, kept for the run's commentary line and as a
+  // fallback (real A2UI emits no trailing ```why block).
   const handleA2UIReply = useCallback((reply: string) => {
     setAgentText((prev) => ({ ...prev, declarative: reply }));
   }, []);
+
+  // The emitted operations, lifted up to drive the reveal on the real path.
+  const handleA2UIOps = useCallback(
+    (ops: ReadonlyArray<Record<string, unknown>>) => setA2uiOps(ops),
+    []
+  );
 
   const a2uiActive = realA2UI && pattern === "declarative";
 
@@ -373,7 +388,17 @@ function DailyTool() {
   );
 
   const activeText = agentText[pattern] ?? null;
-  const why = activeText ? parseWhy(activeText) : null;
+  // Real-A2UI path: the reveal reads the emitted ops, and real A2UI emits no
+  // ```why block, so the Why account is app-truth only (pattern + freedom; no
+  // fabricated model narrative). The simplified path keeps parsing the ```why
+  // block exactly as before.
+  const why: WhyAccount | null = a2uiActive
+    ? a2uiOps && a2uiOps.length > 0
+      ? { pattern: "declarative", rulesApplied: [] }
+      : null
+    : activeText
+    ? parseWhy(activeText)
+    : null;
   const commentary = activeText ? commentaryOf(activeText) : "";
   // App truth, not the model's claim: what this pattern actually allows.
   const allowed = allowedComponentNames(pattern, enabledNames);
@@ -381,6 +406,22 @@ function DailyTool() {
   // the rendered blocks; Declarative walks the emitted spec. Drives the Catalog
   // facet's "used" marks. Open-Ended has no catalog, so the set stays empty.
   const usedNames = useMemo<Set<string>>(() => {
+    // Real-A2UI path: the components the emitted ops actually referenced.
+    if (a2uiActive) {
+      const names = new Set<string>();
+      for (const op of a2uiOps ?? []) {
+        const uc = (op as Record<string, unknown>).updateComponents as
+          | { components?: unknown }
+          | undefined;
+        if (uc && Array.isArray(uc.components)) {
+          for (const c of uc.components) {
+            const comp = (c as Record<string, unknown>)?.component;
+            if (typeof comp === "string") names.add(comp);
+          }
+        }
+      }
+      return names;
+    }
     if (pattern === "static") {
       return new Set(staticBlocks.map((b) => b.component));
     }
@@ -402,7 +443,7 @@ function DailyTool() {
       }
     }
     return new Set();
-  }, [pattern, staticBlocks, activeText]);
+  }, [a2uiActive, a2uiOps, pattern, staticBlocks, activeText]);
   // Which named style set is active, or null ("custom") once tokens diverge.
   const activeSet = activeStyleSetName(tokens);
 
@@ -636,6 +677,7 @@ function DailyTool() {
                           onReply={handleA2UIReply}
                           onStatus={handleA2UIStatus}
                           onSurface={setA2uiSurfacePresent}
+                          onOps={handleA2UIOps}
                         />
                         {a2uiRunNonce === 0 ? (
                           <p className="text-sm text-[var(--faint)]">
@@ -692,7 +734,10 @@ function DailyTool() {
                     </div>
                   )}
                   {pattern === "declarative" && revealFacet === "spec" && (
-                    <LegibilityView agentText={activeText} />
+                    <LegibilityView
+                      agentText={a2uiActive ? null : activeText}
+                      ops={a2uiActive ? a2uiOps : undefined}
+                    />
                   )}
                   {(pattern === "static" ||
                     (pattern === "declarative" && revealFacet === "catalog")) && (

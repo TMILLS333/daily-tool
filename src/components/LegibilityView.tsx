@@ -24,7 +24,23 @@ import {
  * `root > Stack[0] > Card[1]`), so a node here reads the same as its rejection
  * message in the Declarative pattern.
  */
-export function LegibilityView({ agentText }: { agentText: string | null }) {
+export function LegibilityView({
+  agentText,
+  ops,
+}: {
+  agentText: string | null;
+  /**
+   * Real A2UI operations (Pass C). When present, the view reads the emitted
+   * ops directly instead of the json-spec text path. Real A2UI emits operations
+   * (createSurface / updateComponents / updateDataModel), not a json spec, so on
+   * the real-A2UI Declarative path this is the source. Absent (simplified path)
+   * leaves the json-spec behavior below byte-for-byte unchanged.
+   */
+  ops?: ReadonlyArray<Record<string, unknown>> | null;
+}) {
+  if (ops && ops.length > 0) {
+    return <OpsView ops={ops} />;
+  }
   if (!agentText) {
     return (
       <Frame>
@@ -177,4 +193,136 @@ function formatValue(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+/* ---------- Real A2UI operations path (Pass C) -------------------------------
+ *
+ * Real A2UI emits operations, not a json spec: createSurface / updateComponents
+ * / updateDataModel. A component is `{ id, component, ...properties }` where
+ * `component` is its catalog type; containers list their children by id under
+ * `childIds`. We reconstruct that flat, by-id model into the SAME SpecNode tree
+ * the simplified path uses, so the existing SpecNodeRow renders both identically.
+ * Pure presentation of the ops already in hand — no agent loop, can't flake.
+ */
+
+/**
+ * A2UI containers reference their children by id. The runtime/agent schema uses
+ * the key `children`; the catalog file historically documented `childIds`.
+ * Accept either, and treat ONLY those keys as structural so a data array
+ * (List.items, PieChart.labels) is never mistaken for children.
+ */
+const A2UI_CHILD_KEYS = ["children", "childIds"];
+
+/** The child component ids a component points to, in order (empty if a leaf). */
+function childIdsOf(props: Record<string, unknown>): string[] {
+  for (const key of A2UI_CHILD_KEYS) {
+    const value = props[key];
+    if (Array.isArray(value)) {
+      const ids = value.filter((c): c is string => typeof c === "string");
+      if (ids.length > 0) return ids;
+    }
+  }
+  return [];
+}
+
+/** A component's data bindings: its props minus the structural child-id keys. */
+function bindingsOf(props: Record<string, unknown>): Record<string, unknown> {
+  const rest: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (!A2UI_CHILD_KEYS.includes(key)) rest[key] = value;
+  }
+  return rest;
+}
+
+function OpsView({ ops }: { ops: ReadonlyArray<Record<string, unknown>> }) {
+  const { root, dataModel } = buildOpsTree(ops);
+  if (!root) {
+    return (
+      <Frame>
+        <Note>The run emitted operations, but no components to display yet.</Note>
+      </Frame>
+    );
+  }
+  return (
+    <Frame>
+      <SpecNodeRow node={root} path="root" depth={0} />
+      {dataModel.length > 0 ? (
+        <div className="mt-3 border-t border-[var(--line)] pt-2">
+          <div className="text-[11px] uppercase tracking-wide text-[var(--faint)]">
+            Data model{" "}
+            <span className="normal-case text-[var(--faint)]">(path → value)</span>
+          </div>
+          <ul className="mt-1 space-y-0.5">
+            {dataModel.map((d, i) => (
+              <li key={i} className="font-mono text-xs leading-relaxed">
+                <span className="text-[var(--muted)]">{d.path}</span>
+                <span className="text-[var(--faint)]"> → </span>
+                <span className="text-[var(--ink)]">{formatValue(d.value)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </Frame>
+  );
+}
+
+/**
+ * Fold the emitted ops into a SpecNode tree + the data model. Components
+ * accumulate by id (a later op updating an earlier one, last write wins, as the
+ * A2UI message processor does); the tree is resolved from "root" (or, if absent,
+ * the first component nothing else references). Cycles and dangling child ids are
+ * rendered as a labeled node rather than throwing — the reveal must never break.
+ */
+function buildOpsTree(ops: ReadonlyArray<Record<string, unknown>>): {
+  root: SpecNode | null;
+  dataModel: { path: string; value: unknown }[];
+} {
+  const comps = new Map<string, { type: string; props: Record<string, unknown> }>();
+  const dataModel: { path: string; value: unknown }[] = [];
+
+  for (const op of ops) {
+    const uc = (op as Record<string, any>).updateComponents;
+    if (uc && Array.isArray(uc.components)) {
+      for (const comp of uc.components as Record<string, unknown>[]) {
+        if (!comp || typeof comp !== "object") continue;
+        const { id, component, ...props } = comp;
+        if (typeof id !== "string") continue;
+        const prior = comps.get(id);
+        const type =
+          typeof component === "string" ? component : prior?.type ?? "Unknown";
+        comps.set(id, { type, props });
+      }
+    }
+    const dm = (op as Record<string, any>).updateDataModel;
+    if (dm && typeof dm === "object" && "value" in dm) {
+      dataModel.push({
+        path: typeof dm.path === "string" ? dm.path : "/",
+        value: dm.value,
+      });
+    }
+  }
+
+  if (comps.size === 0) return { root: null, dataModel };
+
+  const referenced = new Set<string>();
+  for (const { props } of comps.values()) {
+    for (const id of childIdsOf(props)) referenced.add(id);
+  }
+  const rootId = comps.has("root")
+    ? "root"
+    : [...comps.keys()].find((id) => !referenced.has(id)) ?? [...comps.keys()][0];
+
+  const toNode = (id: string, seen: Set<string>): SpecNode => {
+    const comp = comps.get(id);
+    if (!comp) return { component: `missing: ${id}` };
+    if (seen.has(id)) return { component: `${comp.type} (cycle)` };
+    const next = new Set(seen).add(id);
+    const childIds = childIdsOf(comp.props);
+    const children =
+      childIds.length > 0 ? childIds.map((c) => toNode(c, next)) : undefined;
+    return { component: comp.type, props: bindingsOf(comp.props), children };
+  };
+
+  return { root: toNode(rootId, new Set<string>()), dataModel };
 }

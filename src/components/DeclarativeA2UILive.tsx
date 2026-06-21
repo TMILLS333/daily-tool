@@ -27,11 +27,14 @@ import { buildCatalog } from "@/lib/a2ui-spike-catalog";
  * shipped Declarative path (DeclarativePattern.tsx) is untouched when the flag
  * is off. Driven by `runNonce`: the parent bumps it to fire a run; this island
  * owns the A2UI agent run + the surface feed, and reports back up:
- *  - onReply: the last assistant string (carries the ```why block) so the
- *    parent's WhyPanel keeps working;
+ *  - onReply: the last assistant string, kept for the run's commentary line and
+ *    as a fallback (real A2UI emits no trailing ```why block);
  *  - onStatus: running / complete / error for the parent's run banner;
  *  - onSurface: whether a surface actually painted, so the parent can
- *    auto-fall-back to the simplified renderer when a real run yields no ops.
+ *    auto-fall-back to the simplified renderer when a real run yields no ops;
+ *  - onOps: the emitted A2UI operations, lifted up so the reveal panels
+ *    (Operations / Catalog "used" / Why) read the real run, not the empty
+ *    json/why text path.
  *
  * Operations live on the "a2ui-surface" activity MESSAGE (content.a2ui_operations),
  * NOT the live activity events — see the spike header for the full rationale.
@@ -68,9 +71,17 @@ interface RunnerProps {
   onReply: (reply: string) => void;
   onStatus: (status: RunStatus, message?: string) => void;
   onSurface: (present: boolean) => void;
+  onOps: (ops: ReadonlyArray<Record<string, unknown>>) => void;
 }
 
-function Runner({ request, runNonce, onReply, onStatus, onSurface }: RunnerProps) {
+function Runner({
+  request,
+  runNonce,
+  onReply,
+  onStatus,
+  onSurface,
+  onOps,
+}: RunnerProps) {
   const { copilotkit } = useCopilotKit();
   // Target the dedicated A2UI agent, NOT the default three-pattern agent.
   const { agent } = useAgent({ agentId: "declarativeA2UI" });
@@ -101,13 +112,17 @@ function Runner({ request, runNonce, onReply, onStatus, onSurface }: RunnerProps
       if (hash === lastHashRef.current) return;
       lastHashRef.current = hash;
 
+      // Lift the full emitted op set up so the parent's reveal can read the real
+      // run. Fires only when the ops actually change (the hash guard above).
+      onOps(ops);
+
       const id = ops.map(operationSurfaceId).find(Boolean) ?? null;
       processMessages(
         id && getSurface(id) ? ops.filter((op) => !(op as any)?.createSurface) : ops
       );
       if (id) setSurfaceId(id);
     },
-    [processMessages, getSurface]
+    [processMessages, getSurface, onOps]
   );
 
   useEffect(() => {
@@ -206,6 +221,8 @@ export interface DeclarativeA2UILiveProps {
   onReply: (reply: string) => void;
   onStatus: (status: RunStatus, message?: string) => void;
   onSurface: (present: boolean) => void;
+  /** The emitted A2UI operations, for the reveal panels (Pass C). */
+  onOps: (ops: ReadonlyArray<Record<string, unknown>>) => void;
 }
 
 export function DeclarativeA2UILive({
@@ -215,6 +232,7 @@ export function DeclarativeA2UILive({
   onReply,
   onStatus,
   onSurface,
+  onOps,
 }: DeclarativeA2UILiveProps) {
   // Catalog governance: the renderer only knows the enabled components, so a
   // surface that references a disabled one simply doesn't paint that node.
@@ -227,6 +245,7 @@ export function DeclarativeA2UILive({
         onReply={onReply}
         onStatus={onStatus}
         onSurface={onSurface}
+        onOps={onOps}
       />
     </A2UIProvider>
   );
