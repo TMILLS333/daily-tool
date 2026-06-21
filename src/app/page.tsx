@@ -28,6 +28,7 @@ import { WhyPanel } from "@/components/WhyPanel";
 import { ChatPanel, type ChatTurn } from "@/components/ChatPanel";
 import { StaticPattern, type StaticBlock } from "@/components/StaticPattern";
 import { DeclarativePattern } from "@/components/DeclarativePattern";
+import { DeclarativeA2UILive } from "@/components/DeclarativeA2UILive";
 import { LegibilityView } from "@/components/LegibilityView";
 import { CatalogView } from "@/components/CatalogView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
@@ -124,6 +125,15 @@ function DailyTool() {
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   // Which reveal facet is showing for Declarative (Operations spec vs Catalog).
   const [revealFacet, setRevealFacet] = useState<"spec" | "catalog">("spec");
+
+  // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
+  // Default OFF, never persisted: every load starts on the shipped simplified
+  // path, so the floor is always the default. When ON, the Declarative canvas
+  // is driven by the dedicated declarativeA2UI agent + the low-level renderer.
+  const [realA2UI, setRealA2UI] = useState(false);
+  const [a2uiRunNonce, setA2uiRunNonce] = useState(0);
+  const [a2uiRequest, setA2uiRequest] = useState("");
+  const [a2uiSurfacePresent, setA2uiSurfacePresent] = useState(false);
 
   // --- the three levers (Pass 3a) -----------------------------------------
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
@@ -291,19 +301,66 @@ function DailyTool() {
     [agent, copilotkit, pattern, runState.kind]
   );
 
+  // Real-A2UI run trigger: clear the prior captured text + surface flag, set
+  // the request, and bump the nonce so the island fires a run against the
+  // declarativeA2UI agent. The island reports back via the handlers below.
+  const runRealA2UI = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setAgentText((prev) => ({ ...prev, declarative: undefined }));
+    setA2uiSurfacePresent(false);
+    setA2uiRequest(text);
+    setA2uiRunNonce((n) => n + 1);
+  }, []);
+
+  // The island's run lifecycle maps onto the same run banner as the default path.
+  const handleA2UIStatus = useCallback(
+    (status: "running" | "complete" | "error", message?: string) => {
+      if (status === "running") setRunState({ kind: "running" });
+      else if (status === "complete") setRunState({ kind: "idle" });
+      else {
+        const msg = message ?? "The run failed.";
+        if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(msg)) {
+          setRunState({ kind: "rate-limited" });
+        } else {
+          setRunState({ kind: "error", message: msg });
+        }
+      }
+    },
+    []
+  );
+
+  // The last assistant string (carries the ```why block) feeds the WhyPanel.
+  const handleA2UIReply = useCallback((reply: string) => {
+    setAgentText((prev) => ({ ...prev, declarative: reply }));
+  }, []);
+
+  const a2uiActive = realA2UI && pattern === "declarative";
+
   // Run button: clears the chat transcript so the canvas reflects exactly this
-  // request, then runs it through the shared path.
+  // request, then runs it through the shared path (or the A2UI island).
   const run = useCallback(() => {
     if (!request.trim()) return;
     setChatTurns([]);
+    if (a2uiActive) {
+      runRealA2UI(request);
+      return;
+    }
     void runMessage(request);
-  }, [request, runMessage]);
+  }, [request, runMessage, a2uiActive, runRealA2UI]);
 
   // Chat: appends each exchange to the transcript and renders into the same
-  // canvas through the shared path.
+  // canvas through the shared path (or the A2UI island).
   const chatSend = useCallback(
     (text: string) => {
       setChatTurns((prev) => [...prev, { role: "user", text }]);
+      if (a2uiActive) {
+        runRealA2UI(text);
+        setChatTurns((prev) => [
+          ...prev,
+          { role: "assistant", text: "Rendering a live A2UI surface into the canvas." },
+        ]);
+        return;
+      }
       void runMessage(text).then((reply) => {
         const line =
           reply === null
@@ -312,7 +369,7 @@ function DailyTool() {
         setChatTurns((prev) => [...prev, { role: "assistant", text: line }]);
       });
     },
-    [runMessage]
+    [runMessage, a2uiActive, runRealA2UI]
   );
 
   const activeText = agentText[pattern] ?? null;
@@ -550,6 +607,17 @@ function DailyTool() {
               )}
 
               <section>
+                {pattern === "declarative" && (
+                  <label className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]">
+                    <input
+                      type="checkbox"
+                      checked={realA2UI}
+                      onChange={(e) => setRealA2UI(e.target.checked)}
+                    />
+                    Render with real A2UI{" "}
+                    <span className="text-[var(--faint)]">(experimental)</span>
+                  </label>
+                )}
                 <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
                   {pattern === "static" && (
                     <StaticPattern
@@ -558,12 +626,35 @@ function DailyTool() {
                       enabledNames={enabledNames}
                     />
                   )}
-                  {pattern === "declarative" && (
-                    <DeclarativePattern
-                      agentText={activeText}
-                      enabledNames={enabledNames}
-                    />
-                  )}
+                  {pattern === "declarative" &&
+                    (realA2UI ? (
+                      <>
+                        <DeclarativeA2UILive
+                          request={a2uiRequest}
+                          runNonce={a2uiRunNonce}
+                          enabledNames={enabledNames}
+                          onReply={handleA2UIReply}
+                          onStatus={handleA2UIStatus}
+                          onSurface={setA2uiSurfacePresent}
+                        />
+                        {a2uiRunNonce === 0 ? (
+                          <p className="text-sm text-[var(--faint)]">
+                            Real A2UI mode. Run a request to paint a live A2UI
+                            surface.
+                          </p>
+                        ) : runState.kind !== "running" && !a2uiSurfacePresent ? (
+                          <p className="text-sm text-[var(--faint)]">
+                            The run completed but produced no A2UI surface. Run
+                            again — small models occasionally skip the tool call.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <DeclarativePattern
+                        agentText={activeText}
+                        enabledNames={enabledNames}
+                      />
+                    ))}
                   {pattern === "open-ended" && (
                     <OpenEndedPattern agentText={activeText} />
                   )}

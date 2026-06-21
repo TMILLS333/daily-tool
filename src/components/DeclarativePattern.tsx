@@ -10,9 +10,10 @@ import {
 /**
  * Declarative pattern — the agent emits a JSON spec; a trusted renderer
  * assembles it from the catalog. Labeled "A2UI-style" because it is a
- * simplified stand-in for the real A2UI protocol. (Guardrail, research
- * 2026-06-13: do NOT swap in real A2UI before the June 27 workshop — A2UI is
- * v0.9 Public Preview and unstable. See research-genui-stack-and-patent doc.)
+ * simplified stand-in for the real A2UI protocol. As of the 2026-06-20 GO
+ * decision (recorded in STUDIO-SPEC / SPEC, Pass A), this simplified renderer
+ * is the RETAINED FALLBACK: the production Declarative path is real A2UI,
+ * rendered by DeclarativeA2UILive.tsx behind a default-OFF sub-mode flag.
  *
  * Catalog enforcement is visible on purpose: nodes that name unknown OR
  * disabled components are rejected and listed, not silently dropped. With

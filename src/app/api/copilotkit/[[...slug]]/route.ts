@@ -184,6 +184,77 @@ not yours to edit in this app; smaller models drift into these tools instead
 of rendering. In the static pattern use only the show_* tools; in the other
 patterns use no tools at all.`;
 
+// === Real A2UI Declarative agent (Pass B) ============================
+// A dedicated, single-purpose agent: its ONLY job is to emit a REAL A2UI
+// surface via the render_a2ui tool. It coexists with `default` on the same
+// runtime; the a2ui middleware below is scoped to THIS agent only (agents:
+// ["declarativeA2UI"]), so `default` (Controlled / Open-Ended / simplified
+// Declarative) never sees render_a2ui — proven at the source in
+// configureAgentForRequest (shouldApply = targetAgents.includes(agentId)).
+//
+// Catalog governance (Package 1, Approach B): the agent is STEERED by the
+// enabled catalog via the same "Component catalog" application context the
+// front end already sends (catalogPromptText), and ENFORCED client-side by
+// building the A2UIRenderer catalog from enabledNames. So this server schema
+// stays the full vocabulary; the enabled subset governs via context + render.
+//
+// The schema is plain data (NOT imported from the client a2ui-renderer adapter,
+// which is client-only); names + descriptions mirror a2ui-spike-catalog.tsx.
+const A2UI_SCHEMA = [
+  { name: "Heading", description: "A section heading. Props: text (string), level (1, 2 or 3)." },
+  { name: "Card", description: "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand')." },
+  { name: "Badge", description: "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger')." },
+  { name: "Stack", description: "A layout container. Props: direction ('vertical' | 'horizontal'), childIds (array of child component IDs to place in order)." },
+  { name: "List", description: "A short list of items. Props: title (string, optional), items (array of strings), ordered (boolean)." },
+  { name: "Button", description: "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version." },
+  { name: "PieChart", description: "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels)." },
+  { name: "Table", description: "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items." },
+  { name: "Timeline", description: "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates." },
+  { name: "Kanban", description: "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings). Use ONLY when the data has a status or stage to group by." },
+  { name: "Matrix", description: "A two-axis placement chart. Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100), y (array of numbers 0-100). Use ONLY when you can justify two rateable axes from the data; do not invent scores." },
+];
+
+const A2UI_PROMPT = `You build a small interface that answers the user's request,
+rendered as a REAL A2UI surface via the A2UI tool, within the designer's rules.
+
+The application context gives you, on every run:
+- "The user's data" — raw pasted text. This is your ONLY source of facts.
+- "The user's design rules" — plain-English policy. Obey every rule. Rules
+  outrank your own taste; if a rule conflicts with the request, the rule wins
+  and you say so in your why-account.
+- "Component catalog" — the components you may use, with their props. Use ONLY
+  these components. Do not use a component that is not listed.
+- "Audience and goal" — optional. If present, let it shape tone, ordering, and
+  emphasis. It NEVER licenses inventing facts.
+
+NEVER invent facts that are not in the user's data. Summarize, group, rephrase —
+but do not fabricate.
+
+STRUCTURE HONESTY. Some components imply a shape the data may not have. Kanban
+needs a status or stage to group by. Timeline needs a real date or order. Matrix
+needs two rateable axes. Table needs fields shared across items. Use such a
+component ONLY when the data genuinely carries the dimension it needs. Do not
+fabricate statuses, dates, scores, or categories to make a component fit. If the
+data does not support a component's shape, pick a simpler one.
+
+Build the surface by calling the A2UI tool with components from the catalog. Use
+a Stack to arrange several pieces in order. Choose the components that fit the
+shape of the information. Keep the result clear and concise.
+
+After building the surface, end your reply with a fenced \`\`\`why block containing
+JSON:
+{
+  "pattern": "declarative",
+  "rulesApplied": ["<short quote of each rule you applied and how>"],
+  "intent": "<one line: what you were trying to achieve for the reader>",
+  "structure": "<if you arranged the data into a table/matrix/timeline/kanban, name the data dimension you used and how you inferred it; if you avoided a component because the data lacked its dimension, say so; omit if no structuring was needed>",
+  "source": "<which part(s) of the user's data this draws from>",
+  "notes": "<anything you had to decide that the rules did not cover>"
+}
+The app reports which components were allowed; you do not. Do not list components
+in this block, and do not repeat the rendered data in prose. This is your honest
+account: if you could not follow a rule, say so in "notes" rather than pretending.`;
+
 const agent = new BuiltInAgent({
   model: MODEL,
   prompt: PROMPT,
@@ -207,11 +278,34 @@ const agent = new BuiltInAgent({
   overridableProperties: ["toolChoice"],
 });
 
+// The real-A2UI agent. toolChoice is left at its default (auto) so it can CALL
+// render_a2ui — NOT in overridableProperties, so the front end can't force it
+// to "none" the way it does for the default agent's text patterns. Proven on
+// the spike: injectA2UITool + auto = a clean single tool-call (2026-06-19).
+const a2uiAgent = new BuiltInAgent({
+  model: MODEL,
+  prompt: A2UI_PROMPT,
+  temperature: 0.4,
+  maxOutputTokens: 8192,
+  maxSteps: 10,
+  maxRetries: 0,
+});
+
 const runtime = new CopilotRuntime({
   agents: {
     default: agent,
+    declarativeA2UI: a2uiAgent,
   },
   runner: new InMemoryAgentRunner(),
+  // A2UI is SCOPED to the declarativeA2UI agent only. configureAgentForRequest
+  // applies A2UIMiddleware iff agents.includes(agentId), so `default` never gets
+  // render_a2ui. injectA2UITool registers render_a2ui as a real callable tool
+  // (without it the model emits ops-as-text + an apology — proven 2026-06-19).
+  a2ui: {
+    schema: A2UI_SCHEMA,
+    injectA2UITool: true,
+    agents: ["declarativeA2UI"],
+  },
 });
 
 const app = createCopilotEndpoint({

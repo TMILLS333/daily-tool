@@ -21,7 +21,11 @@
 
 import { Fragment } from "react";
 import { z } from "zod";
-import { createCatalog, type CatalogDefinitions } from "@copilotkit/a2ui-renderer";
+import {
+  createCatalog,
+  type CatalogDefinitions,
+  type CatalogRenderers,
+} from "@copilotkit/a2ui-renderer";
 import {
   DTBadge,
   DTButton,
@@ -135,61 +139,102 @@ const definitions = {
   },
 } satisfies CatalogDefinitions;
 
-/** React catalog the A2UI renderer uses to paint the agent's emitted operations. */
-export const catalog = createCatalog(
-  definitions,
-  {
-    Heading: ({ props }) => <DTHeading text={props.text} level={props.level} />,
-    Card: ({ props }) => (
-      <DTCard title={props.title} body={props.body} accent={props.accent} />
-    ),
-    Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} />,
-    Stack: ({ props, children }) => (
-      <DTStack direction={props.direction}>
-        {(props.childIds ?? []).map((id) => (
-          <Fragment key={id}>{children(id)}</Fragment>
-        ))}
-      </DTStack>
-    ),
-    List: ({ props }) => (
-      <DTList title={props.title} items={props.items} ordered={props.ordered} />
-    ),
-    Button: ({ props }) => <DTButton label={props.label} intent={props.intent} />,
-    PieChart: ({ props }) => (
-      <DTPieChart title={props.title} labels={props.labels} values={props.values} />
-    ),
-    Table: ({ props }) => (
-      <DTTable columns={props.columns} rows={props.rows} caption={props.caption} />
-    ),
-    Timeline: ({ props }) => (
-      <DTTimeline title={props.title} dates={props.dates} events={props.events} />
-    ),
-    Kanban: ({ props }) => (
-      <DTKanban columnTitles={props.columnTitles} columnCards={props.columnCards} />
-    ),
-    Matrix: ({ props }) => (
-      <DTMatrix
-        title={props.title}
-        xAxis={props.xAxis}
-        yAxis={props.yAxis}
-        items={props.items}
-        x={props.x}
-        y={props.y}
-      />
-    ),
-  },
-  {
-    includeBasicCatalog: true,
-    // FIX (2026-06-18, verified on a prod run): the agent's emitted surface
-    // references the A2UI basic catalog by its URL, but createCatalog defaults this
-    // catalog's id to "copilotkit://custom-catalog", so the renderer threw
-    // "Catalog not found: .../basic_catalog.json". Registering under the basic URL
-    // aligns the id the agent references with the one we register, and the surface
-    // paints (Heading + 3 Cards + severity Badges, DT primitives, zero console
-    // errors). Pragmatic id-alignment; a dedicated custom-catalog id advertised via
-    // an extractSchema-equivalent is the cleaner long-term form. The root cause: the
-    // runtime schema is hand-written plain data (a2ui-renderer is client-only, can't
-    // run extractSchema server-side), so the agent falls back to the basic catalog.
-    catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json",
-  },
-);
+/** The React renderers, kept as a named map so a catalog can be built from a
+    subset of component names (catalog-governance enforcement). */
+const renderers = {
+  Heading: ({ props }) => <DTHeading text={props.text} level={props.level} />,
+  Card: ({ props }) => (
+    <DTCard title={props.title} body={props.body} accent={props.accent} />
+  ),
+  Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} />,
+  Stack: ({ props, children }) => (
+    <DTStack direction={props.direction}>
+      {(props.childIds ?? []).map((id) => (
+        <Fragment key={id}>{children(id)}</Fragment>
+      ))}
+    </DTStack>
+  ),
+  List: ({ props }) => (
+    <DTList title={props.title} items={props.items} ordered={props.ordered} />
+  ),
+  Button: ({ props }) => <DTButton label={props.label} intent={props.intent} />,
+  PieChart: ({ props }) => (
+    <DTPieChart title={props.title} labels={props.labels} values={props.values} />
+  ),
+  Table: ({ props }) => (
+    <DTTable columns={props.columns} rows={props.rows} caption={props.caption} />
+  ),
+  Timeline: ({ props }) => (
+    <DTTimeline title={props.title} dates={props.dates} events={props.events} />
+  ),
+  Kanban: ({ props }) => (
+    <DTKanban columnTitles={props.columnTitles} columnCards={props.columnCards} />
+  ),
+  Matrix: ({ props }) => (
+    <DTMatrix
+      title={props.title}
+      xAxis={props.xAxis}
+      yAxis={props.yAxis}
+      items={props.items}
+      x={props.x}
+      y={props.y}
+    />
+  ),
+} satisfies CatalogRenderers<typeof definitions>;
+
+const CATALOG_OPTIONS = {
+  includeBasicCatalog: true,
+  // FIX (2026-06-18, verified on a prod run): the agent's emitted surface
+  // references the A2UI basic catalog by its URL, but createCatalog defaults this
+  // catalog's id to "copilotkit://custom-catalog", so the renderer threw
+  // "Catalog not found: .../basic_catalog.json". Registering under the basic URL
+  // aligns the id the agent references with the one we register, and the surface
+  // paints (Heading + 3 Cards + severity Badges, DT primitives, zero console
+  // errors). The root cause: the runtime schema is hand-written plain data
+  // (a2ui-renderer is client-only, can't run extractSchema server-side), so the
+  // agent falls back to the basic catalog.
+  catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json",
+} as const;
+
+// Container components must always be available or layout can't be assembled,
+// even if a designer disables them in the Catalog tab.
+const ALWAYS_KEEP = new Set(["Stack"]);
+
+/**
+ * Build the A2UI render catalog from a subset of enabled component names. This
+ * is the CLIENT-side half of catalog governance (Pass B, Approach B): disabling
+ * a component in the Catalog tab means its renderer is absent here, so a real
+ * A2UI surface that references it simply does not paint that node. Pass no arg
+ * for the full catalog (the spike's behavior, preserved).
+ */
+export function buildCatalog(enabledNames?: ReadonlySet<string>) {
+  if (!enabledNames) return createCatalog(definitions, renderers, CATALOG_OPTIONS);
+  const keep = (name: string) => enabledNames.has(name) || ALWAYS_KEEP.has(name);
+  const defs = Object.fromEntries(
+    Object.entries(definitions).filter(([name]) => keep(name))
+  ) as typeof definitions;
+  const rends = Object.fromEntries(
+    Object.entries(renderers).filter(([name]) => keep(name))
+  ) as typeof renderers;
+  const built = createCatalog(defs, rends, CATALOG_OPTIONS);
+  // Close the basic-catalog governance hole: createCatalog merges CopilotKit's
+  // basic catalog, which ALSO defines Card / List / Button. Filtering our
+  // definitions drops the DT renderer but leaves the GENERIC basic version in
+  // the merged map, so a disabled Card/List/Button would still paint. Remove
+  // every disabled DT-vocabulary name from the map so the catalog truly governs
+  // (the 8 non-colliding names are already absent, so this only bites the 3).
+  // components is typed ReadonlyMap but is a real mutable Map at runtime
+  // (web_core registers via compMap.set); we mutate the freshly-built, not-yet-
+  // mounted catalog, so there is no shared state to corrupt.
+  const map = (built as unknown as { components?: Map<string, unknown> })
+    ?.components;
+  if (map && typeof map.delete === "function") {
+    for (const name of Object.keys(definitions)) {
+      if (!keep(name)) map.delete(name);
+    }
+  }
+  return built;
+}
+
+/** Full React catalog (all components). Used by the dev spike page verbatim. */
+export const catalog = buildCatalog();
