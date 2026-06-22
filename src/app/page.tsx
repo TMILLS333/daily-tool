@@ -25,6 +25,7 @@ import {
   type StyleTokens,
 } from "@/components/StyleTab";
 import { WhyPanel } from "@/components/WhyPanel";
+import { TeachingCard } from "@/components/TeachingCard";
 import { ChatPanel, type ChatTurn } from "@/components/ChatPanel";
 import { StaticPattern, type StaticBlock } from "@/components/StaticPattern";
 import { DeclarativePattern } from "@/components/DeclarativePattern";
@@ -157,8 +158,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   const [staticBlocks, setStaticBlocks] = useState<StaticBlock[]>([]);
   const [agentText, setAgentText] = useState<Partial<Record<Pattern, string>>>({});
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
-  // Which reveal facet is showing for Declarative (Operations spec vs Catalog).
-  const [revealFacet, setRevealFacet] = useState<"spec" | "catalog">("spec");
+  // Setup collapses to a compact bar after a Run (freedom-first run flow);
+  // editing re-expands it. Presentation-only; does not touch run logic.
+  const [setupExpanded, setSetupExpanded] = useState(true);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
   // Default OFF, never persisted: every load starts on the shipped simplified
@@ -607,117 +609,159 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             </div>
           )}
 
-          {/* Preview playground — config rail + output canvas + chat. Behavior
-              unchanged from the pre-shell layout; the reveal recompose is Slice 3. */}
+          {/* Preview (the hero) — freedom-first run flow that collapses after a
+              Run, a focal Output module, an always-shown Operations module, and
+              the "How Preview works" teaching card (Slice 3a). Run logic is
+              unchanged; the two-state Why + render-path control are Slice 3b, and
+              the chat relocation is Slice 3c. */}
           {tab === "preview" && (
-            <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[224px_1fr_280px]">
-              {/* Config rail: pattern -> style -> request -> Run */}
-              <div className="flex min-h-0 flex-col gap-6 overflow-y-auto pr-1">
-                <div>
-                  <div className={railLabel}>Render pattern</div>
-                  <div className="flex flex-col gap-2">
-                    {PATTERNS.map((p) => {
-                      const on = pattern === p;
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPattern(p)}
-                          className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
-                            on
-                              ? "border-[var(--ink)]"
-                              : "border-[var(--line)] hover:border-[var(--line-strong)]"
-                          }`}
-                        >
-                          {on && (
-                            <span
-                              className="absolute inset-y-0 left-0 w-[3px]"
-                              style={{ background: "var(--dt-brand)" }}
-                              aria-hidden
-                            />
-                          )}
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="font-serif text-[15px] font-medium">
-                              {PATTERN_CARDS[p].name}
-                            </span>
-                            <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
-                              {PATTERN_CARDS[p].freedom} freedom
-                            </span>
-                          </div>
-                          <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
-                            {PATTERN_CARDS[p].line}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+            <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[1fr_280px]">
+              {/* Main flow: setup -> Output -> Operations -> Why -> teaching card */}
+              <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pr-1">
+                {/* Setup, freedom-first. Expanded for editing; a compact bar after Run. */}
+                {setupExpanded ? (
+                  <div className="flex flex-col gap-5 rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-4">
+                    <div>
+                      <div className={railLabel}>Render pattern</div>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        {PATTERNS.map((p) => {
+                          const on = pattern === p;
+                          return (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => setPattern(p)}
+                              className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
+                                on
+                                  ? "border-[var(--ink)]"
+                                  : "border-[var(--line)] hover:border-[var(--line-strong)]"
+                              }`}
+                            >
+                              {on && (
+                                <span
+                                  className="absolute inset-y-0 left-0 w-[3px]"
+                                  style={{ background: "var(--dt-brand)" }}
+                                  aria-hidden
+                                />
+                              )}
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className="font-serif text-[15px] font-medium">
+                                  {PATTERN_CARDS[p].name}
+                                </span>
+                                <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
+                                  {PATTERN_CARDS[p].freedom} freedom
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
+                                {PATTERN_CARDS[p].line}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="mb-2 flex items-baseline justify-between">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-                      Style set
-                    </span>
-                    <span className="text-xs text-[var(--muted)]">
-                      {activeSet ?? "Custom"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {STYLE_SETS.map((s) => {
-                      const on = activeSet === s.name;
-                      return (
-                        <button
-                          key={s.name}
-                          type="button"
-                          onClick={() => setTokens(s.tokens)}
-                          aria-pressed={on}
-                          className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
-                            on
-                              ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                              : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
-                          }`}
-                        >
-                          {s.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                    <div>
+                      <div className="mb-2 flex items-baseline justify-between">
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+                          Style set
+                        </span>
+                        <span className="text-xs text-[var(--muted)]">
+                          {activeSet ?? "Custom"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {STYLE_SETS.map((s) => {
+                          const on = activeSet === s.name;
+                          return (
+                            <button
+                              key={s.name}
+                              type="button"
+                              onClick={() => setTokens(s.tokens)}
+                              aria-pressed={on}
+                              className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
+                                on
+                                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                                  : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
+                              }`}
+                            >
+                              {s.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className={railLabel}>Request</div>
-                  <textarea
-                    className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
-                    rows={3}
-                    value={request}
-                    onChange={(e) => setRequest(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                        e.preventDefault();
+                    <div>
+                      <div className={railLabel}>Request</div>
+                      <textarea
+                        className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
+                        rows={3}
+                        value={request}
+                        onChange={(e) => setRequest(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                            e.preventDefault();
+                            setSetupExpanded(false);
+                            void run();
+                          }
+                        }}
+                        placeholder={DEFAULT_REQUEST}
+                        spellCheck={false}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSetupExpanded(false);
                         void run();
-                      }
-                    }}
-                    placeholder={DEFAULT_REQUEST}
-                    spellCheck={false}
-                  />
-                </div>
+                      }}
+                      disabled={runState.kind === "running"}
+                      className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
+                      style={{
+                        background: "var(--dt-brand)",
+                        color: "var(--dt-brand-contrast)",
+                      }}
+                    >
+                      {runState.kind === "running" ? "Rendering…" : "Run"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-3 rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5">
+                    <span className="shrink-0 rounded bg-[var(--petrol)] px-2 py-0.5 text-[11px] font-medium text-white">
+                      {PATTERN_CARDS[pattern].name} · {PATTERN_CARDS[pattern].freedom} freedom
+                    </span>
+                    <span
+                      className="min-w-0 flex-1 truncate text-sm text-[var(--muted)]"
+                      title={request}
+                    >
+                      {request || DEFAULT_REQUEST}
+                    </span>
+                    <div className="ml-auto flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSetupExpanded(true)}
+                        className="rounded-[var(--dt-radius)] border border-[var(--line)] px-3 py-1.5 text-sm text-[var(--muted)] transition-colors hover:border-[var(--line-strong)]"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void run()}
+                        disabled={runState.kind === "running"}
+                        className="rounded-[var(--dt-radius)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                        style={{
+                          background: "var(--dt-brand)",
+                          color: "var(--dt-brand-contrast)",
+                        }}
+                      >
+                        {runState.kind === "running" ? "Rendering…" : "Re-run"}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => void run()}
-                  disabled={runState.kind === "running"}
-                  className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
-                  style={{
-                    background: "var(--dt-brand)",
-                    color: "var(--dt-brand-contrast)",
-                  }}
-                >
-                  {runState.kind === "running" ? "Rendering…" : "Run"}
-                </button>
-              </div>
-
-              {/* Output canvas — the focal point (the hero, middle zone) */}
-              <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
                 {runState.kind === "rate-limited" && (
                   <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     Free-tier rate limit reached (about 10 requests per minute).
@@ -730,7 +774,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   </div>
                 )}
 
+                {/* Output module — the focal rendered surface */}
                 <section>
+                  <div className={railLabel}>Output</div>
                   {pattern === "declarative" && (
                     <label className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]">
                       <input
@@ -788,44 +834,31 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   ) : null}
                 </section>
 
-                {/* Reveal facets: the emitted operations (Declarative) and the
-                    catalog the agent could reach for (Controlled + Declarative).
-                    Display-only, derived from activeText / blocks — flake-proof. */}
-                {(pattern === "declarative" || pattern === "static") && (
-                  <div className="flex flex-col gap-2">
-                    {pattern === "declarative" && (
-                      <div className="flex gap-2">
-                        {(["spec", "catalog"] as const).map((f) => {
-                          const on = revealFacet === f;
-                          return (
-                            <button
-                              key={f}
-                              type="button"
-                              onClick={() => setRevealFacet(f)}
-                              aria-pressed={on}
-                              className={`rounded-[var(--dt-radius)] border px-2.5 py-1 text-xs transition-colors ${
-                                on
-                                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                                  : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
-                              }`}
-                            >
-                              {f === "spec" ? "Operations" : "Catalog"}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {pattern === "declarative" && revealFacet === "spec" && (
-                      <LegibilityView
-                        agentText={a2uiActive ? null : activeText}
-                        ops={a2uiActive ? a2uiOps : undefined}
+                {/* Operations module — the component tree + bindings the agent
+                    emitted, shown as its own module (no toggle). The Catalog
+                    "used" view stays reachable. Display-only, derived from
+                    activeText / emitted ops — flake-proof. */}
+                {pattern === "declarative" && (
+                  <section>
+                    <div className={railLabel}>Operations</div>
+                    <LegibilityView
+                      agentText={a2uiActive ? null : activeText}
+                      ops={a2uiActive ? a2uiOps : undefined}
+                    />
+                    <div className="mt-3">
+                      <div className={railLabel}>Catalog</div>
+                      <CatalogView
+                        enabledNames={enabledNames}
+                        usedNames={usedNames}
                       />
-                    )}
-                    {(pattern === "static" ||
-                      (pattern === "declarative" && revealFacet === "catalog")) && (
-                      <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
-                    )}
-                  </div>
+                    </div>
+                  </section>
+                )}
+                {pattern === "static" && (
+                  <section>
+                    <div className={railLabel}>Catalog</div>
+                    <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
+                  </section>
                 )}
 
                 <WhyPanel
@@ -833,9 +866,31 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   componentsAllowed={allowed}
                   freedom={PATTERN_CARDS[pattern].freedom}
                 />
+
+                <TeachingCard
+                  name="Preview"
+                  mechanism={
+                    <>
+                      Your setup (freedom level + request) runs the agent over your
+                      Data, Rules, and Catalog. The agent emits a selection or a
+                      spec; the app renders it into the Output above, and the
+                      Operations module shows the exact component tree and data
+                      bindings it emitted.
+                    </>
+                  }
+                  purpose={
+                    <>
+                      Freedom leads because it is the real choice you are making:
+                      how much you let the agent decide. Everything below the Output
+                      is the receipt — what the agent actually produced — so the
+                      render stays legible, not magic.
+                    </>
+                  }
+                />
               </div>
 
-              {/* Chat driver: conversational path into the same canvas. */}
+              {/* Chat driver: conversational path into the same canvas. Relocation
+                  to the nav-foot is Slice 3c. */}
               <ChatPanel
                 turns={chatTurns}
                 onSend={chatSend}
