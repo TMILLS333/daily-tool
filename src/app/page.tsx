@@ -459,6 +459,29 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     }
     return new Set();
   }, [a2uiActive, a2uiOps, pattern, staticBlocks, activeText]);
+
+  // Real-A2UI catalog enforcement, made visible (parity with the simplified
+  // DeclarativePattern). The agent can still NAME a disabled or off-catalog
+  // component (its injected tool schema is the full vocabulary), but the client
+  // catalog only renders the enabled subset, so such a node would paint as the
+  // renderer's raw "Unknown component" with no honest framing. Here we read the
+  // emitted types and list the rejections the same way the simplified path does.
+  // Stack is a container the catalog always keeps, so it is never a rejection.
+  const a2uiRejections = useMemo<string[]>(() => {
+    if (!a2uiActive) return [];
+    const alwaysKeep = new Set(["Stack"]); // mirrors buildCatalog ALWAYS_KEEP
+    const catalogNames = new Set(CATALOG.map((c) => c.name));
+    const problems: string[] = [];
+    for (const name of usedNames) {
+      if (alwaysKeep.has(name)) continue;
+      if (!catalogNames.has(name)) {
+        problems.push(`"${name}" is not in the catalog — not rendered.`);
+      } else if (!enabledNames.has(name)) {
+        problems.push(`"${name}" is disabled — not rendered.`);
+      }
+    }
+    return problems;
+  }, [a2uiActive, usedNames, enabledNames]);
   // Which named style set is active, or null ("custom") once tokens diverge.
   const activeSet = activeStyleSetName(tokens);
 
@@ -882,6 +905,18 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                               The run completed but produced no A2UI surface. Run
                               again — small models occasionally skip the tool call.
                             </p>
+                          ) : null}
+                          {a2uiRejections.length > 0 ? (
+                            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                              <div className="text-xs font-semibold text-amber-800">
+                                Catalog enforcement — rejected by your component vocabulary
+                              </div>
+                              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-amber-700">
+                                {a2uiRejections.map((p, i) => (
+                                  <li key={i}>{p}</li>
+                                ))}
+                              </ul>
+                            </div>
                           ) : null}
                         </>
                       ) : (

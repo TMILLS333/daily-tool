@@ -223,7 +223,10 @@ The application context gives you, on every run:
   outrank your own taste; if a rule conflicts with the request, the rule wins
   and you say so in your why-account.
 - "Component catalog" — the components you may use, with their props. Use ONLY
-  these components. Do not use a component that is not listed.
+  these components. Do not use a component that is not listed. The catalog is a
+  strict allow-list: any component not in it (including ones the designer has
+  turned off) is rejected by the renderer and shown to the user as rejected, so
+  it will not appear. Staying within the catalog is the only way your work renders.
 - "Audience and goal" — optional. If present, let it shape tone, ordering, and
   emphasis. It NEVER licenses inventing facts.
 
