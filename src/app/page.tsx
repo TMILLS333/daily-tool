@@ -54,6 +54,8 @@ if (typeof window !== "undefined") {
   window.fetch = window.fetch.bind(window);
 }
 
+const A2UI_THEME = { colors: { primary: "#0f6b75" } };
+
 const PATTERNS = ["static", "declarative", "open-ended"] as const;
 type Pattern = (typeof PATTERNS)[number];
 type AuthoringTab = "data" | "rules" | "catalog" | "style";
@@ -127,7 +129,7 @@ type RunState =
   | { kind: "rate-limited" }
   | { kind: "error"; message: string };
 
-function DailyTool() {
+function DailyToolInner() {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent();
 
@@ -241,7 +243,6 @@ function DailyTool() {
       ),
     [enabled]
   );
-
   // --- application context: what the agent knows on every run -------------
   const catalogText = useMemo(
     () => catalogPromptText(enabledNames),
@@ -756,7 +757,6 @@ function DailyTool() {
                           <DeclarativeA2UILive
                             request={a2uiRequest}
                             runNonce={a2uiRunNonce}
-                            enabledNames={enabledNames}
                             onReply={handleA2UIReply}
                             onStatus={handleA2UIStatus}
                             onSurface={setA2uiSurfacePresent}
@@ -863,8 +863,8 @@ function DailyTool() {
 
 export default function Home() {
   return (
-    <CopilotKitProvider runtimeUrl="/api/copilotkit" showDevConsole={false}>
-      <DailyTool />
+    <CopilotKitProvider runtimeUrl="/api/copilotkit" showDevConsole={false} a2ui={{ theme: A2UI_THEME }}>
+      <DailyToolInner />
     </CopilotKitProvider>
   );
 }
