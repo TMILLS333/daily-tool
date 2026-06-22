@@ -1,5 +1,7 @@
 "use client";
 
+import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
+
 /**
  * Rules tab — the design-rules file, in plain English.
  * No syntax. Write rules the way you'd brief a junior designer.
@@ -14,6 +16,9 @@ export function RulesTab({
 }) {
   return (
     <div className="flex h-full flex-col gap-2">
+      <div className="flex justify-end">
+        <HonestyChip variant="soft">Soft · instructed</HonestyChip>
+      </div>
       <p className="text-sm text-neutral-500">
         Your design system, expressed as policy: what components appear when,
         and what the agent must never do. Plain English — every rule you write
@@ -25,6 +30,11 @@ export function RulesTab({
         onChange={(e) => onChange(e.target.value)}
         placeholder="# My design rules…"
         spellCheck={false}
+      />
+      <TeachingCard
+        name="Rules"
+        mechanism="Your rules are injected into the agent's prompt as context. The agent is asked to follow them and reports that it did, but nothing in code guarantees it, unlike the Catalog, whose limits are enforced at render."
+        purpose="Steer judgment and priorities in plain language. Strong influence, not a hard gate."
       />
     </div>
   );

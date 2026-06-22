@@ -1,6 +1,7 @@
 "use client";
 
 import { CATALOG, CATALOG_SAMPLES } from "@/lib/catalog";
+import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 
 /**
  * Catalog tab: one of the three creativity levers. Toggle which components the
@@ -25,6 +26,9 @@ export function CatalogTab({
 }) {
   return (
     <div className="flex h-full flex-col gap-2">
+      <div className="flex justify-end">
+        <HonestyChip variant="hard">Hard · enforced</HonestyChip>
+      </div>
       <p className="text-sm text-neutral-500">
         Lever 1 of 3: catalog breadth. This is your design system as an
         allow-list. Turn a component off and it disappears from every pattern
@@ -115,6 +119,11 @@ export function CatalogTab({
           );
         })}
       </div>
+      <TeachingCard
+        name="the Catalog"
+        mechanism="A typed component registry. Toggle one off and it leaves the agent's vocabulary, and the renderer hard-rejects anything not on the list. The description is the prose the agent reads, so editing it steers what gets built."
+        purpose="The catalog is your design space: it decides which components can ever appear, enforced in code, not merely requested."
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRef, type ChangeEvent } from "react";
 import { STARTER_DATASETS } from "@/lib/starter-data";
+import { TeachingCard } from "@/components/TeachingCard";
 
 /**
  * Data tab — paste anything, load a sample, or upload a file. Raw text,
@@ -119,6 +120,11 @@ export function DataTab({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste anything here…"
         spellCheck={false}
+      />
+      <TeachingCard
+        name="Data"
+        mechanism="Whatever you paste is one unstructured block, and it is the agent's only source of facts. The WHO fields (audience, role, goal) are optional and shape tone and emphasis only."
+        purpose="Give the agent ground truth to structure. The WHO context colours how it speaks, never what is true."
       />
     </div>
   );

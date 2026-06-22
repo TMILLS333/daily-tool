@@ -1,6 +1,7 @@
 "use client";
 
 import { DTBadge, DTButton, DTCard } from "@/components/catalog-primitives";
+import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 
 export type StyleTokens = {
   brand: string;
@@ -81,6 +82,9 @@ export function StyleTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
+      <div className="flex justify-end">
+        <HonestyChip variant="invisible">AGENT-INVISIBLE</HonestyChip>
+      </div>
       <p className="text-sm text-neutral-500">
         Lever 2 of 3: visual style. Your design tokens as a form. Pick a preset
         or tune each token; the sample updates live, and so does every component
@@ -135,6 +139,11 @@ export function StyleTab({
           </div>
         </div>
       </div>
+      <TeachingCard
+        name="Style"
+        mechanism="The agent never sees your tokens. It reasons in roles (accent: brand, tone: success), never pixel values; the role-to-value join happens in code at the render boundary."
+        purpose="These controls are the runtime face of a design system. The real interface work, the tokens and their bindings, lives upstream in code, not in this panel."
+      />
     </div>
   );
 }
