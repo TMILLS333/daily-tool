@@ -44,6 +44,7 @@ import {
   type WhyAccount,
 } from "@/lib/catalog";
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
+import { buildCatalog } from "@/lib/a2ui-spike-catalog";
 
 // Workaround for an upstream bug: @ag-ui/client stores the global `fetch`
 // on its agent instance and calls it as a method (`this.fetch(...)`), which
@@ -129,7 +130,13 @@ type RunState =
   | { kind: "rate-limited" }
   | { kind: "error"; message: string };
 
-function DailyToolInner() {
+type DailyToolInnerProps = {
+  enabled: Record<string, boolean>;
+  setEnabled: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
+  enabledNames: Set<string>;
+};
+
+function DailyToolInner({ enabled, setEnabled, enabledNames }: DailyToolInnerProps) {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent();
 
@@ -166,9 +173,8 @@ function DailyToolInner() {
   > | null>(null);
 
   // --- the three levers (Pass 3a) -----------------------------------------
-  const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CATALOG.map((c) => [c.name, c.enabled]))
-  );
+  // `enabled` / `setEnabled` / `enabledNames` are lifted to <Home> (above the
+  // provider) so the A2UI catalog can be built from them; they arrive as props.
   const [tokens, setTokens] = useState<StyleTokens>(DEFAULT_TOKENS);
 
   // --- persistence (survives reload) --------------------------------------
@@ -182,17 +188,6 @@ function DailyToolInner() {
       if (r !== null) setRules(r);
       if (q !== null) setRequest(q);
 
-      const cat = localStorage.getItem(LS.catalog);
-      if (cat) {
-        try {
-          const parsed = JSON.parse(cat);
-          if (parsed && typeof parsed === "object") {
-            setEnabled((prev) => ({ ...prev, ...parsed }));
-          }
-        } catch {
-          /* ignore malformed */
-        }
-      }
       const st = localStorage.getItem(LS.style);
       if (st) {
         try {
@@ -226,23 +221,13 @@ function DailyToolInner() {
       localStorage.setItem(LS.data, data);
       localStorage.setItem(LS.rules, rules);
       localStorage.setItem(LS.request, request);
-      localStorage.setItem(LS.catalog, JSON.stringify(enabled));
       localStorage.setItem(LS.style, JSON.stringify(tokens));
       localStorage.setItem(LS.context, JSON.stringify(context));
     } catch {
       /* non-fatal */
     }
-  }, [hydrated, data, rules, request, enabled, tokens, context]);
+  }, [hydrated, data, rules, request, tokens, context]);
 
-  const enabledNames = useMemo(
-    () =>
-      new Set(
-        Object.entries(enabled)
-          .filter(([, on]) => on)
-          .map(([name]) => name)
-      ),
-    [enabled]
-  );
   // --- application context: what the agent knows on every run -------------
   const catalogText = useMemo(
     () => catalogPromptText(enabledNames),
@@ -862,9 +847,59 @@ function DailyToolInner() {
 }
 
 export default function Home() {
+  // Catalog state lives here, ABOVE the provider, so the A2UI catalog can be
+  // built from it and handed to the provider's `a2ui` prop. The governed catalog
+  // is what gives the real-A2UI render its DT primitives + enable/disable
+  // governance. `enabled`/`setEnabled`/`enabledNames` flow down to the app.
+  const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(CATALOG.map((c) => [c.name, c.enabled]))
+  );
+  const [catalogHydrated, setCatalogHydrated] = useState(false);
+  useEffect(() => {
+    try {
+      const cat = localStorage.getItem(LS.catalog);
+      if (cat) {
+        const parsed = JSON.parse(cat);
+        if (parsed && typeof parsed === "object") {
+          setEnabled((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {
+      /* ignore malformed / private mode */
+    }
+    setCatalogHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!catalogHydrated) return;
+    try {
+      localStorage.setItem(LS.catalog, JSON.stringify(enabled));
+    } catch {
+      /* non-fatal */
+    }
+  }, [catalogHydrated, enabled]);
+
+  const enabledNames = useMemo(
+    () =>
+      new Set(
+        Object.entries(enabled)
+          .filter(([, on]) => on)
+          .map(([name]) => name)
+      ),
+    [enabled]
+  );
+  const a2uiCatalog = useMemo(() => buildCatalog(enabledNames), [enabledNames]);
+
   return (
-    <CopilotKitProvider runtimeUrl="/api/copilotkit" showDevConsole={false} a2ui={{ theme: A2UI_THEME }}>
-      <DailyToolInner />
+    <CopilotKitProvider
+      runtimeUrl="/api/copilotkit"
+      showDevConsole={false}
+      a2ui={{ theme: A2UI_THEME, catalog: a2uiCatalog }}
+    >
+      <DailyToolInner
+        enabled={enabled}
+        setEnabled={setEnabled}
+        enabledNames={enabledNames}
+      />
     </CopilotKitProvider>
   );
 }
