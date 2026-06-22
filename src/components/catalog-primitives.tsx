@@ -133,7 +133,7 @@ export function DTStack({
   );
 }
 
-// Pie slice colors, token-driven so the chart re-themes with the Style tab.
+// Pie slice colors, token-driven so the chart re-themes with the Theme tab.
 const PIE_PALETTE = [
   "var(--dt-brand)",
   "var(--dt-tone-success-fg)",

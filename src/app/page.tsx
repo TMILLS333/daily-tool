@@ -80,7 +80,7 @@ const PRIMARY_NAV: NavItem[] = [
   { key: "data", name: "Data", tech: "source text", glyph: "▦" },
   { key: "rules", name: "Rules", tech: "constraints", glyph: "☰" },
   { key: "catalog", name: "Catalog", tech: "component registry", glyph: "▤" },
-  { key: "style", name: "Style", tech: "design tokens", glyph: "◑" },
+  { key: "style", name: "Theme", tech: "design tokens", glyph: "◑" },
 ];
 const SECONDARY_NAV: NavItem[] = [
   { key: "preview", name: "Preview", tech: "run + reveal", glyph: "▷" },
@@ -707,7 +707,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     <div>
                       <div className="mb-2 flex items-baseline justify-between">
                         <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-                          Style set
+                          Theme set
                         </span>
                         <span className="text-xs text-[var(--muted)]">
                           {activeSet ?? "Custom"}

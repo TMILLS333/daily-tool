@@ -31,8 +31,9 @@ export function CatalogTab({
       </div>
       <p className="text-sm text-neutral-500">
         Lever 1 of 3: catalog breadth. This is your design system as an
-        allow-list. Turn a component off and it disappears from every pattern
-        on the next run — the agent literally cannot reach for it.
+        allow-list. On Controlled and Declarative, turn a component off and the
+        agent can no longer reach for it on the next run. Open-ended has no
+        catalog, by design: that is what HIGH freedom means.
       </p>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {CATALOG.map((entry) => {
@@ -122,7 +123,7 @@ export function CatalogTab({
       <TeachingCard
         name="the Catalog"
         mechanism="A typed component registry. Toggle one off and it leaves the agent's vocabulary, and the renderer hard-rejects anything not on the list. The description is the prose the agent reads, so editing it steers what gets built."
-        purpose="The catalog is your design space: it decides which components can ever appear, enforced in code, not merely requested."
+        purpose="The catalog is your design space: on Controlled and Declarative it decides which components can appear, enforced in code, not merely requested. Open-ended lifts the catalog on purpose, the freedom-dial trade-off made real."
       />
     </div>
   );

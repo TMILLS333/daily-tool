@@ -23,9 +23,9 @@ export const DEFAULT_TOKENS: StyleTokens = {
 };
 
 /**
- * Style sets — named bundles of the --dt-* tokens. A designer picks one and
+ * Theme sets — named bundles of the --dt-* tokens. A designer picks one and
  * every rendered block re-skins (Studio Slice 2). The same sets power both the
- * Style authoring tab and the surfaced style-set lever in the Preview rail.
+ * Theme authoring tab and the surfaced theme-set lever in the Preview rail.
  * Editorial equals the globals.css :root default (the reset baseline). The
  * sets vary the STYLISTIC axes (brand, border, shape, density) only; semantic
  * tone colors stay stable on purpose.
@@ -44,7 +44,7 @@ export const STYLE_SETS: { name: string; tokens: StyleTokens }[] = [
 
 /**
  * Which named set the current tokens match, or null when the designer has
- * fine-tuned away from any set ("custom"). Shared by the Style tab and the
+ * fine-tuned away from any set ("custom"). Shared by the Theme tab and the
  * Preview-rail lever so the active-set indication stays honest.
  */
 export function activeStyleSetName(tokens: StyleTokens): string | null {
@@ -64,7 +64,7 @@ function px(value: string) {
 }
 
 /**
- * Style tab — one of the three creativity levers. The design tokens as a
+ * Theme tab — one of the three creativity levers. The design tokens as a
  * visual form, not raw CSS. Presets set the whole group; advanced controls
  * tune individual tokens. Every catalog primitive reads these tokens, so the
  * sample below (and the agent's renders) re-theme live as you edit. The
@@ -86,14 +86,15 @@ export function StyleTab({
         <HonestyChip variant="invisible">AGENT-INVISIBLE</HonestyChip>
       </div>
       <p className="text-sm text-neutral-500">
-        Lever 2 of 3: visual style. Your design tokens as a form. Pick a preset
-        or tune each token; the sample updates live, and so does every component
-        the agent renders.
+        Lever 2 of 3: visual theme. Your design tokens as a form. Pick a preset
+        or tune each token; the live sample and every catalog component the agent
+        renders re-skin together, without re-running the agent. Open-ended output
+        lives in its own sandbox, so it keeps its own styling.
       </p>
 
       <div>
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-xs font-medium text-neutral-700">Style sets</span>
+          <span className="text-xs font-medium text-neutral-700">Theme sets</span>
           <span className="text-xs text-neutral-400">
             {activeSet ?? "Custom"}
           </span>
@@ -140,9 +141,9 @@ export function StyleTab({
         </div>
       </div>
       <TeachingCard
-        name="Style"
-        mechanism="The agent never sees your tokens. It reasons in roles (accent: brand, tone: success), never pixel values; the role-to-value join happens in code at the render boundary."
-        purpose="These controls are the runtime face of a design system. The real interface work, the tokens and their bindings, lives upstream in code, not in this panel."
+        name="Theme"
+        mechanism="The agent asks for a role, “the brand accent,” never a color. What each role looks like is yours: set here as tokens and joined to the role in code at the render boundary. The agent can't see these values or override them, so your visual rules hold on every output. Change a token and everything on screen re-skins with no re-run. Styling was never the agent's decision to make."
+        purpose="Theme is a constraint, not a coat of paint: the agent owns meaning, you own appearance. These controls are the runtime face of a design system whose real work, the tokens and their bindings, lives in code, not this panel. CopilotKit names this same layer `theme`."
       />
     </div>
   );
