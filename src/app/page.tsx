@@ -778,15 +778,37 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 <section>
                   <div className={railLabel}>Output</div>
                   {pattern === "declarative" && (
-                    <label className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]">
-                      <input
-                        type="checkbox"
-                        checked={realA2UI}
-                        onChange={(e) => setRealA2UI(e.target.checked)}
-                      />
-                      Render with real A2UI{" "}
-                      <span className="text-[var(--faint)]">(experimental)</span>
-                    </label>
+                    <div className="mb-2 flex items-center gap-2 text-xs">
+                      <span className="text-[var(--faint)]">Render path</span>
+                      <div className="inline-flex overflow-hidden rounded-[var(--dt-radius)] border border-[var(--line)]">
+                        {(
+                          [
+                            ["simplified", "Simplified"],
+                            ["real", "Real A2UI"],
+                          ] as const
+                        ).map(([key, labelText]) => {
+                          const on = (key === "real") === realA2UI;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => setRealA2UI(key === "real")}
+                              className={`px-2.5 py-1 transition-colors ${
+                                on
+                                  ? "bg-[var(--ink)] font-medium text-[var(--surface)]"
+                                  : "text-[var(--muted)] hover:bg-[var(--line)]"
+                              }`}
+                            >
+                              {labelText}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {realA2UI && (
+                        <span className="text-[var(--faint)]">(experimental)</span>
+                      )}
+                    </div>
                   )}
                   <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
                     {pattern === "static" && (
@@ -865,6 +887,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   why={why}
                   componentsAllowed={allowed}
                   freedom={PATTERN_CARDS[pattern].freedom}
+                  pattern={pattern}
+                  realPath={a2uiActive}
                 />
 
                 <TeachingCard
