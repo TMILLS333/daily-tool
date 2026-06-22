@@ -206,16 +206,23 @@ const renderers = {
 } satisfies CatalogRenderers<typeof definitions>;
 
 const CATALOG_OPTIONS = {
-  includeBasicCatalog: true,
-  // FIX (2026-06-18, verified on a prod run): the agent's emitted surface
-  // references the A2UI basic catalog by its URL, but createCatalog defaults this
-  // catalog's id to "copilotkit://custom-catalog", so the renderer threw
-  // "Catalog not found: .../basic_catalog.json". Registering under the basic URL
-  // aligns the id the agent references with the one we register, and the surface
-  // paints (Heading + 3 Cards + severity Badges, DT primitives, zero console
-  // errors). The root cause: the runtime schema is hand-written plain data
-  // (a2ui-renderer is client-only, can't run extractSchema server-side), so the
-  // agent falls back to the basic catalog.
+  // Pass E (2026-06-22): DROPPED to false. This is a CLIENT-side render option
+  // (it merges CopilotKit's 18 generic basic components into the renderable map);
+  // it does NOT change what the agent emits. A keyed-prod batch (12/12) showed
+  // the agent only ever uses our 11 DT names and emits flat `children` arrays —
+  // the basic catalog was an unused safety net, off-brand if it ever fired. With
+  // false we register ONLY the 11 DT components: the curated designer vocabulary,
+  // which is the teaching thesis. The agent's vocabulary is governed server-side
+  // by route.ts A2UI_SCHEMA regardless.
+  includeBasicCatalog: false,
+  // KEEP this on the basic-catalog URL. The a2ui middleware HARDCODES this id in
+  // the surface the agent emits ("the catalog id is set by the host"); there is
+  // no runtime option to change it, and every emitted createSurface carries it
+  // (verified 12/12). createCatalog registers OUR catalog under whatever id we
+  // pass here, so this MUST match the emitted id or the renderer throws
+  // "Catalog not found". Do NOT re-point this to a custom id — that breaks
+  // rendering even though it reads as "more correct". (Pass E corrected the
+  // earlier note that said to re-point it.)
   catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json",
 } as const;
 

@@ -119,6 +119,19 @@ export function CatalogTab({
             </div>
           );
         })}
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Coming soon: define a new component and add it to your catalog"
+          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--line)] bg-neutral-50 p-3 text-sm text-neutral-400"
+        >
+          <span aria-hidden className="text-base leading-none">+</span>
+          <span>Add component</span>
+          <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-neutral-500">
+            Coming soon
+          </span>
+        </button>
       </div>
       <TeachingCard
         name="the Catalog"
