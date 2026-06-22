@@ -1,6 +1,6 @@
 "use client";
 
-import { parseFencedBlock } from "@/lib/catalog";
+import { parseFencedBlockMeta } from "@/lib/catalog";
 
 /**
  * Open-Ended pattern — the agent generates the surface itself.
@@ -17,8 +17,8 @@ export function OpenEndedPattern({ agentText }: { agentText: string | null }) {
     );
   }
 
-  const html = parseFencedBlock(agentText, "html");
-  if (!html) {
+  const parsed = parseFencedBlockMeta(agentText, "html");
+  if (!parsed || !parsed.body) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
         <div className="font-semibold text-amber-800">No HTML found</div>
@@ -28,6 +28,8 @@ export function OpenEndedPattern({ agentText }: { agentText: string | null }) {
       </div>
     );
   }
+
+  const { body: html, truncated } = parsed;
 
   return (
     <div className="flex flex-col gap-2">
@@ -40,6 +42,15 @@ export function OpenEndedPattern({ agentText }: { agentText: string | null }) {
         title="Open-ended render"
         className="h-[420px] w-full rounded-lg border border-neutral-200 bg-white"
       />
+      {truncated ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+          <div className="font-semibold text-amber-800">Cut off</div>
+          <div className="mt-0.5 text-amber-700">
+            This surface was cut off (the model hit its output limit). The partial
+            render is shown above. Run again for the full version.
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

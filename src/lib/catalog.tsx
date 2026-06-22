@@ -364,23 +364,36 @@ export function CatalogRenderer({
 // ---------------------------------------------------------------------------
 
 /**
- * Extract the first fenced block of a given language from model text.
+ * Extract a fenced block AND report whether it was truncated.
  *
- * Resilient to truncation: if the output was cut off mid-block (an opening
- * ```lang fence with no closing fence, e.g. when the token budget is hit),
- * fall back to capturing from the opening fence to the end of the text and
- * return that partial body instead of null. A well-formed (closed) block always
- * wins, so the normal path is unchanged; the fallback only fires when no closed
- * block of this language exists.
+ * A well-formed (closed) ```lang ... ``` block wins and reports
+ * `truncated: false`. If only an opening fence exists (the closing fence was
+ * lost to the token budget mid-block), fall back to capturing from the opening
+ * fence to end-of-text and report `truncated: true`. Returns null only when no
+ * opening fence of this language is present at all. This is the single source
+ * of truth; `parseFencedBlock` delegates to it for callers that only need the
+ * body, while callers that must surface truncation (e.g. the open-ended render)
+ * read the flag.
  */
-export function parseFencedBlock(text: string, lang: string): string | null {
+export function parseFencedBlockMeta(
+  text: string,
+  lang: string
+): { body: string; truncated: boolean } | null {
   const closed = new RegExp("```" + lang + "\\s*\\n([\\s\\S]*?)```", "i");
   const m = text.match(closed);
-  if (m) return m[1].trim();
-  // Truncated: opening fence present, closing fence lost to the token budget.
+  if (m) return { body: m[1].trim(), truncated: false };
   const open = new RegExp("```" + lang + "\\s*\\n([\\s\\S]*)$", "i");
   const partial = text.match(open);
-  return partial ? partial[1].trim() : null;
+  return partial ? { body: partial[1].trim(), truncated: true } : null;
+}
+
+/**
+ * Extract the first fenced block of a given language from model text.
+ * Truncation-resilient (see {@link parseFencedBlockMeta}); returns just the
+ * body, or null when absent. Behavior is unchanged from before the meta split.
+ */
+export function parseFencedBlock(text: string, lang: string): string | null {
+  return parseFencedBlockMeta(text, lang)?.body ?? null;
 }
 
 // Note: componentsAllowed is intentionally NOT in this schema. The app owns
