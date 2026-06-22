@@ -97,6 +97,7 @@ const LS = {
   rules: "daily-tool:v1:rules",
   request: "daily-tool:v1:request",
   catalog: "daily-tool:v1:catalog",
+  catalogDescriptions: "daily-tool:v1:catalog-descriptions",
   style: "daily-tool:v1:style",
   context: "daily-tool:v1:context",
 };
@@ -134,9 +135,11 @@ type DailyToolInnerProps = {
   enabled: Record<string, boolean>;
   setEnabled: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
   enabledNames: Set<string>;
+  descriptions: Record<string, string>;
+  setDescriptions: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
 };
 
-function DailyToolInner({ enabled, setEnabled, enabledNames }: DailyToolInnerProps) {
+function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDescriptions }: DailyToolInnerProps) {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent();
 
@@ -230,8 +233,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames }: DailyToolInnerPro
 
   // --- application context: what the agent knows on every run -------------
   const catalogText = useMemo(
-    () => catalogPromptText(enabledNames),
-    [enabledNames]
+    () => catalogPromptText(enabledNames, descriptions),
+    [enabledNames, descriptions]
   );
   useAgentContext({ description: "Active pattern", value: pattern });
   useAgentContext({
@@ -585,6 +588,17 @@ function DailyToolInner({ enabled, setEnabled, enabledNames }: DailyToolInnerPro
                   onToggle={(name, next) =>
                     setEnabled((prev) => ({ ...prev, [name]: next }))
                   }
+                  descriptions={descriptions}
+                  onDescriptionChange={(name, value) =>
+                    setDescriptions((prev) => ({ ...prev, [name]: value }))
+                  }
+                  onDescriptionReset={(name) =>
+                    setDescriptions((prev) => {
+                      const next = { ...prev };
+                      delete next[name];
+                      return next;
+                    })
+                  }
                 />
               )}
               {tab === "style" && (
@@ -854,6 +868,7 @@ export default function Home() {
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CATALOG.map((c) => [c.name, c.enabled]))
   );
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [catalogHydrated, setCatalogHydrated] = useState(false);
   useEffect(() => {
     try {
@@ -862,6 +877,13 @@ export default function Home() {
         const parsed = JSON.parse(cat);
         if (parsed && typeof parsed === "object") {
           setEnabled((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+      const desc = localStorage.getItem(LS.catalogDescriptions);
+      if (desc) {
+        const parsedDesc = JSON.parse(desc);
+        if (parsedDesc && typeof parsedDesc === "object") {
+          setDescriptions(parsedDesc);
         }
       }
     } catch {
@@ -873,10 +895,11 @@ export default function Home() {
     if (!catalogHydrated) return;
     try {
       localStorage.setItem(LS.catalog, JSON.stringify(enabled));
+      localStorage.setItem(LS.catalogDescriptions, JSON.stringify(descriptions));
     } catch {
       /* non-fatal */
     }
-  }, [catalogHydrated, enabled]);
+  }, [catalogHydrated, enabled, descriptions]);
 
   const enabledNames = useMemo(
     () =>
@@ -899,6 +922,8 @@ export default function Home() {
         enabled={enabled}
         setEnabled={setEnabled}
         enabledNames={enabledNames}
+        descriptions={descriptions}
+        setDescriptions={setDescriptions}
       />
     </CopilotKitProvider>
   );

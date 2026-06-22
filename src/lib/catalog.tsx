@@ -242,10 +242,20 @@ function isEnabledName(name: string, enabledNames?: Set<string>): boolean {
   return enabledNames ? enabledNames.has(entry.name) : entry.enabled;
 }
 
-/** Model-facing one-line-per-component catalog description. */
-export const catalogPromptText = (enabledNames?: Set<string>) =>
+/** Model-facing one-line-per-component catalog description. A per-component
+    description override (the designer's edited text from the Catalog surface)
+    replaces the static one when present and non-empty; otherwise the static
+    default is used. */
+export const catalogPromptText = (
+  enabledNames?: Set<string>,
+  descriptions?: Record<string, string>
+) =>
   enabledCatalog(enabledNames)
-    .map((c) => `- ${c.name}: ${c.description}`)
+    .map((c) => {
+      const override = descriptions?.[c.name];
+      const text = override && override.trim() ? override : c.description;
+      return `- ${c.name}: ${text}`;
+    })
     .join("\n");
 
 /**

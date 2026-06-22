@@ -3,18 +3,25 @@
 import { CATALOG, CATALOG_SAMPLES } from "@/lib/catalog";
 
 /**
- * Catalog tab — one of the three creativity levers. Toggle which components
- * the agent may use. Each row is a switch plus a live sample, so widening or
- * narrowing the vocabulary is tactile. Toggling here flows reactively to the
- * Static tab's tools, the Declarative validator, the agent's catalog context,
- * and the why-panel's "components allowed" list.
+ * Catalog tab: one of the three creativity levers. Toggle which components the
+ * agent may use, and edit the description the agent reads for each. Each row is
+ * a switch plus an editable description plus a live sample, so widening or
+ * narrowing the vocabulary, and steering how the agent reads it, stays tactile.
+ * Toggling and editing flow reactively to the agent's catalog context on the
+ * next run.
  */
 export function CatalogTab({
   enabled,
   onToggle,
+  descriptions,
+  onDescriptionChange,
+  onDescriptionReset,
 }: {
   enabled: Record<string, boolean>;
   onToggle: (name: string, next: boolean) => void;
+  descriptions: Record<string, string>;
+  onDescriptionChange: (name: string, value: string) => void;
+  onDescriptionReset: (name: string) => void;
 }) {
   return (
     <div className="flex h-full flex-col gap-2">
@@ -28,12 +35,14 @@ export function CatalogTab({
           const on = enabled[entry.name] ?? false;
           const sample = CATALOG_SAMPLES[entry.name];
           const C = entry.Component;
+          const edited = descriptions[entry.name] !== undefined;
+          const descValue = edited ? descriptions[entry.name] : entry.description;
           return (
             <div
               key={entry.name}
               className="flex items-start justify-between gap-4 rounded-lg border border-[var(--line)] p-3"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">{entry.name}</span>
                   {entry.container ? (
@@ -47,7 +56,31 @@ export function CatalogTab({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 text-xs text-neutral-500">{entry.description}</p>
+                <div className="mt-1">
+                  <textarea
+                    value={descValue}
+                    onChange={(e) => onDescriptionChange(entry.name, e.target.value)}
+                    rows={2}
+                    aria-label={`${entry.name} description (the agent reads this)`}
+                    className="w-full resize-y rounded border border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs text-neutral-600 focus:border-[var(--dt-brand)] focus:outline-none"
+                  />
+                  <div className="mt-0.5 flex items-center gap-2 text-[10px] text-neutral-400">
+                    <span>the agent reads this</span>
+                    {edited ? (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span className="text-amber-700">edited</span>
+                        <button
+                          type="button"
+                          onClick={() => onDescriptionReset(entry.name)}
+                          className="text-neutral-500 underline-offset-2 hover:underline"
+                        >
+                          Reset to default
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
                 {sample ? (
                   <div className="mt-2">
                     {entry.container ? (
