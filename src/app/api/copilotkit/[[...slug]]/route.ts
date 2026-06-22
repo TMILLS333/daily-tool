@@ -204,7 +204,7 @@ const A2UI_SCHEMA = [
   { name: "Heading", description: "A section heading. Props: text (string), level (1, 2 or 3)." },
   { name: "Card", description: "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand')." },
   { name: "Badge", description: "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger')." },
-  { name: "Stack", description: "A layout container. Props: direction ('vertical' | 'horizontal'), childIds (array of child component IDs to place in order)." },
+  { name: "Stack", description: "A layout container. Props: direction ('vertical' | 'horizontal'), children (array of the IDs of the child components to place in order)." },
   { name: "List", description: "A short list of items. Props: title (string, optional), items (array of strings), ordered (boolean)." },
   { name: "Button", description: "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version." },
   { name: "PieChart", description: "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels)." },
@@ -238,7 +238,8 @@ fabricate statuses, dates, scores, or categories to make a component fit. If the
 data does not support a component's shape, pick a simpler one.
 
 Build the surface by calling the A2UI tool with components from the catalog. Use
-a Stack to arrange several pieces in order. Choose the components that fit the
+a Stack to arrange several pieces in order, listing the IDs of its child
+components in the Stack's "children" array. Choose the components that fit the
 shape of the information. Keep the result clear and concise.
 
 After building the surface, end your reply with a fenced \`\`\`why block containing

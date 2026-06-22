@@ -67,9 +67,14 @@ const definitions = {
   },
   Stack: {
     description:
-      "A layout container. Props: direction ('vertical' | 'horizontal'), childIds (array of child component IDs to place in order).",
+      "A layout container. Props: direction ('vertical' | 'horizontal'), children (array of the IDs of the child components to place in order). 'childIds' is accepted as an alias.",
     props: z.object({
       direction: z.enum(["vertical", "horizontal"]).optional(),
+      // A2UI's native ComponentCommon field. The agent emits child IDs here.
+      children: z
+        .array(z.union([z.string(), z.object({ id: z.string() }).passthrough()]))
+        .optional(),
+      // Back-compat alias (some runs emit this key instead).
       childIds: z.array(z.string()).optional(),
     }),
   },
@@ -147,13 +152,31 @@ const renderers = {
     <DTCard title={props.title} body={props.body} accent={props.accent} />
   ),
   Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} />,
-  Stack: ({ props, children }) => (
-    <DTStack direction={props.direction}>
-      {(props.childIds ?? []).map((id) => (
-        <Fragment key={id}>{children(id)}</Fragment>
-      ))}
-    </DTStack>
-  ),
+  Stack: ({ props, children }) => {
+    // A2UI references children by ID. The agent emits the ID list under the
+    // native `children` field (A2UI ComponentCommon) OR our `childIds` alias,
+    // non-deterministically; entries may be plain ID strings or { id } objects.
+    // Resolve from whichever is present and normalize to IDs, mirroring
+    // CopilotKit's renderChildList (a2ui-renderer ChildList.tsx). `children`
+    // (the second arg) is the buildChild resolver, distinct from props.children.
+    const list = props.children ?? props.childIds ?? [];
+    const ids = (Array.isArray(list) ? list : [])
+      .map((item) =>
+        typeof item === "string"
+          ? item
+          : item && typeof item === "object" && "id" in item
+            ? item.id
+            : null
+      )
+      .filter((id): id is string => Boolean(id));
+    return (
+      <DTStack direction={props.direction}>
+        {ids.map((id, i) => (
+          <Fragment key={`${id}-${i}`}>{children(id)}</Fragment>
+        ))}
+      </DTStack>
+    );
+  },
   List: ({ props }) => (
     <DTList title={props.title} items={props.items} ordered={props.ordered} />
   ),
