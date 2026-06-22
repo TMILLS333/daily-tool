@@ -21,11 +21,14 @@ export function ChatPanel({
   turns,
   onSend,
   disabled,
+  headerless = false,
 }: {
   turns: ChatTurn[];
   onSend: (text: string) => void;
   /** True while a run is in flight (from either driver). */
   disabled: boolean;
+  /** Omit the built-in "Chat" header (the nav parked-slot disclosure is the header). */
+  headerless?: boolean;
 }) {
   const [draft, setDraft] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
@@ -45,9 +48,11 @@ export function ChatPanel({
 
   return (
     <aside className="flex min-h-0 min-w-0 flex-col rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)]">
-      <div className="border-b border-[var(--line)] px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-        Chat
-      </div>
+      {!headerless && (
+        <div className="border-b border-[var(--line)] px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+          Chat
+        </div>
+      )}
 
       <div
         ref={logRef}

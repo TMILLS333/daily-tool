@@ -161,6 +161,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Setup collapses to a compact bar after a Run (freedom-first run flow);
   // editing re-expands it. Presentation-only; does not touch run logic.
   const [setupExpanded, setSetupExpanded] = useState(true);
+  // Parked chat lives in the nav, collapsed by default (Slice 3c), so the
+  // dashed handoff note stays the closing beat.
+  const [chatOpen, setChatOpen] = useState(false);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
   // Default OFF, never persisted: every load starts on the shipped simplified
@@ -556,6 +559,49 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         <div className="mx-1.5 my-3 h-px bg-[var(--line)]" />
 
         {SECONDARY_NAV.map(renderNavItem)}
+
+        {/* Parked chat — collapsible, below the surfaces and above the handoff
+            note, collapsed by default so the handoff note stays the closing beat. */}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setChatOpen((o) => !o)}
+            aria-expanded={chatOpen}
+            className="flex w-full items-center justify-between rounded-[9px] px-3 py-2 text-left transition-colors hover:bg-[rgba(255,253,248,0.6)]"
+          >
+            <span className="flex items-center gap-3">
+              <span
+                className="w-4 shrink-0 text-center text-[13px] text-[var(--faint)]"
+                aria-hidden
+              >
+                ✦
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-[13px] text-[var(--muted)]">Chat</span>
+                <span className="font-mono text-[8.5px] tracking-tight text-[var(--faint)]">
+                  drive the canvas
+                </span>
+              </span>
+            </span>
+            <span
+              className="shrink-0 text-[10px] text-[var(--faint)]"
+              aria-hidden
+            >
+              {chatOpen ? "▾" : "▸"}
+            </span>
+          </button>
+          {chatOpen && (
+            <div className="mt-2 h-[320px]">
+              <ChatPanel
+                turns={chatTurns}
+                onSend={chatSend}
+                disabled={runState.kind === "running"}
+                headerless
+              />
+            </div>
+          )}
+        </div>
+
         {/* Handoff preserved: name what the designer owns and what still needs
             engineering, so the tool never pretends "no code anywhere." */}
         <div className="mt-4 rounded-[9px] border border-dashed border-[var(--line)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)]">
@@ -609,15 +655,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             </div>
           )}
 
-          {/* Preview (the hero) — freedom-first run flow that collapses after a
-              Run, a focal Output module, an always-shown Operations module, and
-              the "How Preview works" teaching card (Slice 3a). Run logic is
-              unchanged; the two-state Why + render-path control are Slice 3b, and
-              the chat relocation is Slice 3c. */}
+          {/* Preview (the hero) — full-bleed freedom-first run flow + focal Output
+              + Operations module + composable two-state Why + "How Preview works"
+              card. Chat relocated to the nav's parked slot (Slice 3c); run logic
+              unchanged. */}
           {tab === "preview" && (
-            <div className="grid h-full min-h-0 grid-cols-1 gap-6 md:grid-cols-[1fr_280px]">
-              {/* Main flow: setup -> Output -> Operations -> Why -> teaching card */}
-              <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pr-1">
+            <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pr-1">
                 {/* Setup, freedom-first. Expanded for editing; a compact bar after Run. */}
                 {setupExpanded ? (
                   <div className="flex flex-col gap-5 rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-4">
@@ -912,15 +955,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   }
                 />
               </div>
-
-              {/* Chat driver: conversational path into the same canvas. Relocation
-                  to the nav-foot is Slice 3c. */}
-              <ChatPanel
-                turns={chatTurns}
-                onSend={chatSend}
-                disabled={runState.kind === "running"}
-              />
-            </div>
           )}
 
           {/* Design Notes — placeholder surface (the decision log lands later). */}
