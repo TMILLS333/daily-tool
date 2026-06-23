@@ -51,12 +51,13 @@ const BYO_DEFAULT_MODEL: Record<ByoProvider, string> = {
   google: "google/gemini-2.5-flash",
 };
 
-// Gateway default model (Tania funds this path via Unified Billing). The AI
-// Gateway /compat endpoint uses {provider}/{model} ids that can differ from
-// BuiltInAgent's: openai/gpt-4.1-mini, google-ai-studio/gemini-2.5-flash,
-// anthropic/claude-sonnet-4-5 (hyphens, not dots). Proven on a live gateway
-// call 2026-06-23. Override with CF_AIG_MODEL.
-const GATEWAY_DEFAULT_MODEL = "openai/gpt-4.1-mini";
+// Gateway default model (Tania funds this path via Unified Billing). Tania's
+// choice 2026-06-23: Claude Sonnet, for its stronger rule-following (the
+// workshop's whole teaching point). The /compat endpoint uses {provider}/{model}
+// ids with hyphens, not dots — verified live on this gateway:
+// anthropic/claude-sonnet-4-6, anthropic/claude-haiku-4-5 (cheaper),
+// openai/gpt-4.1-mini, google-ai-studio/gemini-2.5-flash. Override CF_AIG_MODEL.
+const GATEWAY_DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
 
 /** Trim and treat blank / whitespace-only as absent. */
 function present(value: string | undefined): string | undefined {
