@@ -4,6 +4,15 @@
   // it at a shareable URL. Full attendee walkthrough: ../CODESPACES.md
   "name": "Daily Tool",
 
+  // Non-secret gateway ids, injected into every Codespace so attendees only
+  // need to paste the ONE shared gateway token (CF_AIG_TOKEN) into .env. The
+  // token is handed out at the event and is never committed. Account id and
+  // gateway name are public identifiers, not credentials. See ../CODESPACES.md.
+  "containerEnv": {
+    "CF_ACCOUNT_ID": "29c15842e0b9cdef36442ac3318f5745",
+    "CF_AIG_GATEWAY_ID": "genui-workshop"
+  },
+
   // Node 20 toolchain, the version Next 16 targets. TypeScript image so tsc and
   // the editor work out of the box.
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",

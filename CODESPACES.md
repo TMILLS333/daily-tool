@@ -4,8 +4,9 @@
 
 This is the in-room path. You install nothing. A Codespace is a full computer
 that runs in your browser, boots the app, and gives you a live web address you
-can share. You need a free personal GitHub account (18+) and the free AI key
-from `.env.example`.
+can share. You need a free personal GitHub account (18+). The app runs on the shared
+workshop gateway, so the only thing you add is the one token your host gives you
+at the event (or your own AI key, if you'd rather).
 
 ## 1. Open the Codespace
 
@@ -17,29 +18,30 @@ dependencies install on their own. If the repo owner enabled prebuilds (see the
 last section), this takes well under a minute; the first time on a repo without
 prebuilds it can take a few minutes.
 
-## 2. Add your AI key
+## 2. Add the workshop token
 
-You bring ANY ONE key: Google (free, no card, the recommended default),
-Anthropic, or OpenAI. The app auto-detects which one you set.
+The app runs on a shared, funded Claude gateway, so you do not need your own AI
+key. Your host gives you ONE token at the event. The gateway ids are already set
+for you in the Codespace, so the token is all you add.
 
-1. In the file list on the left, open `.env.example` and read the steps at the
-   top. For the free option, grab a Google AI Studio key (personal Gmail, 18+,
-   no card); the file also lists where to get an Anthropic or OpenAI key.
-2. Right-click `.env.example` and choose **Copy**, then **Paste**. Rename the
-   copy to `.env`.
-3. Open `.env`, paste your key into the matching line (`GOOGLE_API_KEY=`,
-   `ANTHROPIC_API_KEY=`, or `OPENAI_API_KEY=`), and save.
+1. In the file list on the left, right-click `.env.example`, choose **Copy**,
+   then **Paste**, and rename the copy to `.env`.
+2. Open `.env`, paste the event token right after `CF_AIG_TOKEN=` (no spaces, no
+   quotes), and save.
 
-Your key stays on the server side of the app inside your own Codespace. It is
-never committed (the repo ignores `.env`) and never sent to the browser. If the
-host configured a shared key, you can skip this step and the app runs on that;
-paste your own key to use it instead, or clear it to return to the shared key.
+That's it. Your token stays on the server side of the app inside your own
+Codespace; it is never committed (the repo ignores `.env`) and never sent to the
+browser.
+
+**Prefer your own key?** Optional. Paste a Google (free), Anthropic, or OpenAI
+key into the matching commented line in `.env` instead, and it overrides the
+gateway (you pay that provider). Clear it again to return to the shared gateway.
 
 ## 3. Start the app (and restart after adding your key)
 
-When the Codespace opens, it starts the app for you. The app reads your key only
-at startup, so the copy that started before you added your key (step 2) will not
-see it yet. After you save your key, restart the app:
+When the Codespace opens, it starts the app for you. The app reads `.env` only
+at startup, so the copy that started before you added your token (step 2) will
+not see it yet. After you save, restart the app:
 
 1. In the terminal at the bottom, stop the running app (click the trash/stop
    icon on its task, or press Ctrl+C in that terminal).
@@ -52,11 +54,9 @@ npm run start
 Watch for the line that says the server is **Ready**. A small popup will offer to
 open the app; open it and go to any pattern tab, then press **Run**.
 
-A faster check that your key and the engine work, straight from the terminal:
-
-```
-node scripts/engine-proof.mjs
-```
+(A terminal self-check, `node scripts/engine-proof.mjs`, verifies a personal
+**Google** key and the tool-calling engine. It does not test the shared gateway,
+so on the token-only setup just press **Run** in the app instead.)
 
 ## 4. Make it live (your shareable URL)
 
@@ -81,11 +81,12 @@ Deploy-to-Cloudflare take-home in the [README](./README.md).
 
 ## If something's wrong
 
-- **No reply / error about a key** — your `.env` file is missing, the key was
-  not pasted, or you added the key but did not restart the app. Re-check step 2,
-  then restart (step 3).
-- **"Rate limit" message** — the free tier allows about 10 requests per minute.
-  Wait a few seconds and try again.
+- **No reply / error about a key** — your `.env` file is missing, the event
+  token (or your own key) was not pasted, or you added it but did not restart the
+  app. Re-check step 2, then restart (step 3).
+- **"Rate limit" message** — the shared gateway allows 350 requests/minute across
+  the whole room; if everyone runs at once you may briefly hit it, so wait a few
+  seconds and try again. (On your own free Google key it is about 10/min.)
 - **The app did not start** — run `npm run start` in the terminal (step 3).
 
 ---
