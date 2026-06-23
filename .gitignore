@@ -9,6 +9,7 @@
 .env
 .env.local
 .env*.local
+.env.bak*
 
 # cloudflare / opennext build artifacts and local secrets
 /.open-next/
