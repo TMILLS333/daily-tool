@@ -51,11 +51,12 @@ const BYO_DEFAULT_MODEL: Record<ByoProvider, string> = {
   google: "google/gemini-2.5-flash",
 };
 
-// Gateway default: Tania funds this path, so default to a higher-quality model.
-// NOTE: the AI Gateway /compat endpoint uses provider prefixes that can differ
-// from BuiltInAgent's (e.g. "google-ai-studio/..."); "anthropic/..." matches.
-// Override with CF_AIG_MODEL.
-const GATEWAY_DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
+// Gateway default model (Tania funds this path via Unified Billing). The AI
+// Gateway /compat endpoint uses {provider}/{model} ids that can differ from
+// BuiltInAgent's: openai/gpt-4.1-mini, google-ai-studio/gemini-2.5-flash,
+// anthropic/claude-sonnet-4-5 (hyphens, not dots). Proven on a live gateway
+// call 2026-06-23. Override with CF_AIG_MODEL.
+const GATEWAY_DEFAULT_MODEL = "openai/gpt-4.1-mini";
 
 /** Trim and treat blank / whitespace-only as absent. */
 function present(value: string | undefined): string | undefined {
@@ -90,9 +91,12 @@ export function buildGatewayConfig(env: NodeJS.ProcessEnv = process.env): {
   return {
     baseURL: `https://gateway.ai.cloudflare.com/v1/${account}/${gateway}/compat`,
     headers: { "cf-aig-authorization": `Bearer ${token}` },
-    // Unified Billing is keyless; the gateway ignores this Authorization value
-    // in that mode. For BYOK pass-through, set CF_AIG_PROVIDER_KEY.
-    apiKey: present(env.CF_AIG_PROVIDER_KEY) ?? "cf-ai-gateway",
+    // Auth: send the AI Gateway token as BOTH the cf-aig-authorization header
+    // (gateway access) and the OpenAI Bearer (Authorization). A bogus/empty
+    // Authorization makes the gateway attempt provider pass-through and 401
+    // (proven 2026-06-23), so we reuse the real token. For BYOK pass-through
+    // with a stored provider key, set CF_AIG_PROVIDER_KEY instead.
+    apiKey: present(env.CF_AIG_PROVIDER_KEY) ?? token,
     modelId: present(env.CF_AIG_MODEL) ?? GATEWAY_DEFAULT_MODEL,
   };
 }
