@@ -33,9 +33,12 @@ Keep reading.
 
 ## Run it (no engineering background needed)
 
-1. **Get your free AI key** (about 3 minutes)
-   Open the file `.env.example` and follow the steps at the top. You'll end
-   up with a file named `.env` containing your key.
+1. **Get an AI key** (about 3 minutes)
+   Open the file `.env.example` and follow the steps at the top. Google's free
+   key (no card) is the easy default; an Anthropic or OpenAI key works too, and
+   the app auto-detects whichever one you set. You'll end up with a file named
+   `.env` containing your key. (If a workshop host gave you a shared key, it's
+   already set and you can skip this.)
 
 2. **Install** (first time only) — in the terminal:
 
@@ -63,7 +66,7 @@ any time:
 - **Your fork of this repo** on GitHub, yours to keep.
 - **Your Codespace**, reopened from the repo's **Code → Codespaces** menu. It
   boots back to the same working app.
-- **Your free Gemini key**, the same one you used in the room.
+- **Your AI key** (Google's free one, or whichever provider you used), the same one you used in the room.
 
 To run it again later, reopen your Codespace (or clone the repo and run it
 locally), add your key, and press **Run**. The full walkthrough is in

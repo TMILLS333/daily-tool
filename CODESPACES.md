@@ -19,17 +19,21 @@ prebuilds it can take a few minutes.
 
 ## 2. Add your AI key
 
-This is the same free key you would use to run the app on your own machine, and
-it lives in the same file.
+You bring ANY ONE key: Google (free, no card, the recommended default),
+Anthropic, or OpenAI. The app auto-detects which one you set.
 
 1. In the file list on the left, open `.env.example` and read the steps at the
-   top to get your free Google AI Studio key (personal Gmail, 18+, no card).
+   top. For the free option, grab a Google AI Studio key (personal Gmail, 18+,
+   no card); the file also lists where to get an Anthropic or OpenAI key.
 2. Right-click `.env.example` and choose **Copy**, then **Paste**. Rename the
    copy to `.env`.
-3. Open `.env`, paste your key after `GOOGLE_API_KEY=`, and save.
+3. Open `.env`, paste your key into the matching line (`GOOGLE_API_KEY=`,
+   `ANTHROPIC_API_KEY=`, or `OPENAI_API_KEY=`), and save.
 
 Your key stays on the server side of the app inside your own Codespace. It is
-never committed (the repo ignores `.env`) and never sent to the browser.
+never committed (the repo ignores `.env`) and never sent to the browser. If the
+host configured a shared key, you can skip this step and the app runs on that;
+paste your own key to use it instead, or clear it to return to the shared key.
 
 ## 3. Start the app (and restart after adding your key)
 

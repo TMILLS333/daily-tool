@@ -22,30 +22,15 @@ import {
 } from "@copilotkit/runtime/v2";
 import { handle } from "hono/vercel";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { resolveModel } from "@/lib/model-resolver";
 
-// Accept the key under either name: our .env uses the short GOOGLE_API_KEY,
-// while the underlying Google SDK looks for GOOGLE_GENERATIVE_AI_API_KEY.
-if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && process.env.GOOGLE_API_KEY) {
-  process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GOOGLE_API_KEY;
-}
-
-// Workshop default: Gemini (google/gemini-2.5-flash) on each attendee's own
-// Google AI Studio key. Matches the Codespaces onboarding, which sets only
-// GOOGLE_API_KEY, and follows design rules more sharply than scout. Same model
-// the deployed wrangler.jsonc var uses, so in-room and deployed paths agree.
-//
-// Opt-in override (set MODEL in .env): Cloudflare Workers AI scout, for the
-// Workers-AI path (needs CF_ACCOUNT_ID + CF_API_TOKEN):
-//   MODEL=@cf/meta/llama-4-scout-17b-16e-instruct
-// Or the sharper-rules Gemini variant:
-//   MODEL=google/gemini-2.5-flash-lite
-//
-// Models starting with "@cf/" route to Cloudflare Workers AI through the
-// account's OpenAI-compatible endpoint. The why-panel's "components allowed"
-// is sourced from the app (not the model), so a duller model can't misreport
-// its own catalog.
-const MODEL_ID =
-  process.env.MODEL || "google/gemini-2.5-flash";
+// Resolve which model/provider this run uses from the environment:
+//   - a personal BYO key (anthropic > openai > google) wins, then the funded
+//     Cloudflare AI Gateway, then a Gemini fallback with a clear warning;
+//   - MODEL still pins a specific model or selects "@cf/..." Workers AI.
+// All of that policy (including the GOOGLE_API_KEY shim) lives in the resolver.
+const resolved = resolveModel();
+console.log(`[daily-tool] model source: ${resolved.label}`);
 
 function resolveWorkersAI(modelId: string) {
   // Workers AI quirk (observed 2026-06-12): the chunk serializer emits
@@ -101,7 +86,12 @@ function resolveWorkersAI(modelId: string) {
   }).chatModel(modelId);
 }
 
-const MODEL = MODEL_ID.startsWith("@cf/") ? resolveWorkersAI(MODEL_ID) : MODEL_ID;
+// Workers AI needs the SSE content-coercion fix (resolveWorkersAI below); the
+// resolver flags that case via source "workers-ai" and returns the "@cf/..." id.
+const MODEL =
+  resolved.source === "workers-ai"
+    ? resolveWorkersAI(resolved.model as string)
+    : resolved.model;
 
 const PROMPT = `You are the rendering engine of the Daily Tool, a small app
 where a designer's pile of text becomes a working interface, within design
