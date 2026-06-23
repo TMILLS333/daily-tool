@@ -30,13 +30,14 @@ type RunStatus = "running" | "complete" | "error";
 interface RunnerProps {
   request: string;
   runNonce: number;
+  stopNonce: number;
   onReply: (reply: string) => void;
   onStatus: (status: RunStatus, message?: string) => void;
   onSurface: (present: boolean) => void;
   onOps: (ops: ReadonlyArray<Record<string, unknown>>) => void;
 }
 
-function Runner({ request, runNonce, onReply, onStatus, onSurface, onOps }: RunnerProps) {
+function Runner({ request, runNonce, stopNonce, onReply, onStatus, onSurface, onOps }: RunnerProps) {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent({
     agentId: "declarativeA2UI",
@@ -116,6 +117,19 @@ function Runner({ request, runNonce, onReply, onStatus, onSurface, onOps }: Runn
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runNonce]);
 
+  // Abort the island's run when the parent bumps stopNonce (Stop button). The
+  // island owns its own agent, so the page-level abort cannot reach it.
+  const stopRef = useRef(0);
+  useEffect(() => {
+    if (!stopNonce || stopNonce === stopRef.current) return;
+    stopRef.current = stopNonce;
+    try {
+      agent?.abortRun();
+    } catch {
+      /* no active run to abort */
+    }
+  }, [stopNonce, agent]);
+
   if (!a2uiMessage) return null;
 
   return (
@@ -132,6 +146,8 @@ export interface DeclarativeA2UILiveProps {
   request: string;
   /** Bump to fire a run. */
   runNonce: number;
+  /** Bump to abort the in-flight run (Stop button). */
+  stopNonce: number;
   onReply: (reply: string) => void;
   onStatus: (status: RunStatus, message?: string) => void;
   onSurface: (present: boolean) => void;

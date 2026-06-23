@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from "react";
@@ -30,6 +31,7 @@ import { ChatPanel, type ChatTurn } from "@/components/ChatPanel";
 import { StaticPattern, type StaticBlock } from "@/components/StaticPattern";
 import { DeclarativePattern } from "@/components/DeclarativePattern";
 import { DeclarativeA2UILive } from "@/components/DeclarativeA2UILive";
+import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTimeline";
 import { LegibilityView } from "@/components/LegibilityView";
 import { CatalogView } from "@/components/CatalogView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
@@ -180,6 +182,22 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     Record<string, unknown>
   > | null>(null);
 
+  // --- emergence timeline (live capture, paced replay) --------------------
+  // Each run records the agent's real event beats (start, compose, tool calls,
+  // finish) with elapsed timestamps via agent.subscribe; the reveal in
+  // the rail (EmergenceTimeline) replays them at a paced cadence. Capture is
+  // live; only the playback is staged. Cleared at the start of every run so the
+  // timeline always reflects this run. The real-A2UI island (Slice 2) is not
+  // captured, so its run clears these instead.
+  const [beats, setBeats] = useState<EmergenceBeat[]>([]);
+
+  // --- stop control -------------------------------------------------------
+  // stopNonce signals the real-A2UI island (which owns its own agent) to abort.
+  // stoppingRef tells the active run's terminal handler that an incoming abort
+  // error is a user Stop, so it resolves to a clean idle rather than an error.
+  const [stopNonce, setStopNonce] = useState(0);
+  const stoppingRef = useRef(false);
+
   // --- the three levers (Pass 3a) -----------------------------------------
   // `enabled` / `setEnabled` / `enabledNames` are lifted to <Home> (above the
   // provider) so the A2UI catalog can be built from them; they arrive as props.
@@ -282,6 +300,54 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       setRunState({ kind: "running" });
       if (pattern === "static") setStaticBlocks([]);
       setAgentText((prev) => ({ ...prev, [pattern]: undefined }));
+      setBeats([]);
+
+      // Live-capture the agent's event beats for the "How this UI emerged"
+      // reveal. Accumulate into a local array (not state) so the run does not
+      // re-render on every event; commit once in `finally`. Timestamps are
+      // real, relative to run start. EmergenceTimeline paces the replay.
+      const captured: EmergenceBeat[] = [];
+      const runStart = Date.now();
+      let composed = false;
+      let started = false;
+      let ok = false;
+      // void return: the subscriber callbacks expect AgentStateMutation | void,
+      // so mark must not leak Array.push's number return.
+      const mark = (
+        kind: EmergenceBeat["kind"],
+        label: string,
+        detail?: string
+      ) => {
+        captured.push({
+          id: crypto.randomUUID(),
+          kind,
+          label,
+          detail,
+          at: Math.max(0, Date.now() - runStart),
+        });
+      };
+      const sub = agent.subscribe({
+        // The agentic loop fires RUN_STARTED once per model round. The first is
+        // the real start (the agent reading your inputs); a later round is the
+        // agent processing the tool results to compose its answer.
+        onRunStartedEvent: () => {
+          if (!started) {
+            started = true;
+            mark("start", "Started", "Read your data, rules, and catalog");
+          } else {
+            mark("start", "Continued", "Processed the tool results");
+          }
+        },
+        onTextMessageStartEvent: () => {
+          if (!composed) {
+            composed = true;
+            mark("think", "Composing the response");
+          }
+        },
+        onToolCallStartEvent: ({ event }) =>
+          mark("tool", `Called ${event.toolCallName}`, "Agent invoked a tool"),
+      });
+
       try {
         agent.setMessages([]);
         agent.addMessage({
@@ -309,8 +375,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
         setRunState({ kind: "idle" });
+        ok = true;
         return reply;
       } catch (err) {
+        if (stoppingRef.current) return null; // user Stop; state already idle
         const message = err instanceof Error ? err.message : String(err);
         if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(message)) {
           setRunState({ kind: "rate-limited" });
@@ -318,6 +386,18 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           setRunState({ kind: "error", message });
         }
         return null;
+      } finally {
+        sub.unsubscribe();
+        mark(
+          "finish",
+          stoppingRef.current
+            ? "Stopped"
+            : ok
+              ? "Finished"
+              : "Run did not complete"
+        );
+        stoppingRef.current = false;
+        setBeats(captured);
       }
     },
     [agent, copilotkit, pattern, runState.kind]
@@ -331,6 +411,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     setAgentText((prev) => ({ ...prev, declarative: undefined }));
     setA2uiSurfacePresent(false);
     setA2uiOps(null);
+    // The island path is not beat-captured in Slice 1; clear so no stale
+    // main-path timeline shows under a real-A2UI run.
+    setBeats([]);
     setA2uiRequest(text);
     setA2uiRunNonce((n) => n + 1);
   }, []);
@@ -338,8 +421,18 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // The island's run lifecycle maps onto the same run banner as the default path.
   const handleA2UIStatus = useCallback(
     (status: "running" | "complete" | "error", message?: string) => {
-      if (status === "running") setRunState({ kind: "running" });
-      else if (status === "complete") setRunState({ kind: "idle" });
+      if (status === "running") {
+        setRunState({ kind: "running" });
+        return;
+      }
+      // Terminal (complete | error). A user Stop lands here as an abort error;
+      // swallow it into a clean idle instead of surfacing an error banner.
+      if (stoppingRef.current) {
+        stoppingRef.current = false;
+        setRunState({ kind: "idle" });
+        return;
+      }
+      if (status === "complete") setRunState({ kind: "idle" });
       else {
         const msg = message ?? "The run failed.";
         if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(msg)) {
@@ -377,6 +470,24 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     }
     void runMessage(request);
   }, [request, runMessage, a2uiActive, runRealA2UI]);
+
+  // Stop the in-flight run. Aborts the page agent (Controlled /
+  // Declarative-simplified / Open-ended) and signals the real-A2UI island to
+  // abort its own agent via stopNonce. Sets idle at once for snappy feedback;
+  // stoppingRef makes the run's terminal handler resolve to a clean stop, not an
+  // error. abortRun halts the client wait + further tool calls; it cannot
+  // guarantee provider tokens already streaming are cancelled.
+  const stop = useCallback(() => {
+    if (runState.kind !== "running") return;
+    stoppingRef.current = true;
+    try {
+      agent.abortRun();
+    } catch {
+      /* nothing to abort on the page agent (e.g. an island run is active) */
+    }
+    setStopNonce((n) => n + 1);
+    setRunState({ kind: "idle" });
+  }, [agent, runState.kind]);
 
   // Chat: appends each exchange to the transcript and renders into the same
   // canvas through the shared path (or the A2UI island).
@@ -779,18 +890,25 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setSetupExpanded(false);
-                        void run();
-                      }}
-                      disabled={runState.kind === "running"}
-                      className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium disabled:opacity-50"
-                      style={{
-                        background: "var(--dt-brand)",
-                        color: "var(--dt-brand-contrast)",
-                      }}
+                      onClick={
+                        runState.kind === "running"
+                          ? stop
+                          : () => {
+                              setSetupExpanded(false);
+                              void run();
+                            }
+                      }
+                      className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium transition-colors"
+                      style={
+                        runState.kind === "running"
+                          ? { background: "var(--line)", color: "var(--ink)" }
+                          : {
+                              background: "var(--dt-brand)",
+                              color: "var(--dt-brand-contrast)",
+                            }
+                      }
                     >
-                      {runState.kind === "running" ? "Rendering…" : "Run"}
+                      {runState.kind === "running" ? "Stop" : "Run"}
                     </button>
                   </div>
                 ) : (
@@ -814,15 +932,18 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       </button>
                       <button
                         type="button"
-                        onClick={() => void run()}
-                        disabled={runState.kind === "running"}
-                        className="rounded-[var(--dt-radius)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-                        style={{
-                          background: "var(--dt-brand)",
-                          color: "var(--dt-brand-contrast)",
-                        }}
+                        onClick={runState.kind === "running" ? stop : () => void run()}
+                        className="rounded-[var(--dt-radius)] px-3 py-1.5 text-sm font-medium transition-colors"
+                        style={
+                          runState.kind === "running"
+                            ? { background: "var(--line)", color: "var(--ink)" }
+                            : {
+                                background: "var(--dt-brand)",
+                                color: "var(--dt-brand-contrast)",
+                              }
+                        }
                       >
-                        {runState.kind === "running" ? "Rendering…" : "Re-run"}
+                        {runState.kind === "running" ? "Stop" : "Re-run"}
                       </button>
                     </div>
                   </div>
@@ -890,6 +1011,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                           <DeclarativeA2UILive
                             request={a2uiRequest}
                             runNonce={a2uiRunNonce}
+                            stopNonce={stopNonce}
                             onReply={handleA2UIReply}
                             onStatus={handleA2UIStatus}
                             onSurface={setA2uiSurfacePresent}
@@ -960,6 +1082,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
                   </section>
                 )}
+
+                <EmergenceTimeline beats={beats} />
 
                 <WhyPanel
                   why={why}
@@ -1063,7 +1187,11 @@ export default function Home() {
   return (
     <CopilotKitProvider
       runtimeUrl="/api/copilotkit"
-      showDevConsole={false}
+      // Troubleshooting: "auto" mounts the inspector on localhost only (off in
+      // Codespaces / prod URLs); debug logs the AG-UI event + lifecycle pipeline.
+      // verbose dumps payloads — dial it to false for the public event.
+      showDevConsole="auto"
+      debug={{ events: true, lifecycle: true, verbose: true }}
       a2ui={{ theme: A2UI_THEME, catalog: a2uiCatalog }}
     >
       <DailyToolInner
