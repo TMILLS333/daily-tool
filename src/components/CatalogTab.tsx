@@ -72,20 +72,36 @@ export function CatalogTab({
             aria-checked={on}
             aria-label={`${entry.name} ${on ? "enabled" : "disabled"}`}
             onClick={() => onToggle(entry.name, !on)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              on ? "bg-[var(--dt-brand)]" : "bg-neutral-300"
+            className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors ${
+              on
+                ? "justify-end bg-[var(--dt-brand)]"
+                : "justify-start bg-neutral-300"
             }`}
             title={on ? "Enabled, click to disable" : "Disabled, click to enable"}
           >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                on ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
+            <span className="h-5 w-5 rounded-full bg-white shadow-sm" />
           </button>
         </div>
 
-        {/* Reveal + Edit controls */}
+        {/* The component itself, always visible: the card shows the component. */}
+        {sample ? (
+          <div className="mt-2">
+            {entry.container ? (
+              <C {...sample.props}>
+                <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
+                  one
+                </span>
+                <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
+                  two
+                </span>
+              </C>
+            ) : (
+              <C {...sample.props} />
+            )}
+          </div>
+        ) : null}
+
+        {/* Reveal + Edit controls (the agent-read description lives behind these) */}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
           <button
             type="button"
@@ -120,7 +136,7 @@ export function CatalogTab({
           ) : null}
         </div>
 
-        {/* Revealed: the description (read-only or editor) + the live sample */}
+        {/* Revealed: the description the agent reads (read-only or editor). */}
         {isRevealed ? (
           <div className="mt-2">
             {isEditing ? (
@@ -136,22 +152,6 @@ export function CatalogTab({
                 {descValue}
               </p>
             )}
-            {sample ? (
-              <div className="mt-2">
-                {entry.container ? (
-                  <C {...sample.props}>
-                    <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
-                      one
-                    </span>
-                    <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
-                      two
-                    </span>
-                  </C>
-                ) : (
-                  <C {...sample.props} />
-                )}
-              </div>
-            ) : null}
           </div>
         ) : null}
       </div>
