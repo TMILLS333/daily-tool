@@ -33,6 +33,7 @@ import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTim
 import { LegibilityView } from "@/components/LegibilityView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
 import { RightDock, type LayerStatus } from "@/components/RightDock";
+import { SetupSequence, type SetupStep } from "@/components/SetupSequence";
 import {
   CATALOG,
   allowedComponentNames,
@@ -77,6 +78,7 @@ const LS = {
   catalogDescriptions: "daily-tool:v1:catalog-descriptions",
   style: "daily-tool:v1:style",
   context: "daily-tool:v1:context",
+  hasRunOnce: "daily-tool:v1:has-run-once",
 };
 
 /** One short line per pattern for the rail's selectable cards: who designs,
@@ -142,6 +144,11 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Parked chat lives in the nav, collapsed by default (Slice 3c), so the
   // dashed handoff note stays the closing beat.
   const [chatOpen, setChatOpen] = useState(false);
+  // First-run guided sequence (Pass 10): until the designer has run once,
+  // the Data -> Rules -> Catalog -> Theme stepper replaces the working shell.
+  // Set true on the first successful run and persisted, so it never returns.
+  const [hasRunOnce, setHasRunOnce] = useState(false);
+  const [setupStep, setSetupStep] = useState(0);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
   // Default OFF, never persisted: every load starts on the shipped simplified
@@ -235,6 +242,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           /* ignore malformed */
         }
       }
+      if (localStorage.getItem(LS.hasRunOnce) === "1") setHasRunOnce(true);
     } catch {
       // private mode etc. — run without persistence
     }
@@ -248,10 +256,11 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       localStorage.setItem(LS.request, request);
       localStorage.setItem(LS.style, JSON.stringify(tokens));
       localStorage.setItem(LS.context, JSON.stringify(context));
+      localStorage.setItem(LS.hasRunOnce, hasRunOnce ? "1" : "0");
     } catch {
       /* non-fatal */
     }
-  }, [hydrated, data, rules, request, tokens, context]);
+  }, [hydrated, data, rules, request, tokens, context, hasRunOnce]);
 
   // --- application context: what the agent knows on every run -------------
   const catalogText = useMemo(
@@ -374,6 +383,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
         setApplied(latestLayersRef.current);
+        setHasRunOnce(true);
         setRunState({ kind: "idle" });
         ok = true;
         return reply;
@@ -434,6 +444,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       }
       if (status === "complete") {
         setApplied(latestLayersRef.current);
+        setHasRunOnce(true);
         setRunState({ kind: "idle" });
       } else {
         const msg = message ?? "The run failed.";
@@ -626,6 +637,94 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     catalog: pendingLayers.includes("Catalog") ? "pending" : "applied",
     style: "live",
   };
+
+  // First-run: the guided stepper replaces the working shell until the first
+  // successful run. Steps reuse the existing layer components + their props.
+  const setupSteps: SetupStep[] = [
+    {
+      key: "data",
+      label: "Data",
+      node: (
+        <DataTab
+          value={data}
+          onChange={setData}
+          context={context}
+          onContextChange={setContext}
+        />
+      ),
+    },
+    {
+      key: "rules",
+      label: "Rules",
+      node: <RulesTab value={rules} onChange={setRules} />,
+    },
+    {
+      key: "catalog",
+      label: "Catalog",
+      node: (
+        <CatalogTab
+          enabled={enabled}
+          onToggle={(name, next) =>
+            setEnabled((prev) => ({ ...prev, [name]: next }))
+          }
+          descriptions={descriptions}
+          onDescriptionChange={(name, value) =>
+            setDescriptions((prev) => ({ ...prev, [name]: value }))
+          }
+          onDescriptionReset={(name) =>
+            setDescriptions((prev) => {
+              const next = { ...prev };
+              delete next[name];
+              return next;
+            })
+          }
+        />
+      ),
+    },
+    {
+      key: "style",
+      label: "Theme",
+      node: <StyleTab tokens={tokens} onChange={setTokens} />,
+    },
+  ];
+
+  // Hold a blank paper frame until hydration resolves hasRunOnce, so neither
+  // the stepper nor the working shell flashes for the wrong audience.
+  if (!hydrated) {
+    return (
+      <div className="min-h-dvh bg-[var(--paper)]" style={tokenStyle} aria-hidden />
+    );
+  }
+
+  // First run: the guided sequence, dock hidden, until the first run lands.
+  if (!hasRunOnce) {
+    return (
+      <div
+        className="flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
+        style={tokenStyle}
+      >
+        <header className="flex shrink-0 items-center border-b border-[var(--line)] px-10 py-3">
+          <div className="font-serif text-[17px] leading-tight">
+            GenUI Studio{" "}
+            <span className="font-sans text-[11px] text-[var(--muted)]">
+              Daily Tool
+            </span>
+          </div>
+        </header>
+        <div className="mx-auto w-full max-w-[860px] px-10 py-8">
+          <SetupSequence
+            steps={setupSteps}
+            current={setupStep}
+            onCurrent={setSetupStep}
+            request={request}
+            onRequestChange={setRequest}
+            onRun={run}
+            running={runState.kind === "running"}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
