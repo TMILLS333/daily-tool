@@ -35,6 +35,7 @@ import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTim
 import { LegibilityView } from "@/components/LegibilityView";
 import { CatalogView } from "@/components/CatalogView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
+import { RightDock, type LayerStatus } from "@/components/RightDock";
 import {
   CATALOG,
   allowedComponentNames,
@@ -67,33 +68,16 @@ type Tab = AuthoringTab | "preview" | "notes";
 
 const AUTHORING_TABS: AuthoringTab[] = ["data", "rules", "catalog", "style"];
 
-// Flat, dual-labeled nav: a designer-facing name plus a technical mono
-// sub-label, per surface. Authoring surfaces lead (the brief before the build),
-// then a divider, then Preview and the Design Notes placeholder.
-type NavItem = {
-  key: Tab;
-  name: string;
-  tech: string;
-  glyph: string;
-  soon?: boolean;
+// Dock save-state placeholder (Slice 1). The four authoring layers report a
+// per-layer status to the right dock; real applied/pending/live derivation is
+// wired in the next slice. Theme is "live" because tokens apply immediately via
+// --dt-* CSS variables; the others default to "applied".
+const DOCK_STATUS_PLACEHOLDER: Record<AuthoringTab, LayerStatus> = {
+  data: "applied",
+  rules: "applied",
+  catalog: "applied",
+  style: "live",
 };
-
-const PRIMARY_NAV: NavItem[] = [
-  { key: "data", name: "Data", tech: "source text", glyph: "▦" },
-  { key: "rules", name: "Rules", tech: "constraints", glyph: "☰" },
-  { key: "catalog", name: "Catalog", tech: "component registry", glyph: "▤" },
-  { key: "style", name: "Theme", tech: "design tokens", glyph: "◑" },
-];
-const SECONDARY_NAV: NavItem[] = [
-  { key: "preview", name: "Preview", tech: "run + reveal", glyph: "▷" },
-  {
-    key: "notes",
-    name: "Design Notes",
-    tech: "decision log",
-    glyph: "✎",
-    soon: true,
-  },
-];
 
 const LS = {
   data: "daily-tool:v1:data",
@@ -610,148 +594,61 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   const railLabel = "mb-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]";
 
-  // One flat nav row: glyph + dual labels + an optional status badge. Active
-  // row gets the fixed petrol accent (chrome, never the swappable --dt-brand).
-  const renderNavItem = (item: NavItem) => {
-    const on = tab === item.key;
-    const badge =
-      item.key === "catalog"
-        ? `${enabledNames.size}/${CATALOG.length}`
-        : item.key === "style"
-        ? activeSet ?? "Custom"
-        : item.key === "notes"
-        ? "soon"
-        : null;
-    return (
-      <button
-        key={item.key}
-        type="button"
-        onClick={() => setTab(item.key)}
-        className={`relative mb-0.5 flex w-full items-center gap-3 rounded-[9px] px-3 py-2 text-left transition-colors ${
-          on
-            ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-            : item.soon
-            ? "text-[var(--faint)] hover:bg-[rgba(255,253,248,0.6)]"
-            : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
-        }`}
-      >
-        {on && (
-          <span
-            className="absolute -left-4 bottom-2 top-2 w-[3px] rounded-r bg-[var(--petrol)]"
-            aria-hidden
-          />
-        )}
-        <span
-          className={`w-4 shrink-0 text-center text-[13px] ${
-            on ? "text-[var(--petrol)]" : "text-[var(--faint)]"
-          }`}
-          aria-hidden
-        >
-          {item.glyph}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className={`text-[13px] ${on ? "font-semibold" : ""}`}>
-            {item.name}
-          </span>
-          <span className="font-mono text-[8.5px] tracking-tight text-[var(--faint)]">
-            {item.tech}
-          </span>
-        </span>
-        {badge && (
-          <span
-            className={`shrink-0 text-[9.5px] text-[var(--faint)] ${
-              item.soon ? "italic" : ""
-            }`}
-          >
-            {badge}
-          </span>
-        )}
-      </button>
-    );
-  };
-
   const isAuthoring = AUTHORING_TABS.includes(tab as AuthoringTab);
 
   return (
     <div
-      className="grid h-dvh grid-cols-[252px_1fr] overflow-hidden bg-[var(--paper)] text-[var(--ink)]"
+      className="flex h-dvh overflow-hidden bg-[var(--paper)] text-[var(--ink)]"
       style={tokenStyle}
     >
-      {/* NAV — flat, dual-labeled surfaces, a divider, parked chat, handoff */}
-      <nav className="flex h-dvh flex-col overflow-auto border-r border-[var(--line)] bg-[var(--vellum)] px-4 py-5">
-        <div className="mb-4 px-1.5">
-          <div className="font-serif text-[17px] leading-tight">
+      {/* CANVAS — primary surface, fills the width. The render is the canvas;
+          authoring layers open from the right dock (interim surface-swap this
+          slice). The retired left <nav> tab-router lived here pre-v3. */}
+      <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Canvas chrome top bar: the wordmark doubles as "home" (→ Preview),
+            plus the two surfaces the dock does not hold — Design Notes and the
+            parked Chat — so removing the nav strands neither. */}
+        <header className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-10 py-3">
+          <button
+            type="button"
+            onClick={() => setTab("preview")}
+            className="font-serif text-[17px] leading-tight"
+            aria-label="GenUI Studio — back to Preview"
+          >
             GenUI Studio{" "}
             <span className="font-sans text-[11px] text-[var(--muted)]">
               Daily Tool
             </span>
-          </div>
-        </div>
-
-        {PRIMARY_NAV.map(renderNavItem)}
-
-        <div className="mx-1.5 my-3 h-px bg-[var(--line)]" />
-
-        {SECONDARY_NAV.map(renderNavItem)}
-
-        {/* Parked chat — collapsible, below the surfaces and above the handoff
-            note, collapsed by default so the handoff note stays the closing beat. */}
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setChatOpen((o) => !o)}
-            aria-expanded={chatOpen}
-            className="flex w-full items-center justify-between rounded-[9px] px-3 py-2 text-left transition-colors hover:bg-[rgba(255,253,248,0.6)]"
-          >
-            <span className="flex items-center gap-3">
-              <span
-                className="w-4 shrink-0 text-center text-[13px] text-[var(--faint)]"
-                aria-hidden
-              >
-                ✦
-              </span>
-              <span className="flex flex-col leading-tight">
-                <span className="text-[13px] text-[var(--muted)]">Chat</span>
-                <span className="font-mono text-[8.5px] tracking-tight text-[var(--faint)]">
-                  drive the canvas
-                </span>
-              </span>
-            </span>
-            <span
-              className="shrink-0 text-[10px] text-[var(--faint)]"
-              aria-hidden
-            >
-              {chatOpen ? "▾" : "▸"}
-            </span>
           </button>
-          {chatOpen && (
-            <div className="mt-2 h-[320px]">
-              <ChatPanel
-                turns={chatTurns}
-                onSend={chatSend}
-                disabled={runState.kind === "running"}
-                headerless
-              />
-            </div>
-          )}
-        </div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setTab(tab === "notes" ? "preview" : "notes")}
+              aria-pressed={tab === "notes"}
+              className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
+                tab === "notes"
+                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                  : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+              }`}
+            >
+              Design Notes{" "}
+              <span className="text-[var(--faint)]">soon</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setChatOpen((o) => !o)}
+              aria-expanded={chatOpen}
+              className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
+                chatOpen
+                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                  : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+              }`}
+            >
+              <span aria-hidden>✦</span> Chat
+            </button>
+          </div>
+        </header>
 
-        {/* Handoff preserved: name what the designer owns and what still needs
-            engineering, so the tool never pretends "no code anywhere." */}
-        <div className="mt-4 rounded-[9px] border border-dashed border-[var(--line)] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)]">
-          You author the{" "}
-          <b className="font-semibold text-[var(--ink)]">
-            vocabulary, constraints, and visual system
-          </b>
-          . A genuinely <b className="font-semibold text-[var(--ink)]">new</b>{" "}
-          primitive still needs engineering. Your work with the developers
-          continues.
-        </div>
-      </nav>
-
-      {/* MAIN — one surface at a time. Authoring + Notes route into a
-          max-width sheet; Preview keeps the full-width playground grid. */}
-      <div className="flex h-dvh min-h-0 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 px-10 py-8">
           {isAuthoring && (
             <div className="mx-auto h-full min-h-0 max-w-[820px]">
@@ -1127,7 +1024,61 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             </div>
           )}
         </div>
+
+        {/* Handoff preserved (was the nav's closing beat): name what the
+            designer owns vs what still needs engineering, so the tool never
+            pretends "no code anywhere." */}
+        <footer className="shrink-0 border-t border-dashed border-[var(--line)] px-10 py-2 text-[10px] leading-relaxed text-[var(--muted)]">
+          You author the{" "}
+          <b className="font-semibold text-[var(--ink)]">
+            vocabulary, constraints, and visual system
+          </b>
+          . A genuinely <b className="font-semibold text-[var(--ink)]">new</b>{" "}
+          primitive still needs engineering. Your work with the developers
+          continues.
+        </footer>
       </div>
+
+      {/* RIGHT DOCK — four authoring tiles (Data/Rules/Catalog/Theme). No Run
+          control: running is the canvas request input's submit arrow. Status is
+          a static placeholder this slice; real save-states land next slice. */}
+      <RightDock
+        tabs={AUTHORING_TABS}
+        status={DOCK_STATUS_PLACEHOLDER}
+        active={isAuthoring ? (tab as AuthoringTab) : null}
+        onOpen={(t) => setTab((cur) => (cur === t ? "preview" : t))}
+      />
+
+      {/* Parked Chat — reachable from the top bar, anchored bottom-left so it
+          never collides with the right dock. */}
+      {chatOpen && (
+        <div className="fixed bottom-4 left-4 z-40 flex h-[420px] w-[340px] flex-col overflow-hidden rounded-[12px] border border-[var(--line)] bg-[var(--surface)] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-3 py-2">
+            <span className="text-[12px] text-[var(--muted)]">
+              Chat{" "}
+              <span className="font-mono text-[8.5px] text-[var(--faint)]">
+                drive the canvas
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setChatOpen(false)}
+              aria-label="Close chat"
+              className="text-[14px] leading-none text-[var(--faint)] hover:text-[var(--ink)]"
+            >
+              ×
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">
+            <ChatPanel
+              turns={chatTurns}
+              onSend={chatSend}
+              disabled={runState.kind === "running"}
+              headerless
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
