@@ -48,11 +48,13 @@ import {
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
 import { buildCatalog } from "@/lib/a2ui-spike-catalog";
 
-// Workaround for an upstream bug: @ag-ui/client stores the global `fetch`
-// on its agent instance and calls it as a method (`this.fetch(...)`), which
-// browsers reject with "Illegal invocation". Binding fetch to window before
-// the agent is constructed makes the stored reference safe to call.
-// Remove once fixed upstream in @ag-ui/client.
+// Legacy safety net — redundant as of @copilotkit 1.60.1 / @ag-ui/client 0.0.57.
+// This WAS the fix for an upstream bug: @ag-ui/client stored the global `fetch`
+// on its agent and called it as a method (`this.fetch(...)`), which browsers
+// reject with "Illegal invocation". That bug is now fixed upstream (HttpAgent
+// arrow-wraps fetch), so this no longer carries the load. Kept deliberately as
+// a cheap belt-and-suspenders guard in case a transitive resolution ever drags
+// @ag-ui/client back below 0.0.57. Safe to delete once we're confident.
 if (typeof window !== "undefined") {
   window.fetch = window.fetch.bind(window);
 }
