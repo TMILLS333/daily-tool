@@ -144,10 +144,15 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Parked chat lives in the nav, collapsed by default (Slice 3c), so the
   // dashed handoff note stays the closing beat.
   const [chatOpen, setChatOpen] = useState(false);
-  // First-run guided sequence (Pass 10): until the designer has run once,
-  // the Data -> Rules -> Catalog -> Theme stepper replaces the working shell.
-  // Set true on the first successful run and persisted, so it never returns.
+  // First-run guided sequence (Pass 10) + first-run-error hardening (Pass 11).
+  // hasRunOnce is the PERSISTED "has attempted a run" flag; it flips at run
+  // commit (in `run`, below), so a reload after a failed first run lands in the
+  // working shell rather than resetting the stepper. revealWorkingShell is the
+  // in-session gate: the stepper stays until the first SUCCESSFUL run this load,
+  // so a failed first run stays in the guided frame (showing the failure)
+  // instead of being stranded with no feedback.
   const [hasRunOnce, setHasRunOnce] = useState(false);
+  const [revealWorkingShell, setRevealWorkingShell] = useState(false);
   const [setupStep, setSetupStep] = useState(0);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
@@ -242,7 +247,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           /* ignore malformed */
         }
       }
-      if (localStorage.getItem(LS.hasRunOnce) === "1") setHasRunOnce(true);
+      if (localStorage.getItem(LS.hasRunOnce) === "1") {
+        // Returning user, or a reload after a committed (possibly failed) run:
+        // skip the stepper and land directly in the working shell.
+        setHasRunOnce(true);
+        setRevealWorkingShell(true);
+      }
     } catch {
       // private mode etc. — run without persistence
     }
@@ -319,6 +329,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       let composed = false;
       let started = false;
       let ok = false;
+      // A model-side RUN_ERROR resolves runAgent (it does not throw), so capture
+      // it here to (a) set the matching runState and (b) skip the success path.
+      let errored = false;
       // void return: the subscriber callbacks expect AgentStateMutation | void,
       // so mark must not leak Array.push's number return.
       const mark = (
@@ -354,6 +367,22 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         },
         onToolCallStartEvent: ({ event }) =>
           mark("tool", `Called ${event.toolCallName}`, "Agent invoked a tool"),
+        // A model-side failure (e.g. a free-tier 429) arrives as a RUN_ERROR
+        // event, not a runAgent throw, so it would otherwise resolve as an empty
+        // success and collapse the first-run stepper with no message. Capture it
+        // as the matching runState; the guard after runAgent skips the success
+        // path. A user Stop can also emit RUN_ERROR via abort — ignore that.
+        onRunErrorEvent: ({ event }) => {
+          if (stoppingRef.current) return;
+          errored = true;
+          const message =
+            event && event.message ? String(event.message) : "The run failed.";
+          if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(message)) {
+            setRunState({ kind: "rate-limited" });
+          } else {
+            setRunState({ kind: "error", message });
+          }
+        },
       });
 
       try {
@@ -372,6 +401,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             toolChoice: pattern === "static" ? "auto" : "none",
           },
         });
+        // A RUN_ERROR fired during the stream: runAgent resolved, but the run
+        // failed. The error/rate-limited runState is already set; do not record
+        // a reply or collapse the stepper.
+        if (errored) return null;
         const lastAssistant = [...agent.messages]
           .reverse()
           .find(
@@ -383,7 +416,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
         setApplied(latestLayersRef.current);
-        setHasRunOnce(true);
+        setRevealWorkingShell(true);
         setRunState({ kind: "idle" });
         ok = true;
         return reply;
@@ -444,7 +477,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       }
       if (status === "complete") {
         setApplied(latestLayersRef.current);
-        setHasRunOnce(true);
+        setRevealWorkingShell(true);
         setRunState({ kind: "idle" });
       } else {
         const msg = message ?? "The run failed.";
@@ -476,6 +509,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // request, then runs it through the shared path (or the A2UI island).
   const run = useCallback(() => {
     if (!request.trim()) return;
+    // Mark "has attempted" the moment a run is committed (persisted), so a
+    // reload after a failed first run lands in the working shell. The in-session
+    // view stays in the stepper until a run actually succeeds (revealWorkingShell).
+    setHasRunOnce(true);
     setChatTurns([]);
     if (a2uiActive) {
       runRealA2UI(request);
@@ -696,8 +733,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     );
   }
 
-  // First run: the guided sequence, dock hidden, until the first run lands.
-  if (!hasRunOnce) {
+  // First run: the guided sequence, dock hidden, until the first run SUCCEEDS
+  // this load (revealWorkingShell). A failed run stays here, showing the failure.
+  if (!revealWorkingShell) {
     return (
       <div
         className="flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
@@ -719,7 +757,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             request={request}
             onRequestChange={setRequest}
             onRun={run}
-            running={runState.kind === "running"}
+            runStatus={runState.kind}
+            errorMessage={runState.kind === "error" ? runState.message : undefined}
           />
         </div>
       </div>

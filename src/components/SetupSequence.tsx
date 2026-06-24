@@ -2,12 +2,14 @@
 
 import type { ReactNode } from "react";
 
-// First-run guided sequence (Pass 10). Pure chrome: a numbered Data -> Rules
-// -> Catalog -> Theme progress header, the active step's existing layer
-// component (passed in, not reimplemented), Back/Next navigation, and a
-// request input + run arrow on the final step. A faint placeholder shows
-// where the interface will appear. After the first successful run, page.tsx
-// collapses this into the working shell for good.
+// First-run guided sequence (Pass 10) + first-run-error hardening (Pass 11).
+// Pure chrome: a numbered Data -> Rules -> Catalog -> Theme progress header,
+// the active step's existing layer component (passed in, not reimplemented),
+// Back/Next navigation, and a request input + run arrow on the final step. The
+// outcome region below shows a building beat while running, or the run's
+// failure (rate-limit / error, same copy as the working shell) with the input
+// kept for retry, or a faint placeholder when idle. After the first SUCCESSFUL
+// run, page.tsx collapses this into the working shell for good.
 export type SetupStep = { key: string; label: string; node: ReactNode };
 
 export function SetupSequence({
@@ -17,7 +19,8 @@ export function SetupSequence({
   request,
   onRequestChange,
   onRun,
-  running,
+  runStatus,
+  errorMessage,
 }: {
   steps: SetupStep[];
   current: number;
@@ -25,11 +28,13 @@ export function SetupSequence({
   request: string;
   onRequestChange: (v: string) => void;
   onRun: () => void;
-  running: boolean;
+  runStatus: "idle" | "running" | "rate-limited" | "error";
+  errorMessage?: string;
 }) {
   const last = steps.length - 1;
   const step = steps[current];
   const isLast = current === last;
+  const running = runStatus === "running";
 
   return (
     <div className="flex flex-col gap-6">
@@ -150,10 +155,27 @@ export function SetupSequence({
         </div>
       )}
 
-      {/* Faint placeholder: where the interface will appear. */}
-      <div className="flex min-h-[160px] items-center justify-center rounded-[var(--dt-radius)] border border-dashed border-[var(--line)] text-sm text-[var(--faint)]">
-        Your interface appears here once you run.
-      </div>
+      {/* Outcome: building while running, the run's failure (with the input
+          above kept for retry), or the idle placeholder. Failure copy matches
+          the working shell's banners so the two never drift. */}
+      {running ? (
+        <div className="flex min-h-[160px] items-center justify-center rounded-[var(--dt-radius)] border border-dashed border-[var(--line)] text-sm text-[var(--muted)]">
+          <span className="animate-pulse">Building your interface…</span>
+        </div>
+      ) : runStatus === "rate-limited" ? (
+        <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Free-tier rate limit reached (about 10 requests per minute). Wait a few
+          seconds and run again — nothing is broken.
+        </div>
+      ) : runStatus === "error" ? (
+        <div className="rounded-[var(--dt-radius)] border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          The run failed: {errorMessage}
+        </div>
+      ) : (
+        <div className="flex min-h-[160px] items-center justify-center rounded-[var(--dt-radius)] border border-dashed border-[var(--line)] text-sm text-[var(--faint)]">
+          Your interface appears here once you run.
+        </div>
+      )}
     </div>
   );
 }
