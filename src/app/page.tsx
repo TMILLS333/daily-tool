@@ -33,7 +33,6 @@ import { DeclarativePattern } from "@/components/DeclarativePattern";
 import { DeclarativeA2UILive } from "@/components/DeclarativeA2UILive";
 import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTimeline";
 import { LegibilityView } from "@/components/LegibilityView";
-import { CatalogView } from "@/components/CatalogView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
 import { RightDock, type LayerStatus } from "@/components/RightDock";
 import {
@@ -147,6 +146,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Setup collapses to a compact bar after a Run (freedom-first run flow);
   // editing re-expands it. Presentation-only; does not touch run logic.
   const [setupExpanded, setSetupExpanded] = useState(true);
+  // "How Preview works" is render-first: collapsed by default, revealed on
+  // demand (Pass 2 declutter) so the render leads, not the explainer.
+  const [howPreviewOpen, setHowPreviewOpen] = useState(false);
   // Parked chat lives in the nav, collapsed by default (Slice 3c), so the
   // dashed handoff note stays the closing beat.
   const [chatOpen, setChatOpen] = useState(false);
@@ -953,10 +955,11 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   ) : null}
                 </section>
 
-                {/* Operations module — the component tree + bindings the agent
-                    emitted, shown as its own module (no toggle). The Catalog
-                    "used" view stays reachable. Display-only, derived from
-                    activeText / emitted ops — flake-proof. */}
+                {/* Operations module: the component tree + bindings the agent
+                    emitted, shown as its own module (no toggle). Display-only,
+                    derived from activeText / emitted ops, flake-proof. The
+                    "Catalog used" view was removed from the canvas (Pass 2
+                    declutter); the vocabulary lives in the Catalog dock layer. */}
                 {pattern === "declarative" && (
                   <section>
                     <div className={railLabel}>Operations</div>
@@ -964,19 +967,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       agentText={a2uiActive ? null : activeText}
                       ops={a2uiActive ? a2uiOps : undefined}
                     />
-                    <div className="mt-3">
-                      <div className={railLabel}>Catalog</div>
-                      <CatalogView
-                        enabledNames={enabledNames}
-                        usedNames={usedNames}
-                      />
-                    </div>
-                  </section>
-                )}
-                {pattern === "static" && (
-                  <section>
-                    <div className={railLabel}>Catalog</div>
-                    <CatalogView enabledNames={enabledNames} usedNames={usedNames} />
                   </section>
                 )}
 
@@ -990,26 +980,54 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   realPath={a2uiActive}
                 />
 
-                <TeachingCard
-                  name="Preview"
-                  mechanism={
-                    <>
-                      Your setup (freedom level + request) runs the agent over your
-                      Data, Rules, and Catalog. The agent emits a selection or a
-                      spec; the app renders it into the Output above, and the
-                      Operations module shows the exact component tree and data
-                      bindings it emitted.
-                    </>
-                  }
-                  purpose={
-                    <>
-                      Freedom leads because it is the real choice you are making:
-                      how much you let the agent decide. Everything below the Output
-                      is the receipt — what the agent actually produced — so the
-                      render stays legible, not magic.
-                    </>
-                  }
-                />
+                {/* How Preview works: render-first reveal (Pass 2). Collapsed to
+                    a bar by default; expands the teaching card on demand so the
+                    render leads, not the explainer. */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setHowPreviewOpen((o) => !o)}
+                    aria-expanded={howPreviewOpen}
+                    className="flex w-full items-center justify-between rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-left transition-colors hover:border-[var(--line-strong)]"
+                  >
+                    <span className="text-sm text-[var(--ink)]">
+                      How Preview works{" "}
+                      {!howPreviewOpen && (
+                        <span className="text-[var(--faint)]">reveal when ready</span>
+                      )}
+                    </span>
+                    <span
+                      className="shrink-0 text-[10px] text-[var(--faint)]"
+                      aria-hidden
+                    >
+                      {howPreviewOpen ? "▾" : "▸"}
+                    </span>
+                  </button>
+                  {howPreviewOpen && (
+                    <div className="mt-2">
+                      <TeachingCard
+                        name="Preview"
+                        mechanism={
+                          <>
+                            Your setup (freedom level + request) runs the agent over
+                            your Data, Rules, and Catalog. The agent emits a selection
+                            or a spec; the app renders it into the Output above, and
+                            the Operations module shows the exact component tree and
+                            data bindings it emitted.
+                          </>
+                        }
+                        purpose={
+                          <>
+                            Freedom leads because it is the real choice you are making:
+                            how much you let the agent decide. Everything below the
+                            Output is the receipt — what the agent actually produced —
+                            so the render stays legible, not magic.
+                          </>
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
           )}
 
