@@ -12,6 +12,12 @@ import { TeachingCard } from "@/components/TeachingCard";
  */
 export type DataContext = { audience: string; role: string; goal: string };
 
+// WHO context fields hidden for the event (Pass 9 declutter): they are tone
+// hints, not design constraints, so off-thesis for a tool about rules + catalog.
+// Kept in source and fully wired (the context state + useAgentContext plumbing
+// stays, harmless when empty); flip to true to restore the fields.
+const SHOW_WHO_FIELDS: boolean = false;
+
 export function DataTab({
   value,
   onChange,
@@ -68,10 +74,12 @@ export function DataTab({
         <span className="mx-1 h-4 w-px bg-neutral-200" aria-hidden />
         <button
           type="button"
-          onClick={() => fileRef.current?.click()}
-          className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+          disabled
+          aria-disabled="true"
+          title="Coming soon"
+          className="cursor-not-allowed rounded-full border border-dashed border-[var(--line)] px-3 py-1 text-xs text-neutral-400"
         >
-          Upload a file…
+          Upload a file · coming soon
         </button>
         <input
           ref={fileRef}
@@ -85,9 +93,10 @@ export function DataTab({
         Loading a sample or a file replaces the box below.
       </p>
 
-      {/* Optional context: who the UI is for. Shapes tone and emphasis; never
-          required, and never a source of facts. */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      {/* WHO context fields hidden (Pass 9 declutter): gated off, kept wired
+          (context state + useAgentContext plumbing stays). */}
+      {SHOW_WHO_FIELDS && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {(
           [
             ["audience", "Audience", "e.g. busy execs"],
@@ -112,7 +121,8 @@ export function DataTab({
             />
           </label>
         ))}
-      </div>
+        </div>
+      )}
 
       <textarea
         className="min-h-[360px] resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
@@ -123,8 +133,8 @@ export function DataTab({
       />
       <TeachingCard
         name="Data"
-        mechanism="Whatever you paste is one unstructured block, and it is the agent's only source of facts. The WHO fields (audience, role, goal) are optional and shape tone and emphasis only."
-        purpose="Give the agent ground truth to structure. The WHO context colours how it speaks, never what is true."
+        mechanism="Whatever you paste is one unstructured block, and it is the agent's only source of facts. It is never parsed here; the agent does the structuring on the next run."
+        purpose="Give the agent ground truth to structure. What you paste is the only thing it can build from, so the data you bring decides what the render can say."
       />
     </div>
   );

@@ -59,6 +59,10 @@ if (typeof window !== "undefined") {
 const A2UI_THEME = { colors: { primary: "#0f6b75" } };
 
 const PATTERNS = ["static", "declarative", "open-ended"] as const;
+// Operations panel hidden for the event (Pass 9 declutter): engineer-facing
+// component-tree noise. The agent's "what it did" provenance is carried by the
+// "How this emerged" reveal. Kept in source, gated off; flip to restore.
+const SHOW_OPERATIONS: boolean = false;
 type Pattern = (typeof PATTERNS)[number];
 type AuthoringTab = "data" | "rules" | "catalog" | "style";
 type Tab = AuthoringTab | "preview" | "notes";
@@ -934,7 +938,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     derived from activeText / emitted ops, flake-proof. The
                     "Catalog used" view was removed from the canvas (Pass 2
                     declutter); the vocabulary lives in the Catalog dock layer. */}
-                {pattern === "declarative" && (
+                {SHOW_OPERATIONS && pattern === "declarative" && (
                   <section>
                     <div className={railLabel}>Operations</div>
                     <LegibilityView
