@@ -23,13 +23,14 @@ const TILES: Tile[] = [
   { key: "style", name: "Theme", glyph: "◑" },
 ];
 
-// Badge per save-state. Tones use existing chrome tokens only (no new hex):
-// applied = petrol check, live = faint tilde, pending = ink bang (distinguished
-// by glyph since there is no amber chrome token; real warning styling lands with
-// the wired status in the next slice).
+// Badge per save-state. applied = petrol check, live = faint tilde, pending =
+// amber bang. Amber (#d97706, Tailwind amber-600) is the one intentional
+// exception to chrome-tokens-only: there is no amber chrome token, and this
+// matches the app's existing warning treatment (rate-limit / rejection notices)
+// and the v3 mockup's pending colour.
 const BADGE: Record<LayerStatus, { mark: string; label: string; tone: string }> = {
   applied: { mark: "✓", label: "applied", tone: "var(--petrol)" },
-  pending: { mark: "!", label: "needs a run", tone: "var(--ink)" },
+  pending: { mark: "!", label: "needs a run", tone: "#d97706" },
   live: { mark: "~", label: "live", tone: "var(--faint)" },
 };
 

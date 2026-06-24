@@ -65,17 +65,6 @@ type Tab = AuthoringTab | "preview" | "notes";
 
 const AUTHORING_TABS: AuthoringTab[] = ["data", "rules", "catalog", "style"];
 
-// Dock save-state placeholder (Slice 1). The four authoring layers report a
-// per-layer status to the right dock; real applied/pending/live derivation is
-// wired in the next slice. Theme is "live" because tokens apply immediately via
-// --dt-* CSS variables; the others default to "applied".
-const DOCK_STATUS_PLACEHOLDER: Record<AuthoringTab, LayerStatus> = {
-  data: "applied",
-  rules: "applied",
-  catalog: "applied",
-  style: "live",
-};
-
 const LS = {
   data: "daily-tool:v1:data",
   rules: "daily-tool:v1:rules",
@@ -185,6 +174,29 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // `enabled` / `setEnabled` / `enabledNames` are lifted to <Home> (above the
   // provider) so the A2UI catalog can be built from them; they arrive as props.
   const [tokens, setTokens] = useState<StyleTokens>(DEFAULT_TOKENS);
+
+  // --- run-lifecycle save-states (Pass 4) ---------------------------------
+  // Each layer reports applied / pending / live to the right dock. "Applied"
+  // is the snapshot of Data/Rules/Catalog captured when a run last succeeded;
+  // a layer goes "pending" once its live value diverges from that snapshot.
+  // Theme is always "live" (tokens apply immediately via CSS, no run needed).
+  // A latest-values ref feeds the capture so the run callbacks (whose deps
+  // exclude data/rules) snapshot current values, not a stale closure.
+  const catalogKey = useMemo(
+    () => JSON.stringify({ enabled: [...enabledNames].sort(), descriptions }),
+    [enabledNames, descriptions]
+  );
+  const [applied, setApplied] = useState<{
+    data: string;
+    rules: string;
+    catalog: string;
+  } | null>(null);
+  const latestLayersRef = useRef({ data, rules, catalog: catalogKey });
+  useEffect(() => {
+    latestLayersRef.current = { data, rules, catalog: catalogKey };
+  }, [data, rules, catalogKey]);
+  // The request input, focused when the pending hint is activated.
+  const requestRef = useRef<HTMLTextAreaElement>(null);
 
   // --- persistence (survives reload) --------------------------------------
   const [hydrated, setHydrated] = useState(false);
@@ -357,6 +369,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           );
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
+        setApplied(latestLayersRef.current);
         setRunState({ kind: "idle" });
         ok = true;
         return reply;
@@ -415,8 +428,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         setRunState({ kind: "idle" });
         return;
       }
-      if (status === "complete") setRunState({ kind: "idle" });
-      else {
+      if (status === "complete") {
+        setApplied(latestLayersRef.current);
+        setRunState({ kind: "idle" });
+      } else {
         const msg = message ?? "The run failed.";
         if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED/i.test(msg)) {
           setRunState({ kind: "rate-limited" });
@@ -593,6 +608,21 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   const isAuthoring = AUTHORING_TABS.includes(tab as AuthoringTab);
 
+  // Pending = a layer changed since the applied snapshot (the last successful
+  // render). Before the first run (applied === null) nothing is pending.
+  const pendingLayers: string[] = [];
+  if (applied) {
+    if (applied.data !== data) pendingLayers.push("Data");
+    if (applied.rules !== rules) pendingLayers.push("Rules");
+    if (applied.catalog !== catalogKey) pendingLayers.push("Catalog");
+  }
+  const layerStatus: Record<AuthoringTab, LayerStatus> = {
+    data: pendingLayers.includes("Data") ? "pending" : "applied",
+    rules: pendingLayers.includes("Rules") ? "pending" : "applied",
+    catalog: pendingLayers.includes("Catalog") ? "pending" : "applied",
+    style: "live",
+  };
+
   return (
     <div
       className="flex h-dvh overflow-hidden bg-[var(--paper)] text-[var(--ink)]"
@@ -731,6 +761,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
                   <div className="flex items-end gap-2 rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-2 transition-colors focus-within:border-[var(--ink)]">
                     <textarea
+                      ref={requestRef}
                       className="min-h-[44px] w-full resize-none bg-transparent px-2 py-1.5 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none"
                       rows={2}
                       value={request}
@@ -762,6 +793,23 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     </button>
                   </div>
                 </div>
+
+                {/* Pending hint (Pass 4): the render is behind your edits.
+                    Names the changed layers; activating focuses the input so
+                    you can run. No auto-rerun. Amber = the app's warning tone. */}
+                {pendingLayers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => requestRef.current?.focus()}
+                    className="flex w-full items-center gap-2 rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-left text-sm text-amber-800 transition-colors hover:bg-amber-100"
+                  >
+                    <span aria-hidden>!</span>
+                    <span>
+                      {pendingLayers.join(", ")} changed since this render ·{" "}
+                      <span className="font-medium">run to update</span>
+                    </span>
+                  </button>
+                )}
 
                 {runState.kind === "rate-limited" && (
                   <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
@@ -812,6 +860,15 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     </div>
                   )}
                   <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
+                    {runState.kind === "running" && (
+                      <div className="mb-3 flex items-center gap-2 text-sm text-[var(--muted)]">
+                        <span
+                          className="h-2 w-2 animate-pulse rounded-full bg-[var(--petrol)]"
+                          aria-hidden
+                        />
+                        Building your interface…
+                      </div>
+                    )}
                     {pattern === "static" && (
                       <StaticPattern
                         blocks={staticBlocks}
@@ -977,7 +1034,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           a static placeholder this slice; real save-states land next slice. */}
       <RightDock
         tabs={AUTHORING_TABS}
-        status={DOCK_STATUS_PLACEHOLDER}
+        status={layerStatus}
         active={isAuthoring ? (tab as AuthoringTab) : null}
         onOpen={(t) => setTab((cur) => (cur === t ? "preview" : t))}
       />
