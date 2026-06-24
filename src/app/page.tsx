@@ -20,8 +20,6 @@ import { RulesTab } from "@/components/RulesTab";
 import { CatalogTab } from "@/components/CatalogTab";
 import {
   StyleTab,
-  STYLE_SETS,
-  activeStyleSetName,
   DEFAULT_TOKENS,
   type StyleTokens,
 } from "@/components/StyleTab";
@@ -145,7 +143,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   // Setup collapses to a compact bar after a Run (freedom-first run flow);
   // editing re-expands it. Presentation-only; does not touch run logic.
-  const [setupExpanded, setSetupExpanded] = useState(true);
   // "How Preview works" is render-first: collapsed by default, revealed on
   // demand (Pass 2 declutter) so the render leads, not the explainer.
   const [howPreviewOpen, setHowPreviewOpen] = useState(false);
@@ -579,8 +576,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     }
     return problems;
   }, [a2uiActive, usedNames, enabledNames]);
-  // Which named style set is active, or null ("custom") once tokens diverge.
-  const activeSet = activeStyleSetName(tokens);
 
   // Style tokens applied as CSS custom properties on the app root. They drive
   // the rendered OUTPUT (catalog primitives); attendee edits override the
@@ -694,110 +689,66 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               unchanged. */}
           {tab === "preview" && (
             <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pr-1">
-                {/* Setup, freedom-first. Expanded for editing; a compact bar after Run. */}
-                {setupExpanded ? (
-                  <div className="flex flex-col gap-5 rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-4">
-                    <div>
-                      <div className={railLabel}>Render pattern</div>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        {PATTERNS.map((p) => {
-                          const on = pattern === p;
-                          return (
-                            <button
-                              key={p}
-                              type="button"
-                              onClick={() => setPattern(p)}
-                              className={`relative overflow-hidden rounded-[var(--dt-radius)] border bg-[var(--surface)] p-3 text-left transition-colors ${
-                                on
-                                  ? "border-[var(--ink)]"
-                                  : "border-[var(--line)] hover:border-[var(--line-strong)]"
+                {/* Consolidated setup (Pass 3): a compact, visible freedom
+                    control + one persistent input whose inline arrow is the
+                    only run trigger. Replaces the pattern-cards / theme-set /
+                    request / Run / Edit-Re-run stack. Freedom stays visible
+                    (freedom leads); theme moved to the dock Theme tile. */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+                      Freedom
+                    </span>
+                    <div className="inline-flex overflow-hidden rounded-[var(--dt-radius)] border border-[var(--line)]">
+                      {PATTERNS.map((p) => {
+                        const on = pattern === p;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setPattern(p)}
+                            aria-pressed={on}
+                            title={PATTERN_CARDS[p].line}
+                            className={`flex items-baseline gap-1.5 px-3 py-1.5 text-sm transition-colors ${
+                              on
+                                ? "bg-[var(--ink)] font-medium text-[var(--surface)]"
+                                : "text-[var(--muted)] hover:bg-[var(--line)]"
+                            }`}
+                          >
+                            {PATTERN_CARDS[p].name}
+                            <span
+                              className={`text-[9px] uppercase tracking-wider ${
+                                on ? "text-[var(--surface)]" : "text-[var(--faint)]"
                               }`}
                             >
-                              {on && (
-                                <span
-                                  className="absolute inset-y-0 left-0 w-[3px]"
-                                  style={{ background: "var(--dt-brand)" }}
-                                  aria-hidden
-                                />
-                              )}
-                              <div className="flex items-baseline justify-between gap-2">
-                                <span className="font-serif text-[15px] font-medium">
-                                  {PATTERN_CARDS[p].name}
-                                </span>
-                                <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--faint)]">
-                                  {PATTERN_CARDS[p].freedom} freedom
-                                </span>
-                              </div>
-                              <p className="mt-0.5 text-xs leading-snug text-[var(--muted)]">
-                                {PATTERN_CARDS[p].line}
-                              </p>
-                            </button>
-                          );
-                        })}
-                      </div>
+                              {PATTERN_CARDS[p].freedom}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
+                  </div>
 
-                    <div>
-                      <div className="mb-2 flex items-baseline justify-between">
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-                          Theme set
-                        </span>
-                        <span className="text-xs text-[var(--muted)]">
-                          {activeSet ?? "Custom"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {STYLE_SETS.map((s) => {
-                          const on = activeSet === s.name;
-                          return (
-                            <button
-                              key={s.name}
-                              type="button"
-                              onClick={() => setTokens(s.tokens)}
-                              aria-pressed={on}
-                              className={`rounded-[var(--dt-radius)] border px-3 py-1.5 text-sm transition-colors ${
-                                on
-                                  ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                                  : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--line-strong)]"
-                              }`}
-                            >
-                              {s.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className={railLabel}>Request</div>
-                      <textarea
-                        className="w-full resize-none rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
-                        rows={3}
-                        value={request}
-                        onChange={(e) => setRequest(e.target.value)}
-                        onKeyDown={(e) => {
-                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                            e.preventDefault();
-                            setSetupExpanded(false);
-                            void run();
-                          }
-                        }}
-                        placeholder={DEFAULT_REQUEST}
-                        spellCheck={false}
-                      />
-                    </div>
-
+                  <div className="flex items-end gap-2 rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-2 transition-colors focus-within:border-[var(--ink)]">
+                    <textarea
+                      className="min-h-[44px] w-full resize-none bg-transparent px-2 py-1.5 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none"
+                      rows={2}
+                      value={request}
+                      onChange={(e) => setRequest(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          void run();
+                        }
+                      }}
+                      placeholder="Describe what you want from your data…"
+                      spellCheck={false}
+                    />
                     <button
                       type="button"
-                      onClick={
-                        runState.kind === "running"
-                          ? stop
-                          : () => {
-                              setSetupExpanded(false);
-                              void run();
-                            }
-                      }
-                      className="rounded-[var(--dt-radius)] py-2.5 text-sm font-medium transition-colors"
+                      aria-label={runState.kind === "running" ? "Stop" : "Run"}
+                      onClick={runState.kind === "running" ? stop : () => void run()}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--dt-radius)] text-base font-medium transition-colors"
                       style={
                         runState.kind === "running"
                           ? { background: "var(--line)", color: "var(--ink)" }
@@ -807,46 +758,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                             }
                       }
                     >
-                      {runState.kind === "running" ? "Stop" : "Run"}
+                      {runState.kind === "running" ? "■" : "→"}
                     </button>
                   </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-3 rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5">
-                    <span className="shrink-0 rounded bg-[var(--petrol)] px-2 py-0.5 text-[11px] font-medium text-white">
-                      {PATTERN_CARDS[pattern].name} · {PATTERN_CARDS[pattern].freedom} freedom
-                    </span>
-                    <span
-                      className="min-w-0 flex-1 truncate text-sm text-[var(--muted)]"
-                      title={request}
-                    >
-                      {request || DEFAULT_REQUEST}
-                    </span>
-                    <div className="ml-auto flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSetupExpanded(true)}
-                        className="rounded-[var(--dt-radius)] border border-[var(--line)] px-3 py-1.5 text-sm text-[var(--muted)] transition-colors hover:border-[var(--line-strong)]"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={runState.kind === "running" ? stop : () => void run()}
-                        className="rounded-[var(--dt-radius)] px-3 py-1.5 text-sm font-medium transition-colors"
-                        style={
-                          runState.kind === "running"
-                            ? { background: "var(--line)", color: "var(--ink)" }
-                            : {
-                                background: "var(--dt-brand)",
-                                color: "var(--dt-brand-contrast)",
-                              }
-                        }
-                      >
-                        {runState.kind === "running" ? "Stop" : "Re-run"}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 {runState.kind === "rate-limited" && (
                   <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
