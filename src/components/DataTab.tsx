@@ -41,7 +41,7 @@ export function DataTab({
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <p className="text-sm text-neutral-500">
         Paste your daily pile of text below — meeting notes, audit findings, a
         brief, a CSV, anything. This is the only data the agent is allowed to
@@ -115,7 +115,7 @@ export function DataTab({
       </div>
 
       <textarea
-        className="min-h-0 flex-1 resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
+        className="min-h-[360px] resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste anything here…"

@@ -625,17 +625,17 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   return (
     <div
-      className="flex h-dvh overflow-hidden bg-[var(--paper)] text-[var(--ink)]"
+      className="flex min-h-dvh bg-[var(--paper)] text-[var(--ink)]"
       style={tokenStyle}
     >
       {/* CANVAS — primary surface, fills the width. The render is the canvas;
           authoring layers open from the right dock (interim surface-swap this
           slice). The retired left <nav> tab-router lived here pre-v3. */}
-      <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Canvas chrome top bar: the wordmark doubles as "home" (→ Preview),
             plus the two surfaces the dock does not hold — Design Notes and the
             parked Chat — so removing the nav strands neither. */}
-        <header className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-10 py-3">
+        <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
           <button
             type="button"
             onClick={() => setTab("preview")}
@@ -676,9 +676,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 px-10 py-8">
+        <div className="px-10 py-8">
           {isAuthoring && (
-            <div className="mx-auto h-full min-h-0 max-w-[820px]">
+            <div className="mx-auto max-w-[820px]">
               {tab === "data" && (
                 <DataTab
                   value={data}
@@ -718,7 +718,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               card. Chat relocated to the nav's parked slot (Slice 3c); run logic
               unchanged. */}
           {tab === "preview" && (
-            <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pr-1">
+            <div className="flex min-w-0 flex-col gap-4">
                 {/* Consolidated setup (Pass 3): a compact, visible freedom
                     control + one persistent input whose inline arrow is the
                     only run trigger. Replaces the pattern-cards / theme-set /
@@ -779,7 +779,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       type="button"
                       aria-label={runState.kind === "running" ? "Stop" : "Run"}
                       onClick={runState.kind === "running" ? stop : () => void run()}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--dt-radius)] text-base font-medium transition-colors"
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--dt-radius)] text-base font-medium transition-colors ${
+                        runState.kind === "running" ? "animate-pulse" : ""
+                      }`}
                       style={
                         runState.kind === "running"
                           ? { background: "var(--line)", color: "var(--ink)" }
@@ -861,12 +863,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   )}
                   <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
                     {runState.kind === "running" && (
-                      <div className="mb-3 flex items-center gap-2 text-sm text-[var(--muted)]">
+                      <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-[var(--muted)]">
                         <span
-                          className="h-2 w-2 animate-pulse rounded-full bg-[var(--petrol)]"
+                          className="h-3 w-3 animate-pulse rounded-full bg-[var(--petrol)]"
                           aria-hidden
                         />
-                        Building your interface…
+                        <span className="text-sm">Building your interface…</span>
                       </div>
                     )}
                     {pattern === "static" && (
@@ -1005,7 +1007,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
           {/* Design Notes — placeholder surface (the decision log lands later). */}
           {tab === "notes" && (
-            <div className="mx-auto h-full min-h-0 max-w-[820px]">
+            <div className="mx-auto max-w-[820px]">
               <h2 className="font-serif text-2xl">Design Notes</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 A running narrative of the design decisions behind each render.{" "}

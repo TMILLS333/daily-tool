@@ -15,7 +15,7 @@ export function RulesTab({
   onChange: (next: string) => void;
 }) {
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <div className="flex justify-end">
         <HonestyChip variant="soft">Soft · instructed</HonestyChip>
       </div>
@@ -25,7 +25,7 @@ export function RulesTab({
         here binds the agent on the next run.
       </p>
       <textarea
-        className="min-h-0 flex-1 resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
+        className="min-h-[360px] resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="# My design rules…"

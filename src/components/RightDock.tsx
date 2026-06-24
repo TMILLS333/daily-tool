@@ -49,7 +49,7 @@ export function RightDock({
   return (
     <nav
       aria-label="Authoring layers"
-      className="flex h-dvh shrink-0 flex-col items-center gap-1.5 border-l border-[var(--line)] bg-[var(--vellum)] px-2 py-4"
+      className="sticky top-0 flex h-dvh shrink-0 flex-col items-center gap-1.5 self-start border-l border-[var(--line)] bg-[var(--vellum)] px-2 py-4"
     >
       {tiles.map((t) => {
         const on = active === t.key;

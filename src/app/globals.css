@@ -10,6 +10,22 @@
   --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
 }
 
+/* Elongated document scroll (Pass 7): the page scrolls as one document; hide
+   the scrollbar chrome app-wide while keeping it scrollable. .no-scrollbar is
+   reusable for any inner scroller that should stay bar-free. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 :root {
   /* Editorial chrome palette — fixed, near-monochrome. The chrome stays quiet
      so attendee Style tokens (the --dt-* group below) lead in the output. */

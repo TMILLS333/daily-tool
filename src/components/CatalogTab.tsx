@@ -159,7 +159,7 @@ export function CatalogTab({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <div className="flex justify-end">
         <HonestyChip variant="hard">Hard · enforced</HonestyChip>
       </div>
@@ -169,7 +169,7 @@ export function CatalogTab({
         agent can no longer reach for it on the next run. Open-ended has no
         catalog, by design: that is what HIGH freedom means.
       </p>
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto">
+      <div className="space-y-5">
         <section>
           <div className={sectionLabel}>Basic</div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
