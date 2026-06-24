@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { DTBadge, DTButton, DTCard } from "@/components/catalog-primitives";
 import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 
@@ -79,6 +80,8 @@ export function StyleTab({
 }) {
   const set = (patch: Partial<StyleTokens>) => onChange({ ...tokens, ...patch });
   const activeSet = activeStyleSetName(tokens);
+  const [agentSeesOpen, setAgentSeesOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,7 +102,7 @@ export function StyleTab({
             {activeSet ?? "Custom"}
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {STYLE_SETS.map((p) => {
             const on = activeSet === p.name;
             return (
@@ -108,10 +111,10 @@ export function StyleTab({
                 type="button"
                 onClick={() => onChange(p.tokens)}
                 aria-pressed={on}
-                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                className={`rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
                   on
                     ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                    : "border-[var(--line)] hover:border-neutral-400"
+                    : "border-[var(--line)] text-[var(--muted)] hover:border-neutral-400"
                 }`}
               >
                 {p.name}
@@ -121,12 +124,45 @@ export function StyleTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Color label="Brand" value={tokens.brand} onChange={(v) => set({ brand: v })} />
-        <Color label="Brand contrast" value={tokens.brandContrast} onChange={(v) => set({ brandContrast: v })} />
-        <Color label="Border" value={tokens.border} onChange={(v) => set({ border: v })} />
-        <Range label="Radius" value={px(tokens.radius)} min={0} max={24} onChange={(n) => set({ radius: `${n}px` })} />
-        <Range label="Gap" value={px(tokens.gap)} min={0} max={32} onChange={(n) => set({ gap: `${n}px` })} />
+      {/* The signature Theme beat: what the agent sees is nothing. */}
+      <div>
+        <button
+          type="button"
+          aria-expanded={agentSeesOpen}
+          onClick={() => setAgentSeesOpen((o) => !o)}
+          className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+        >
+          <span aria-hidden>{agentSeesOpen ? "▾" : "▸"}</span>
+          <span aria-hidden>◉</span>
+          what the agent sees
+        </button>
+        {agentSeesOpen ? (
+          <p className="mt-1 rounded-lg border border-[var(--line)] bg-[var(--vellum)] px-3 py-2 text-xs text-[var(--muted)]">
+            Nothing — your tokens are applied by code. The agent picks
+            components and asks for roles, never colors.
+          </p>
+        ) : null}
+      </div>
+
+      <div>
+        <button
+          type="button"
+          aria-expanded={advancedOpen}
+          onClick={() => setAdvancedOpen((o) => !o)}
+          className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+        >
+          <span aria-hidden>{advancedOpen ? "▾" : "▸"}</span>
+          Advanced · fine-tune tokens
+        </button>
+        {advancedOpen ? (
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Color label="Brand" value={tokens.brand} onChange={(v) => set({ brand: v })} />
+            <Color label="Brand contrast" value={tokens.brandContrast} onChange={(v) => set({ brandContrast: v })} />
+            <Color label="Border" value={tokens.border} onChange={(v) => set({ border: v })} />
+            <Range label="Radius" value={px(tokens.radius)} min={0} max={24} onChange={(n) => set({ radius: `${n}px` })} />
+            <Range label="Gap" value={px(tokens.gap)} min={0} max={32} onChange={(n) => set({ gap: `${n}px` })} />
+          </div>
+        ) : null}
       </div>
 
       <div>
