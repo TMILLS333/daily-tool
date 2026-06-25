@@ -4,8 +4,8 @@ import type { WhyAccount } from "@/lib/catalog";
 import { HonestyChip } from "@/components/TeachingCard";
 
 /**
- * The why-strip — a quiet band beneath the rendered output, split by PROVENANCE
- * so the demo never blurs a guarantee with a claim:
+ * The why-strip — two PROVENANCE cards beneath the rendered output, so the demo
+ * never blurs a guarantee with a claim:
  *   - "Computed by the app" (verified): the active pattern, the AI-freedom level,
  *     and the components allowed (allowedComponentNames) — app truth, not a model
  *     claim. Small models hallucinate their own catalog, so this is enforced.
@@ -13,7 +13,13 @@ import { HonestyChip } from "@/components/TeachingCard";
  *     structure, drawn-from, notes — the model's self-report, which can be wrong.
  * On the Real A2UI path the agent emits operations and no written why-account, so
  * the model zone is replaced by an honest note rather than empty fields.
+ *
+ * Each zone is its own card on the chrome --surface (the "card" color, distinct
+ * from the --paper panel ground), padded on the 8/4 grid (p-4, gap-2, mb-2).
  */
+const cardClass =
+  "rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-4";
+
 export function WhyPanel({
   why,
   componentsAllowed,
@@ -33,11 +39,11 @@ export function WhyPanel({
 }) {
   const label = "text-[11px] uppercase tracking-wide text-[var(--faint)]";
 
-  // Pre-run on the simplified path: the quiet prompt. (The real path always has
-  // app-truth to show, so it skips the placeholder.)
+  // Pre-run on the simplified path: the quiet prompt, on its own card. (The real
+  // path always has app-truth to show, so it skips the placeholder.)
   if (!why && !realPath) {
     return (
-      <aside className="rounded-[var(--dt-radius)] border border-[var(--line)] px-4 py-3">
+      <aside className={cardClass}>
         <p className="text-sm text-[var(--faint)]">
           <span className="font-medium text-[var(--muted)]">Why this render</span>{" "}
           — run a request and the agent reports the pattern it used, the rules it
@@ -50,20 +56,20 @@ export function WhyPanel({
   const patternName = pattern === "static" ? "Controlled" : pattern;
 
   return (
-    <aside className="flex flex-col gap-3 rounded-[var(--dt-radius)] border border-[var(--line)] px-4 py-3">
-      {/* Computed by the app — verified, not a model claim. */}
-      <div>
+    <aside className="flex flex-col gap-2">
+      {/* Computed by the app — verified, not a model claim. Its own card. */}
+      <div className={cardClass}>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[12px] font-medium text-[var(--ink)]">
             Computed by the app
           </span>
           <HonestyChip variant="hard">Verified</HonestyChip>
         </div>
-        <div className="flex flex-wrap gap-x-10 gap-y-3">
+        <div className="flex flex-wrap gap-x-10 gap-y-4">
           <div>
             <div className={label}>Pattern</div>
             <div className="font-serif text-[15px] capitalize">{patternName}</div>
-            <div className="mt-0.5 text-[11px] text-[var(--faint)]">
+            <div className="mt-1 text-[11px] text-[var(--faint)]">
               {freedom} AI freedom
             </div>
           </div>
@@ -85,9 +91,9 @@ export function WhyPanel({
         </div>
       </div>
 
-      {/* Reported by the model — the agent's own account (can be wrong). On the
-          real A2UI path there is no written account, so an honest note replaces it. */}
-      <div className="border-t border-[var(--line)] pt-3">
+      {/* Reported by the model — the agent's own account (can be wrong). Its own
+          card. On the real A2UI path an honest note replaces the written account. */}
+      <div className={cardClass}>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[12px] font-medium text-[var(--ink)]">
             Reported by the model
