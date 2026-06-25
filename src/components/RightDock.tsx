@@ -1,13 +1,13 @@
 "use client";
 
 // Right-side authoring dock (v3 shell). Replaces the old left <nav> tab-router.
-// A slim vertical column of four icon tiles — Data, Rules, Catalog, Theme —
-// each carrying a save-state badge. It is CHROME, so it uses the fixed chrome
-// tokens (--petrol accent, --line, --surface, --vellum), never the swappable
-// --dt-* render tokens, matching the retired nav's intent (page.tsx:614).
+// A vertical column of four icon tiles — Data, Rules, Catalog, Theme — each
+// carrying a save-state badge. It is CHROME, so it uses the fixed chrome tokens
+// (--petrol accent, --line, --surface, --vellum), never the swappable --dt-*
+// render tokens, matching the retired nav's intent (page.tsx:614).
 // It renders NO run control: running is the canvas request input's submit arrow.
-// The per-layer `status` is a static placeholder in this slice; real
-// applied/pending/live derivation lands in the next slice.
+// Pass 4: chunkier tiles + readable (>=11px) labels + inactive contrast raised
+// off --faint to --muted, so the dock reads present, not faint.
 
 export type AuthoringTab = "data" | "rules" | "catalog" | "style";
 export type LayerStatus = "applied" | "pending" | "live";
@@ -49,7 +49,7 @@ export function RightDock({
   return (
     <nav
       aria-label="Authoring layers"
-      className="sticky top-0 flex h-dvh shrink-0 flex-col items-center gap-1.5 self-start border-l border-[var(--line)] bg-[var(--vellum)] px-2 py-4"
+      className="sticky top-0 flex h-dvh shrink-0 flex-col items-center gap-2 self-start border-l border-[var(--line)] bg-[var(--vellum)] px-2.5 py-4"
     >
       {tiles.map((t) => {
         const on = active === t.key;
@@ -62,34 +62,36 @@ export function RightDock({
             aria-pressed={on}
             aria-label={`${t.name} — ${badge.label}`}
             title={`${t.name} · ${badge.label}`}
-            className={`relative flex h-12 w-12 flex-col items-center justify-center rounded-[10px] transition-colors ${
+            className={`relative flex h-16 w-16 flex-col items-center justify-center rounded-[12px] transition-colors ${
               on
-                ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+                ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                : "text-[var(--muted)] hover:bg-[rgba(255,255,255,0.5)]"
             }`}
           >
             {on && (
               <span
-                className="absolute inset-y-2 right-0 w-[3px] rounded-l bg-[var(--petrol)]"
+                className="absolute inset-y-2 right-0 w-1 rounded-l bg-[var(--petrol)]"
                 aria-hidden
               />
             )}
             <span
-              className={`text-[15px] leading-none ${
-                on ? "text-[var(--petrol)]" : "text-[var(--faint)]"
+              className={`text-[20px] leading-none ${
+                on ? "text-[var(--petrol)]" : "text-[var(--muted)]"
               }`}
               aria-hidden
             >
               {t.glyph}
             </span>
             <span
-              className="mt-0.5 text-[8px] uppercase tracking-wide text-[var(--faint)]"
+              className={`mt-1 text-[11px] leading-none ${
+                on ? "text-[var(--ink)]" : "text-[var(--muted)]"
+              }`}
               aria-hidden
             >
               {t.name}
             </span>
             <span
-              className="absolute right-1 top-1 text-[9px] font-semibold leading-none"
+              className="absolute right-1.5 top-1.5 text-[10px] font-semibold leading-none"
               style={{ color: badge.tone }}
               aria-hidden
             >

@@ -751,7 +751,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             </span>
           </div>
         </header>
-        <div className="mx-auto w-full max-w-[860px] px-10 py-8">
+        <div className="mx-auto w-full max-w-[900px] px-10 py-8">
           <SetupSequence
             steps={setupSteps}
             current={setupStep}
@@ -779,7 +779,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         {/* Canvas chrome top bar: the wordmark doubles as "home" (→ Preview),
             plus the two surfaces the dock does not hold — Design Notes and the
             parked Chat — so removing the nav strands neither. */}
-        <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
+        <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
+          <div className="mx-auto flex w-full max-w-[900px] items-center justify-between">
           <button
             type="button"
             onClick={() => setTab("preview")}
@@ -818,11 +819,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               <span aria-hidden>✦</span> Chat
             </button>
           </div>
+          </div>
         </header>
 
         <div className="px-10 py-8">
           {isAuthoring && (
-            <div className="mx-auto max-w-[820px]">
+            <div className="mx-auto max-w-[900px]">
               {tab === "data" && (
                 <DataTab
                   value={data}
@@ -1151,7 +1153,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
           {/* Design Notes — placeholder surface (the decision log lands later). */}
           {tab === "notes" && (
-            <div className="mx-auto max-w-[820px]">
+            <div className="mx-auto max-w-[900px]">
               <h2 className="font-serif text-2xl">Design Notes</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 A running narrative of the design decisions behind each render.{" "}
@@ -1165,6 +1167,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             designer owns vs what still needs engineering, so the tool never
             pretends "no code anywhere." */}
         <footer className="shrink-0 border-t border-dashed border-[var(--line)] px-10 py-2 text-[10px] leading-relaxed text-[var(--muted)]">
+          <div className="mx-auto w-full max-w-[900px]">
           You author the{" "}
           <b className="font-semibold text-[var(--ink)]">
             vocabulary, constraints, and visual system
@@ -1172,6 +1175,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           . A genuinely <b className="font-semibold text-[var(--ink)]">new</b>{" "}
           primitive still needs engineering. Your work with the developers
           continues.
+          </div>
         </footer>
       </div>
 

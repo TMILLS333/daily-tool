@@ -27,36 +27,37 @@ html::-webkit-scrollbar {
 }
 
 :root {
-  /* Editorial chrome palette — fixed, near-monochrome. The chrome stays quiet
-     so attendee Style tokens (the --dt-* group below) lead in the output. */
-  /* Locked values: warm paper, ink, ONE fixed petrol accent, hairlines. Petrol
-     is chrome (the nav accent), kept separate from the swappable --dt-brand so
-     the chrome never flickers when a Style set is applied. Vellum = nav ground. */
-  --paper: #f3ede2;
-  --vellum: #efe9da;
-  --surface: #fffdf9;
-  --ink: #1f1c16;
-  --petrol: #1f5d59;
-  --muted: #6f6a5f;
-  --faint: #b4ab97;
-  --line: #e6dfce;
-  --line-strong: rgba(31, 28, 22, 0.2);
+  /* Editorial chrome palette — Sage frost (Pass 4). Cool green-gray frost
+     surfaces, a lighter teal accent, and higher-contrast muted text. The chrome
+     stays quiet so attendee Style tokens (the --dt-* group below) lead. */
+  /* Petrol is chrome (the nav/dock accent), kept separate from the swappable
+     --dt-brand so the chrome never flickers when a Style set is applied.
+     Vellum = dock ground. --muted/--faint darkened to pass WCAG AA / AA-large. */
+  --paper: #edf0ea;
+  --vellum: #e6eae1;
+  --surface: #fbfcf8;
+  --ink: #1c211a;
+  --petrol: #2b8f74;
+  --muted: #54655c;
+  --faint: #6b7a70;
+  --line: #dce3d5;
+  --line-strong: rgba(28, 33, 26, 0.22);
 
   --background: var(--paper);
   --foreground: var(--ink);
 
   /* Design tokens — the Style tab edits these as a visual form, and they drive
-     the rendered OUTPUT (catalog primitives), not the chrome. Defaults are the
-     "Editorial" preset; attendee edits override live so their choices lead.
-     Keep components token-driven, never hard-coded. */
-  --dt-brand: #1f5d59;
+     the rendered OUTPUT (catalog primitives), not the chrome. Defaults track
+     the Sage-frost chrome so the default render reads cohesive; attendee edits
+     override live so their choices lead. Keep components token-driven. */
+  --dt-brand: #2b8f74;
   --dt-brand-contrast: #ffffff;
-  --dt-border: #e3dccf;
+  --dt-border: #d8e0d4;
   --dt-radius: 10px;
   --dt-gap: 12px;
 
-  --dt-tone-neutral-bg: #efe9dd;
-  --dt-tone-neutral-fg: #5f5a4f;
+  --dt-tone-neutral-bg: #e8ece4;
+  --dt-tone-neutral-fg: #4f5b52;
   --dt-tone-success-bg: #e9f0ea;
   --dt-tone-success-fg: #3b6d4f;
   --dt-tone-warning-bg: #f6edd9;
