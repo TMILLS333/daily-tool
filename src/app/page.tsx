@@ -740,7 +740,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   if (!revealWorkingShell) {
     return (
       <div
-        className="flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
+        className="flex min-h-dvh flex-col hero-wash text-[var(--ink)]"
         style={tokenStyle}
       >
         <header className="flex shrink-0 items-center border-b border-[var(--line)] px-10 py-3">

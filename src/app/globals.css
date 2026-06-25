@@ -43,6 +43,10 @@ html::-webkit-scrollbar {
   --line: #dce3d5;
   --line-strong: rgba(28, 33, 26, 0.22);
 
+  /* base44-style entry wash (Pass 12): cool teal-tint → sage field →
+     warm peach. First-run hero only; the working shell stays flat --paper. */
+  --hero-wash: linear-gradient(135deg, #e2efe8 0%, var(--paper) 50%, #f4e2d0 100%);
+
   --background: var(--paper);
   --foreground: var(--ink);
 
@@ -70,6 +74,10 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.hero-wash {
+  background: var(--hero-wash);
 }
 
 /* Range sliders (creativity lever, Style tab) stay monochrome ink — the brand
