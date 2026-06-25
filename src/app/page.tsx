@@ -1238,8 +1238,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   </button>
                 </div>
               </div>
-              <div className="pbody">
-                <CatalogTab
+              <CatalogTab
                   bare
                   enabled={enabled}
                   onToggle={(name, next) =>
@@ -1257,7 +1256,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     })
                   }
                 />
-              </div>
               <div className="pfoot">
                 <span>
                   {enabledNames.size} of {CATALOG.length} enabled

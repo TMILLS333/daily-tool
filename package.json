@@ -16,6 +16,7 @@
     "@copilotkit/react-core": "1.60.2",
     "@copilotkit/runtime": "1.60.2",
     "@opennextjs/cloudflare": "1.19.11",
+    "@tabler/icons-react": "3.44.0",
     "hono": "4.11.4",
     "next": "16.2.9",
     "react": "19.2.3",
