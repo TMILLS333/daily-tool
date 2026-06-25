@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Catalog primitives — the pre-built components the agent assembles.
  *
@@ -6,7 +8,7 @@
  * re-render automatically. Keep them token-driven, not hard-coded.
  */
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export function DTHeading({ text, level = 2 }: { text: string; level?: number }) {
   const Tag = (level === 1 ? "h1" : level === 3 ? "h3" : "h2") as "h1" | "h2" | "h3";
@@ -21,7 +23,7 @@ export function DTCard({
   accent = "none",
   children,
 }: {
-  title: string;
+  title?: string;
   body?: string;
   accent?: "none" | "brand";
   children?: ReactNode;
@@ -35,7 +37,7 @@ export function DTCard({
         borderLeftWidth: accent === "brand" ? 4 : 1,
       }}
     >
-      <div className="font-serif text-base font-medium">{title}</div>
+      {title ? <div className="font-serif text-base font-medium">{title}</div> : null}
       {body ? <div className="mt-1 text-sm text-[var(--muted)]">{body}</div> : null}
       {children}
     </div>
@@ -113,6 +115,125 @@ export function DTButton({
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * Image. Display-only and honest: it renders a real <img> only when a usable
+ * src is supplied (the agent is told never to invent one); otherwise, or if the
+ * URL fails to load, it shows a captioned placeholder. The onError fallback is
+ * why this module is a client component, and it makes a later "permissive src"
+ * mode safe to test without broken-image glyphs.
+ */
+export function DTImage({ alt, src }: { alt: string; src?: string }) {
+  const [broken, setBroken] = useState(false);
+  const showImage = Boolean(src && src.trim()) && !broken;
+  if (showImage) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt}
+        onError={() => setBroken(true)}
+        className="block w-full object-cover"
+        style={{ borderRadius: "var(--dt-radius)", maxHeight: 240 }}
+      />
+    );
+  }
+  return (
+    <div
+      role="img"
+      aria-label={alt}
+      className="flex flex-col items-center justify-center gap-2 border text-center"
+      style={{
+        borderRadius: "var(--dt-radius)",
+        borderColor: "var(--dt-border)",
+        background: "var(--surface)",
+        minHeight: 120,
+        padding: "var(--dt-gap)",
+      }}
+    >
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--faint)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="M21 15l-5-5L5 21" />
+      </svg>
+      <span className="text-xs text-[var(--muted)]">{alt}</span>
+    </div>
+  );
+}
+
+// A small, fixed glyph set. Curated on purpose: the agent picks a name from
+// this list, an unknown name degrades to a neutral dot. Stroke-driven so they
+// inherit the brand token; 'star' and 'dot' fill for weight.
+const ICON_GLYPHS: Record<string, ReactNode> = {
+  check: <path d="M20 6L9 17l-5-5" />,
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 7.5h.01" />
+    </>
+  ),
+  warning: (
+    <>
+      <path d="M12 3l9 16H3z" />
+      <path d="M12 10v4M12 17h.01" />
+    </>
+  ),
+  star: (
+    <path
+      d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.9 6.6 20l1-6.1L3.2 9.5l6.1-.9z"
+      fill="var(--dt-brand)"
+      stroke="none"
+    />
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <path d="M3 9h18M8 2v4M16 2v4" />
+    </>
+  ),
+  dot: <circle cx="12" cy="12" r="4.5" fill="var(--dt-brand)" stroke="none" />,
+  "arrow-right": <path d="M5 12h14M13 6l6 6-6 6" />,
+};
+
+export function DTIcon({ name, label }: { name: string; label?: string }) {
+  const glyph = ICON_GLYPHS[name] ?? ICON_GLYPHS.dot;
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--dt-brand)"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    >
+      {glyph}
+    </svg>
+  );
+}
+
+export function DTDivider() {
+  return (
+    <hr
+      className="border-0"
+      style={{ height: 1, background: "var(--dt-border)", margin: "var(--dt-gap) 0" }}
+    />
   );
 }
 

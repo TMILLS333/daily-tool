@@ -12,7 +12,7 @@ import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
  * presentational primitives; Structured = the data-shape components. Grouping
  * lives here (not in the catalog data) to keep the change to this layer.
  */
-const BASIC = ["Heading", "Card", "Badge", "List", "Button", "Stack"];
+const BASIC = ["Heading", "Card", "Badge", "List", "Button", "Image", "Icon", "Divider", "Stack"];
 const STRUCTURED = ["PieChart", "Table", "Timeline", "Kanban", "Matrix"];
 
 export function CatalogTab({

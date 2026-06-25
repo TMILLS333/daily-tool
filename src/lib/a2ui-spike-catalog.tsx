@@ -30,7 +30,10 @@ import {
   DTBadge,
   DTButton,
   DTCard,
+  DTDivider,
   DTHeading,
+  DTIcon,
+  DTImage,
   DTKanban,
   DTList,
   DTMatrix,
@@ -50,11 +53,16 @@ const definitions = {
   },
   Card: {
     description:
-      "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand').",
+      "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'), children (array of the IDs of child components to place inside, in order). 'childIds' is accepted as an alias.",
     props: z.object({
-      title: z.string(),
-      body: z.string(),
+      title: z.string().optional(),
+      body: z.string().optional(),
       accent: z.enum(["none", "brand"]).optional(),
+      // Card is a container too: child IDs, same shape as Stack.
+      children: z
+        .array(z.union([z.string(), z.object({ id: z.string() }).passthrough()]))
+        .optional(),
+      childIds: z.array(z.string()).optional(),
     }),
   },
   Badge: {
@@ -94,6 +102,34 @@ const definitions = {
       label: z.string(),
       intent: z.enum(["primary", "secondary"]).optional(),
     }),
+  },
+  Image: {
+    description:
+      "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder.",
+    props: z.object({
+      alt: z.string(),
+      src: z.string().optional(),
+    }),
+  },
+  Icon: {
+    description:
+      "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional, for accessibility).",
+    props: z.object({
+      name: z.enum([
+        "check",
+        "info",
+        "warning",
+        "star",
+        "calendar",
+        "dot",
+        "arrow-right",
+      ]),
+      label: z.string().optional(),
+    }),
+  },
+  Divider: {
+    description: "A thin horizontal rule that separates sections. No props.",
+    props: z.object({}),
   },
   PieChart: {
     description:
@@ -148,9 +184,26 @@ const definitions = {
     subset of component names (catalog-governance enforcement). */
 const renderers = {
   Heading: ({ props }) => <DTHeading text={props.text} level={props.level} />,
-  Card: ({ props }) => (
-    <DTCard title={props.title} body={props.body} accent={props.accent} />
-  ),
+  Card: ({ props, children }) => {
+    // Card is a container too: resolve child IDs the same way Stack does.
+    const list = props.children ?? props.childIds ?? [];
+    const ids = (Array.isArray(list) ? list : [])
+      .map((item) =>
+        typeof item === "string"
+          ? item
+          : item && typeof item === "object" && "id" in item
+            ? item.id
+            : null
+      )
+      .filter((id): id is string => Boolean(id));
+    return (
+      <DTCard title={props.title} body={props.body} accent={props.accent}>
+        {ids.map((id, i) => (
+          <Fragment key={`${id}-${i}`}>{children(id)}</Fragment>
+        ))}
+      </DTCard>
+    );
+  },
   Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} />,
   Stack: ({ props, children }) => {
     // A2UI references children by ID. The agent emits the ID list under the
@@ -181,6 +234,9 @@ const renderers = {
     <DTList title={props.title} items={props.items} ordered={props.ordered} />
   ),
   Button: ({ props }) => <DTButton label={props.label} intent={props.intent} />,
+  Image: ({ props }) => <DTImage alt={props.alt} src={props.src} />,
+  Icon: ({ props }) => <DTIcon name={props.name} label={props.label} />,
+  Divider: () => <DTDivider />,
   PieChart: ({ props }) => (
     <DTPieChart title={props.title} labels={props.labels} values={props.values} />
   ),
