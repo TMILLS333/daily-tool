@@ -65,11 +65,12 @@ function px(value: string) {
 }
 
 /**
- * Theme tab — one of the three creativity levers. The design tokens as a
- * visual form, not raw CSS. Presets set the whole group; advanced controls
- * tune individual tokens. Every catalog primitive reads these tokens, so the
- * sample below (and the agent's renders) re-theme live as you edit. The
- * globals.css defaults stay intact as the reset baseline.
+ * Theme tab — the design tokens as a visual form, not raw CSS. In a popup
+ * (`bare`) it shows the mockup's direct token controls (brand, radius, gap, and
+ * the read-only tone swatches); the canvas behind applies every change live, so
+ * "Applies instantly, no run needed." In the first-run stepper (non-bare) it
+ * keeps the fuller form (preset sets, the "what the agent sees" beat, advanced
+ * fine-tuning, and a live sample).
  */
 export function StyleTab({
   tokens,
@@ -78,7 +79,8 @@ export function StyleTab({
 }: {
   tokens: StyleTokens;
   onChange: (next: StyleTokens) => void;
-  /** In-popup mode: drop the chip + intro + teaching card (the popup says them). */
+  /** In-popup mode: show the mockup's direct token controls; drop the chip /
+      intro / teaching (the popup chrome states them). */
   bare?: boolean;
 }) {
   const set = (patch: Partial<StyleTokens>) => onChange({ ...tokens, ...patch });
@@ -103,87 +105,147 @@ export function StyleTab({
         </>
       )}
 
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-xs font-medium text-neutral-700">Theme sets</span>
-          <span className="text-xs text-neutral-400">
-            {activeSet ?? "Custom"}
-          </span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {STYLE_SETS.map((p) => {
-            const on = activeSet === p.name;
-            return (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => onChange(p.tokens)}
-                aria-pressed={on}
-                className={`rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
-                  on
-                    ? "border-[var(--ink)] font-medium text-[var(--ink)]"
-                    : "border-[var(--line)] text-[var(--muted)] hover:border-neutral-400"
-                }`}
-              >
-                {p.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* The signature Theme beat: what the agent sees is nothing. */}
-      <div>
-        <button
-          type="button"
-          aria-expanded={agentSeesOpen}
-          onClick={() => setAgentSeesOpen((o) => !o)}
-          className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
-        >
-          <span aria-hidden>{agentSeesOpen ? "▾" : "▸"}</span>
-          <span aria-hidden>◉</span>
-          what the agent sees
-        </button>
-        {agentSeesOpen ? (
-          <p className="mt-1 rounded-lg border border-[var(--line)] bg-[var(--vellum)] px-3 py-2 text-xs text-[var(--muted)]">
-            Nothing — your tokens are applied by code. The agent picks
-            components and asks for roles, never colors.
-          </p>
-        ) : null}
-      </div>
-
-      <div>
-        <button
-          type="button"
-          aria-expanded={advancedOpen}
-          onClick={() => setAdvancedOpen((o) => !o)}
-          className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
-        >
-          <span aria-hidden>{advancedOpen ? "▾" : "▸"}</span>
-          Advanced · fine-tune tokens
-        </button>
-        {advancedOpen ? (
-          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Color label="Brand" value={tokens.brand} onChange={(v) => set({ brand: v })} />
-            <Color label="Brand contrast" value={tokens.brandContrast} onChange={(v) => set({ brandContrast: v })} />
-            <Color label="Border" value={tokens.border} onChange={(v) => set({ border: v })} />
-            <Range label="Radius" value={px(tokens.radius)} min={0} max={24} onChange={(n) => set({ radius: `${n}px` })} />
-            <Range label="Gap" value={px(tokens.gap)} min={0} max={32} onChange={(n) => set({ gap: `${n}px` })} />
+      {bare ? (
+        <div className="tok">
+          <div className="tok-row">
+            <span className="k">Brand</span>
+            <span className="v">
+              <input
+                type="color"
+                value={tokens.brand}
+                onChange={(e) => set({ brand: e.target.value })}
+                aria-label="Brand color"
+              />
+              {tokens.brand}
+            </span>
           </div>
-        ) : null}
-      </div>
-
-      <div>
-        <div className="mb-1 text-xs font-medium text-neutral-700">Live sample</div>
-        <div className="flex flex-col" style={{ gap: "var(--dt-gap)" }}>
-          <DTCard title="Themed card" body="This card reads your tokens." accent="brand" />
-          <div className="flex items-center" style={{ gap: "var(--dt-gap)" }}>
-            <DTBadge label="Status" tone="success" />
-            <DTButton label="Primary" intent="primary" />
-            <DTButton label="Secondary" intent="secondary" />
+          <div className="tok-row">
+            <span className="k">Corner radius</span>
+            <span className="v">
+              <input
+                type="range"
+                min={0}
+                max={20}
+                value={px(tokens.radius)}
+                onChange={(e) => set({ radius: `${e.target.value}px` })}
+                style={{ width: 120 }}
+                aria-label="Corner radius"
+              />
+              <span style={{ minWidth: 36, textAlign: "right" }}>{px(tokens.radius)}px</span>
+            </span>
+          </div>
+          <div className="tok-row">
+            <span className="k">Gap</span>
+            <span className="v">
+              <input
+                type="range"
+                min={4}
+                max={24}
+                value={px(tokens.gap)}
+                onChange={(e) => set({ gap: `${e.target.value}px` })}
+                style={{ width: 120 }}
+                aria-label="Gap"
+              />
+              <span style={{ minWidth: 36, textAlign: "right" }}>{px(tokens.gap)}px</span>
+            </span>
+          </div>
+          <div>
+            <div className="tok-row" style={{ marginBottom: 7 }}>
+              <span className="k">Tones</span>
+              <span className="v">neutral · success · warning · danger</span>
+            </div>
+            <div className="tones">
+              <span className="tone" style={{ background: "#e8ece4" }} />
+              <span className="tone" style={{ background: "#e9f0ea" }} />
+              <span className="tone" style={{ background: "#f6edd9" }} />
+              <span className="tone" style={{ background: "#f4e9e7" }} />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div>
+            <div className="mb-1 flex items-baseline justify-between">
+              <span className="text-xs font-medium text-neutral-700">Theme sets</span>
+              <span className="text-xs text-neutral-400">{activeSet ?? "Custom"}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {STYLE_SETS.map((p) => {
+                const on = activeSet === p.name;
+                return (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => onChange(p.tokens)}
+                    aria-pressed={on}
+                    className={`rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
+                      on
+                        ? "border-[var(--ink)] font-medium text-[var(--ink)]"
+                        : "border-[var(--line)] text-[var(--muted)] hover:border-neutral-400"
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* The signature Theme beat: what the agent sees is nothing. */}
+          <div>
+            <button
+              type="button"
+              aria-expanded={agentSeesOpen}
+              onClick={() => setAgentSeesOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+            >
+              <span aria-hidden>{agentSeesOpen ? "▾" : "▸"}</span>
+              <span aria-hidden>◉</span>
+              what the agent sees
+            </button>
+            {agentSeesOpen ? (
+              <p className="mt-1 rounded-lg border border-[var(--line)] bg-[var(--vellum)] px-3 py-2 text-xs text-[var(--muted)]">
+                Nothing. Your tokens are applied by code. The agent picks
+                components and asks for roles, never colors.
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <button
+              type="button"
+              aria-expanded={advancedOpen}
+              onClick={() => setAdvancedOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+            >
+              <span aria-hidden>{advancedOpen ? "▾" : "▸"}</span>
+              Advanced · fine-tune tokens
+            </button>
+            {advancedOpen ? (
+              <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Color label="Brand" value={tokens.brand} onChange={(v) => set({ brand: v })} />
+                <Color label="Brand contrast" value={tokens.brandContrast} onChange={(v) => set({ brandContrast: v })} />
+                <Color label="Border" value={tokens.border} onChange={(v) => set({ border: v })} />
+                <Range label="Radius" value={px(tokens.radius)} min={0} max={24} onChange={(n) => set({ radius: `${n}px` })} />
+                <Range label="Gap" value={px(tokens.gap)} min={0} max={32} onChange={(n) => set({ gap: `${n}px` })} />
+              </div>
+            ) : null}
+          </div>
+
+          <div>
+            <div className="mb-1 text-xs font-medium text-neutral-700">Live sample</div>
+            <div className="flex flex-col" style={{ gap: "var(--dt-gap)" }}>
+              <DTCard title="Themed card" body="This card reads your tokens." accent="brand" />
+              <div className="flex items-center" style={{ gap: "var(--dt-gap)" }}>
+                <DTBadge label="Status" tone="success" />
+                <DTButton label="Primary" intent="primary" />
+                <DTButton label="Secondary" intent="secondary" />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {!bare && (
         <TeachingCard
           name="Theme"
