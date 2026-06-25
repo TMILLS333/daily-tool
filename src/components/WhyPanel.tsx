@@ -80,13 +80,20 @@ export function WhyPanel({
                 (from your catalog)
               </span>
             </div>
-            <div className="text-sm text-[var(--ink)]">
-              {componentsAllowed.length === 0 ? (
-                <span className="text-[var(--faint)]">none — rules only</span>
-              ) : (
-                componentsAllowed.join(" · ")
-              )}
-            </div>
+            {componentsAllowed.length === 0 ? (
+              <div className="text-sm text-[var(--faint)]">none — rules only</div>
+            ) : (
+              <div className="mt-1 flex flex-wrap gap-2">
+                {componentsAllowed.map((name) => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--paper)] px-2 py-1 text-[11px] text-[var(--ink)]"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
