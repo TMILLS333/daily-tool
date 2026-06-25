@@ -47,6 +47,12 @@ import {
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
 import { buildCatalog } from "@/lib/a2ui-spike-catalog";
 import "./prompt-v2.css";
+import {
+  IconDatabase,
+  IconListDetails,
+  IconTable,
+  IconCircleHalf2,
+} from "@tabler/icons-react";
 
 // Legacy safety net — redundant as of @copilotkit 1.60.1 / @ag-ui/client 0.0.57.
 // This WAS the fix for an upstream bug: @ag-ui/client stored the global `fetch`
@@ -1147,11 +1153,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 setTab((cur) => (cur === "data" ? "preview" : "data"))
               }
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <ellipse cx="12" cy="6" rx="8" ry="3" />
-                <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
-                <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
-              </svg>
+              <IconDatabase size={16} stroke={1.5} aria-hidden />
               <span className="lab">
                 Data<span className="ct">loose text</span>
               </span>
@@ -1163,9 +1165,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 setTab((cur) => (cur === "rules" ? "preview" : "rules"))
               }
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
-              </svg>
+              <IconListDetails size={16} stroke={1.5} aria-hidden />
               <span className="lab">
                 Rules
                 <span className="ct">
@@ -1180,10 +1180,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 setTab((cur) => (cur === "catalog" ? "preview" : "catalog"))
               }
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="3" y="4" width="18" height="16" rx="2" />
-                <path d="M3 10h18M9 4v16" />
-              </svg>
+              <IconTable size={16} stroke={1.5} aria-hidden />
               <span className="lab">
                 Catalog
                 <span className="ct">
@@ -1198,10 +1195,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 setTab((cur) => (cur === "style" ? "preview" : "style"))
               }
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none" />
-              </svg>
+              <IconCircleHalf2 size={16} stroke={1.5} aria-hidden />
               <span className="lab">
                 Theme<span className="ct">Sage</span>
               </span>
