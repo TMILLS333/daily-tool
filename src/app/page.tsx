@@ -91,17 +91,17 @@ const PATTERN_CARDS: Record<
 > = {
   static: {
     name: "Controlled",
-    line: "You built the components. The agent fills them.",
+    line: "The agent fills a fixed layout you define, most predictable.",
     freedom: "Low",
   },
   declarative: {
     name: "Declarative",
-    line: "The agent proposes a spec. Your catalog approves.",
-    freedom: "Medium",
+    line: "The agent composes from your catalog into a layout it chooses.",
+    freedom: "Med",
   },
   "open-ended": {
-    name: "Open-ended",
-    line: "No catalog. The agent invents the surface.",
+    name: "Open-Ended",
+    line: "No catalog, the agent writes the interface freely. Most surprising.",
     freedom: "High",
   },
 };
@@ -1094,7 +1094,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 );
               })}
             </div>
-            <div className="fdesc">{PATTERN_CARDS[pattern].line}</div>
+            <div className="fdesc">
+              <b>{PATTERN_CARDS[pattern].name}.</b> {PATTERN_CARDS[pattern].line}
+            </div>
           </div>
 
           <div className="pb">
