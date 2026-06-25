@@ -48,18 +48,20 @@ export function DataTab({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-neutral-500">
-        Paste your daily pile of text below — meeting notes, audit findings, a
-        brief, a CSV, anything. This is the only data the agent is allowed to
-        use. It is never parsed here; the agent does the structuring.
-      </p>
+      {/* Pass 3 cleanup (Version A): lead with a short title; the long
+          "how it works" explanation moved into the collapsed card below. */}
+      <div>
+        <div className="text-sm font-semibold text-neutral-800">Your data</div>
+        <p className="text-xs text-neutral-500">
+          {"The agent's only source of facts."}
+        </p>
+      </div>
 
-      {/* Starters + upload. Both just load text into the box below; loading
-          replaces whatever is there. Samples are embedded (no network). */}
+      {/* Samples + upload, tidied into one chip row. Both just load text into
+          the box below; loading replaces whatever is there. Samples are
+          embedded (no network). */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-neutral-700">
-          No data handy? Load a sample CSV:
-        </span>
+        <span className="text-xs text-neutral-400">Samples</span>
         {STARTER_DATASETS.map((s) => (
           <button
             key={s.id}
@@ -79,7 +81,7 @@ export function DataTab({
           title="Coming soon"
           className="cursor-not-allowed rounded-full border border-dashed border-[var(--line)] px-3 py-1 text-xs text-neutral-400"
         >
-          Upload a file · coming soon
+          Upload · soon
         </button>
         <input
           ref={fileRef}
@@ -89,9 +91,6 @@ export function DataTab({
           className="hidden"
         />
       </div>
-      <p className="text-xs text-neutral-400">
-        Loading a sample or a file replaces the box below.
-      </p>
 
       {/* WHO context fields hidden (Pass 9 declutter): gated off, kept wired
           (context state + useAgentContext plumbing stays). */}
@@ -133,8 +132,9 @@ export function DataTab({
       />
       <TeachingCard
         name="Data"
-        mechanism="Whatever you paste is one unstructured block, and it is the agent's only source of facts. It is never parsed here; the agent does the structuring on the next run."
-        purpose="Give the agent ground truth to structure. What you paste is the only thing it can build from, so the data you bring decides what the render can say."
+        collapsible
+        mechanism="In a real product this data would arrive via an API, a database, or a connector. Here you paste it by hand to stand in for that. The agent never parses it in this panel."
+        purpose="Whatever is in the box is the agent's only source of facts. It structures that raw text into the render on each run, so the data you bring decides what the render can say."
       />
     </div>
   );
