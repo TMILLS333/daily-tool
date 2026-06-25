@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "1.0.40",
-    "@copilotkit/react-core": "1.60.1",
-    "@copilotkit/runtime": "1.60.1",
+    "@copilotkit/react-core": "1.60.2",
+    "@copilotkit/runtime": "1.60.2",
     "@opennextjs/cloudflare": "1.19.11",
     "hono": "4.11.4",
     "next": "16.2.9",
