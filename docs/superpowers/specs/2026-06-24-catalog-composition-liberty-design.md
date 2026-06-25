@@ -62,9 +62,8 @@ All token-driven (`--dt-*`), no external dependencies, matching the hand-rolled-
 2. `src/lib/catalog.tsx` — register `Image`, `Icon`, `Divider` (`enabled: true`) with descriptions + zod props; set `Card` `container: true` and `title` optional; add `CATALOG_SAMPLES` for the three (and a child sample for Card).
 3. `src/lib/a2ui-spike-catalog.tsx` — add `Image`, `Icon`, `Divider` definitions + renderers; add the by-id child resolver to `Card`.
 4. `src/app/api/copilotkit-a2ui-spike/[[...slug]]/route.ts` — add the three to `A2UI_SCHEMA` (mirroring the catalog descriptions, including the Image honesty line in the Image description); update the `Card` description to note it can hold children.
-5. `src/app/api/copilotkit/[[...slug]]/route.ts` — **verify only.** It builds the agent prompt from `catalogPromptText`, so the new `CATALOG` entries and the Image honesty rule (carried in the Image description) propagate automatically. No hardcoded component list expected; confirm during build.
-
-No change needed to `CatalogTab` / `CatalogView`: they iterate `CATALOG` and read `CATALOG_SAMPLES`, so the three new entries surface automatically.
+5. `src/app/api/copilotkit/[[...slug]]/route.ts` — **two halves.** The simplified `default` agent derives its catalog from `catalogPromptText`, so the new `CATALOG` entries and the Image honesty line propagate automatically (no edit). The shipped real-A2UI `declarativeA2UI` agent carries its OWN inline `A2UI_SCHEMA` (separate from the spike route's), which IS edited here: add the three components, update the `Card` description.
+6. `src/components/CatalogTab.tsx` — add `Image`, `Icon`, `Divider` to the `BASIC` grouping array. **Discovered during verification:** the Catalog tab groups by hardcoded name lists (`BASIC` / `STRUCTURED`) by design (grouping lives in the view layer), so new `CATALOG` entries do NOT auto-surface. The original AFP's "no UI change" assumption was wrong; the slice stays a focused six files.
 
 ## Enablement defaults
 
@@ -91,3 +90,14 @@ Verified on a keyed production build (`next build` + a real Gemini run), per hou
 - All work on `catalog-expansion` in the `../daily-tool-catalog` worktree. The parallel UI-cleanup session keeps `studio-ui-cleanup` with its uncommitted `DataTab.tsx` / `TeachingCard.tsx`, untouched.
 - Zero file overlap between this slice's AFP and the parallel session's dirty files, so a later merge is clean.
 - Base is `d6466b5` (CopilotKit 1.60.1, latest catalog), not the older `main` (`eb1bf30`).
+
+## Outcomes Record (Closeout)
+
+- **Status:** key-free criteria CLOSED; agent-driven criteria PENDING a keyed run.
+- **Files delivered (AFP, six):** `catalog-primitives.tsx`, `catalog.tsx`, `a2ui-spike-catalog.tsx`, `api/copilotkit/route.ts`, `api/copilotkit-a2ui-spike/route.ts`, `CatalogTab.tsx`.
+- **AFP corrections (recorded honestly):** the original five-file AFP (a) mischaracterized the main route as verify-only — it carries the shipped real-A2UI `A2UI_SCHEMA`, which was edited — and (b) missed `CatalogTab.tsx`, whose hardcoded `BASIC`/`STRUCTURED` grouping does not auto-surface new entries. Both folded in above; no expansion beyond the slice's intent.
+- **Verified:**
+  - Criterion 1 (build): PASS. `next build` compiled, TypeScript passed, both routes generated, zero errors.
+  - Criterion 2 (Catalog tab): PASS. `Image` (honest captioned placeholder), `Icon` (brand-teal check glyph), `Divider` (hairline) render in BASIC; the `Card` sample shows nested children; `PieChart`/`Table` unchanged (no regression). Browser console clean.
+- **Pending a keyed Gemini run (the worktree has no `.env` key):** criterion 3 (composed card, simplified path), 4 (composed card, real-A2UI path), 5 (real-`src` render path), 6 (honest mode holds across runs).
+- **Isolation:** all on `catalog-expansion`; the parallel `studio-ui-cleanup` working tree was untouched throughout.

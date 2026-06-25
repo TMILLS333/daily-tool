@@ -21,7 +21,10 @@ import {
   DTBadge,
   DTButton,
   DTCard,
+  DTDivider,
   DTHeading,
+  DTIcon,
+  DTImage,
   DTKanban,
   DTList,
   DTMatrix,
@@ -62,13 +65,14 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Card",
     description:
-      "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand').",
+      "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'). It can hold child components (for example an Image, Heading and Badge) to compose a richer card.",
     props: z.object({
-      title: z.string(),
-      body: z.string(),
+      title: z.string().optional(),
+      body: z.string().optional(),
       accent: z.enum(["none", "brand"]).optional(),
     }),
     enabled: true,
+    container: true,
     Component: DTCard,
   },
   {
@@ -104,6 +108,43 @@ export const CATALOG: CatalogEntry[] = [
     }),
     enabled: true,
     Component: DTButton,
+  },
+  {
+    name: "Image",
+    description:
+      "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder.",
+    props: z.object({
+      alt: z.string(),
+      src: z.string().optional(),
+    }),
+    enabled: true,
+    Component: DTImage,
+  },
+  {
+    name: "Icon",
+    description:
+      "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional, for accessibility).",
+    props: z.object({
+      name: z.enum([
+        "check",
+        "info",
+        "warning",
+        "star",
+        "calendar",
+        "dot",
+        "arrow-right",
+      ]),
+      label: z.string().optional(),
+    }),
+    enabled: true,
+    Component: DTIcon,
+  },
+  {
+    name: "Divider",
+    description: "A thin horizontal rule that separates sections. No props.",
+    props: z.object({}),
+    enabled: true,
+    Component: DTDivider,
   },
   {
     name: "Stack",
@@ -186,10 +227,13 @@ export const CATALOG_SAMPLES: Record<
   { props: Record<string, unknown>; childrenSample?: boolean }
 > = {
   Heading: { props: { text: "Section heading", level: 2 } },
-  Card: { props: { title: "Card title", body: "A short supporting line." , accent: "brand" } },
+  Card: { props: { title: "Card title", body: "A short supporting line.", accent: "brand" }, childrenSample: true },
   Badge: { props: { label: "Accepting", tone: "success" } },
   List: { props: { title: "Checklist", items: ["First item", "Second item"], ordered: false } },
   Button: { props: { label: "Action", intent: "primary" } },
+  Image: { props: { alt: "A captioned image placeholder" } },
+  Icon: { props: { name: "check", label: "Done" } },
+  Divider: { props: {} },
   Stack: { props: { direction: "horizontal" }, childrenSample: true },
   PieChart: { props: { title: "Sources", labels: ["A", "B", "C"], values: [50, 30, 20] } },
   Table: {

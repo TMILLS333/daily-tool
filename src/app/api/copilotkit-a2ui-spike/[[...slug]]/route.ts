@@ -46,7 +46,7 @@ const A2UI_SCHEMA = [
   {
     name: "Card",
     description:
-      "A bordered card for one idea. Props: title (string), body (string), accent ('none' | 'brand').",
+      "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'), children (array of the IDs of child components to place inside, in order).",
   },
   {
     name: "Badge",
@@ -67,6 +67,20 @@ const A2UI_SCHEMA = [
     name: "Button",
     description:
       "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version.",
+  },
+  {
+    name: "Image",
+    description:
+      "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder.",
+  },
+  {
+    name: "Icon",
+    description:
+      "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional).",
+  },
+  {
+    name: "Divider",
+    description: "A thin horizontal rule that separates sections. No props.",
   },
   {
     name: "PieChart",
