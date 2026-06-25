@@ -33,7 +33,8 @@ export function RulesTab({
         </>
       )}
       <textarea
-        className="min-h-[360px] resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
+        className="ta"
+        style={{ minHeight: 260 }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="# My design rules…"

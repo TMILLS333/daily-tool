@@ -1165,7 +1165,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
               </svg>
               <span className="lab">
-                Rules<span className="ct">guidance</span>
+                Rules
+                <span className="ct">
+                  {rules.split("\n").filter((l) => l.trim()).length} active
+                </span>
               </span>
             </button>
             <button
@@ -1282,7 +1285,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 <RulesTab bare value={rules} onChange={setRules} />
               </div>
               <div className="pfoot">
-                <span>Plain-language</span>
+                <span>
+                  {rules.split("\n").filter((l) => l.trim()).length} rules
+                </span>
                 <span className="faint">Weighed by the agent, not enforced</span>
               </div>
             </div>

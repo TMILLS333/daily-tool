@@ -61,29 +61,29 @@ export function DataTab({
         </div>
       )}
 
-      {/* Samples + upload, tidied into one chip row. Both just load text into
-          the box below; loading replaces whatever is there. Samples are
-          embedded (no network). */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-neutral-400">Samples</span>
+      {/* Example-starter chips (mockup .ex): each loads its text into the box;
+          loading replaces whatever is there. The active chip is the one whose
+          text currently fills the box. */}
+      <div className="ex">
+        <span className="ex-l">Try an example</span>
         {STARTER_DATASETS.map((s) => (
           <button
             key={s.id}
             type="button"
-            title={`${s.filename} — ${s.description}`}
+            className="ex-c"
+            aria-pressed={value === s.csv}
+            title={`${s.filename}: ${s.description}`}
             onClick={() => onChange(s.csv)}
-            className="rounded-full border border-[var(--line)] px-3 py-1 text-xs text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
           >
             {s.label}
           </button>
         ))}
-        <span className="mx-1 h-4 w-px bg-neutral-200" aria-hidden />
         <button
           type="button"
+          className="ex-c"
           disabled
           aria-disabled="true"
           title="Coming soon"
-          className="cursor-not-allowed rounded-full border border-dashed border-[var(--line)] px-3 py-1 text-xs text-neutral-400"
         >
           Upload · soon
         </button>
@@ -128,7 +128,8 @@ export function DataTab({
       )}
 
       <textarea
-        className="min-h-[360px] resize-none rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 font-mono text-sm outline-none focus:border-[var(--ink)]"
+        className="ta"
+        style={{ minHeight: 200 }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste anything here…"
