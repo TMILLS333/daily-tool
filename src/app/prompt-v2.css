@@ -9,6 +9,36 @@
 
 .pv2 {
   --off: #cdd5c8;
+  min-height: 100dvh;
+  background: #dfe4da;
+  padding: 20px;
+}
+
+/* The studio as a framed card on the backdrop (mockup .a). */
+.pv2 .a {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 0.5px solid var(--line-strong);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.pv2 .hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid var(--line);
+  padding: 13px 24px;
+  flex-shrink: 0;
+}
+.pv2 .sh {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 /* LEFT — canvas */

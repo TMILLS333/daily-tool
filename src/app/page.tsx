@@ -777,15 +777,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   }
 
   return (
-    <div
-      className="pv2 flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
-      style={tokenStyle}
-    >
-      {/* Prompt page v2 — Slice 1: full-width header on top; the body below is a
-          two-pane row (canvas mat left, tooling right). Header pulled out of the
-          canvas column so it spans the full width. */}
-      <header className="shrink-0 border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
-        <div className="flex w-full items-center justify-between">
+    <div className="pv2 text-[var(--ink)]" style={tokenStyle}>
+      {/* Prompt page v2 — the studio as a framed card on a backdrop, matching
+          mockups/prompt-page-v2.html: .a card > .hd header + .sh body row. */}
+      <div className="a">
+        <header className="hd">
+          <div className="flex w-full items-center justify-between">
           <button
             type="button"
             onClick={() => setTab("preview")}
@@ -827,13 +824,13 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           </div>
         </header>
 
-      {/* v2 body row: canvas (left) + tooling dock (right) */}
-      <div className="flex min-h-0 flex-1">
+      {/* v2 body row (.sh): canvas (left) + tooling panel (right) */}
+      <div className="sh">
         {/* CANVAS — left pane on the recessed --vellum mat. Slice 1 interim: the
             existing content sits in the mat; the artboard wrap + the dedicated
             right tooling panel land in the next slices. */}
-        <div className="flex min-w-0 flex-1 flex-col bg-[var(--vellum)]">
-        <div className="px-10 py-8">
+        <div className="canvas">
+        <div className="flex flex-col">
           {isAuthoring && (
             <div className="mx-auto max-w-[900px]">
               {tab === "data" && (
@@ -1245,6 +1242,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           genuinely <b>new</b> primitive still needs engineering.
         </div>
       </aside>
+      </div>
       </div>
 
       {/* Parked Chat — reachable from the top bar, anchored bottom-left so it
