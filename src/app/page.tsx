@@ -47,6 +47,7 @@ import {
 } from "@/lib/catalog";
 import { DEFAULT_DATA, DEFAULT_REQUEST, DEFAULT_RULES } from "@/lib/default-rules";
 import { buildCatalog } from "@/lib/a2ui-spike-catalog";
+import "./prompt-v2.css";
 
 // Legacy safety net — redundant as of @copilotkit 1.60.1 / @ag-ui/client 0.0.57.
 // This WAS the fix for an upstream bug: @ag-ui/client stored the global `fetch`
@@ -777,7 +778,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   return (
     <div
-      className="flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
+      className="pv2 flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
       style={tokenStyle}
     >
       {/* Prompt page v2 — Slice 1: full-width header on top; the body below is a
@@ -907,9 +908,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   </div>
                 )}
 
-                {/* Output module — the focal rendered surface */}
+                {/* Output module — the focal rendered surface, painted onto
+                    the centered artboard (v2). */}
                 <section>
-                  <div className={railLabel}>Output</div>
+                  <div className="canvas-lbl">Canvas</div>
                   {pattern === "declarative" && (
                     <div className="mb-2 flex items-center gap-2 text-xs">
                       <span className="text-[var(--faint)]">Render path</span>
@@ -943,7 +945,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       )}
                     </div>
                   )}
-                  <div className="rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-6">
+                  <div className="artboard">
                     {runState.kind === "running" && (
                       <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-[var(--muted)]">
                         <span
@@ -1099,74 +1101,41 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           )}
         </div>
 
-        {/* Handoff preserved (was the nav's closing beat): name what the
-            designer owns vs what still needs engineering, so the tool never
-            pretends "no code anywhere." */}
-        <footer className="shrink-0 border-t border-dashed border-[var(--line)] px-10 py-2 text-[10px] leading-relaxed text-[var(--muted)]">
-          <div className="mx-auto w-full max-w-[900px]">
-          You author the{" "}
-          <b className="font-semibold text-[var(--ink)]">
-            vocabulary, constraints, and visual system
-          </b>
-          . A genuinely <b className="font-semibold text-[var(--ink)]">new</b>{" "}
-          primitive still needs engineering. Your work with the developers
-          continues.
-          </div>
-        </footer>
+        {/* Handoff moved into the tooling panel (v2). */}
       </div>
 
-      {/* TOOLING PANEL (v2 Slice 2) — right pane. Primary zone: Freedom +
-          Prompt (moved out of the canvas). Secondary zone: demoted Layer chips
-          that open each authoring surface. Replaces the RightDock tiles. */}
-      <aside className="flex w-[384px] shrink-0 flex-col overflow-y-auto border-l border-[var(--line)] bg-[var(--paper)] p-6">
-        {/* Primary: Freedom */}
-        <div className="flex flex-col gap-5">
+      {/* TOOLING PANEL (v2) — ported from mockups/prompt-page-v2.html. Primary
+          zone: Freedom + Prompt. Secondary zone: demoted Layer chips. Handoff
+          pinned to the bottom. */}
+      <aside className="panel">
+        <div className="prime">
           <div>
-            <div className="mb-2.5 flex items-baseline gap-2">
-              <span className="text-[15px] font-medium text-[var(--ink)]">
-                Freedom
-              </span>
-              <span className="text-[11px] text-[var(--faint)]">
-                how much you let the agent decide
-              </span>
+            <div className="fhead">
+              <span className="ftitle">Freedom</span>
+              <span className="fsub">how much you let the agent decide</span>
             </div>
-            <div className="flex w-full overflow-hidden rounded-[var(--dt-radius)] border border-[var(--line-strong)]">
+            <div className="seg">
               {PATTERNS.map((p) => {
                 const on = pattern === p;
                 return (
                   <button
                     key={p}
                     type="button"
-                    onClick={() => setPattern(p)}
                     aria-pressed={on}
-                    className={`flex flex-1 flex-col items-center gap-0.5 border-r border-[var(--line)] px-2 py-2.5 transition-colors last:border-r-0 ${
-                      on
-                        ? "bg-[var(--ink)] text-[var(--surface)]"
-                        : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--line)]"
-                    }`}
+                    onClick={() => setPattern(p)}
                   >
-                    <span className="text-[13px]">{PATTERN_CARDS[p].name}</span>
-                    <span
-                      className={`text-[9px] uppercase tracking-wider ${
-                        on ? "text-[var(--surface)]" : "text-[var(--faint)]"
-                      }`}
-                    >
-                      {PATTERN_CARDS[p].freedom}
-                    </span>
+                    <span className="nm">{PATTERN_CARDS[p].name}</span>
+                    <span className="f">{PATTERN_CARDS[p].freedom}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="mt-2.5 text-[12px] leading-relaxed text-[var(--muted)]">
-              {PATTERN_CARDS[pattern].line}
-            </p>
+            <div className="fdesc">{PATTERN_CARDS[pattern].line}</div>
           </div>
 
-          {/* Prompt composer */}
-          <div className="flex flex-col rounded-[13px] border border-[var(--line-strong)] bg-[var(--surface)] p-3.5 transition-colors focus-within:border-[var(--ink)]">
+          <div className="pb">
             <textarea
               ref={requestRef}
-              className="min-h-[96px] w-full resize-none bg-transparent font-mono text-[13.5px] leading-relaxed text-[var(--ink)] outline-none"
               value={request}
               onChange={(e) => setRequest(e.target.value)}
               onKeyDown={(e) => {
@@ -1178,25 +1147,19 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               placeholder="Describe what you want from your data…"
               spellCheck={false}
             />
-            <div className="mt-2.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[11px] text-[var(--faint)]">
-                <span className="rounded border border-[var(--line)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted)]">
-                  ⌘ ↵
-                </span>{" "}
-                to run
+            <div className="pbtools">
+              <span className="phint">
+                <span className="pkey">⌘ ↵</span> to run
               </span>
               <button
+                className="run"
                 type="button"
                 aria-label={runState.kind === "running" ? "Stop" : "Run"}
                 onClick={runState.kind === "running" ? stop : () => void run()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] text-base font-medium transition-colors"
                 style={
                   runState.kind === "running"
                     ? { background: "var(--line)", color: "var(--ink)" }
-                    : {
-                        background: "var(--dt-brand)",
-                        color: "var(--dt-brand-contrast)",
-                      }
+                    : undefined
                 }
               >
                 {runState.kind === "running" ? "■" : "→"}
@@ -1205,41 +1168,81 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           </div>
         </div>
 
-        {/* Secondary: Layers (demoted) */}
-        <div className="mt-6 border-t border-[var(--line)] pt-5">
-          <div className="mb-3 flex items-baseline gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-              Layers
-            </span>
-            <span className="text-[11px] text-[var(--faint)]">
-              what the agent can use, optional
-            </span>
+        <div className="second">
+          <div className="slabel">
+            <span className="t">Layers</span>
+            <span className="s">what the agent can use, optional</span>
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            {(
-              [
-                ["data", "Data", "loose text"],
-                ["rules", "Rules", "guidance"],
-                ["catalog", "Catalog", `${enabledNames.size}/${CATALOG.length}`],
-                ["style", "Theme", "Sage"],
-              ] as const
-            ).map(([key, label, sub]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab((cur) => (cur === key ? "preview" : key))}
-                aria-pressed={tab === key}
-                className={`flex flex-col items-start rounded-[10px] border px-3 py-2.5 text-left transition-colors ${
-                  tab === key
-                    ? "border-[var(--ink)] bg-[var(--surface)]"
-                    : "border-[var(--line-strong)] bg-[var(--surface)] hover:border-[var(--ink)]"
-                }`}
-              >
-                <span className="text-[13px] text-[var(--ink)]">{label}</span>
-                <span className="text-[11px] text-[var(--muted)]">{sub}</span>
-              </button>
-            ))}
+          <div className="chips">
+            <button
+              className="chip"
+              type="button"
+              onClick={() =>
+                setTab((cur) => (cur === "data" ? "preview" : "data"))
+              }
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <ellipse cx="12" cy="6" rx="8" ry="3" />
+                <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
+                <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+              </svg>
+              <span className="lab">
+                Data<span className="ct">loose text</span>
+              </span>
+            </button>
+            <button
+              className="chip"
+              type="button"
+              onClick={() =>
+                setTab((cur) => (cur === "rules" ? "preview" : "rules"))
+              }
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+              </svg>
+              <span className="lab">
+                Rules<span className="ct">guidance</span>
+              </span>
+            </button>
+            <button
+              className="chip"
+              type="button"
+              onClick={() =>
+                setTab((cur) => (cur === "catalog" ? "preview" : "catalog"))
+              }
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M3 10h18M9 4v16" />
+              </svg>
+              <span className="lab">
+                Catalog
+                <span className="ct">
+                  {enabledNames.size}/{CATALOG.length}
+                </span>
+              </span>
+            </button>
+            <button
+              className="chip"
+              type="button"
+              onClick={() =>
+                setTab((cur) => (cur === "style" ? "preview" : "style"))
+              }
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none" />
+              </svg>
+              <span className="lab">
+                Theme<span className="ct">Sage</span>
+              </span>
+            </button>
           </div>
+        </div>
+
+        <div className="handoff">
+          You author the <b>vocabulary, constraints, and visual system</b>. A
+          genuinely <b>new</b> primitive still needs engineering.
         </div>
       </aside>
       </div>
