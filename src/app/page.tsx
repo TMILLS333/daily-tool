@@ -777,18 +777,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   return (
     <div
-      className="flex min-h-dvh bg-[var(--paper)] text-[var(--ink)]"
+      className="flex min-h-dvh flex-col bg-[var(--paper)] text-[var(--ink)]"
       style={tokenStyle}
     >
-      {/* CANVAS — primary surface, fills the width. The render is the canvas;
-          authoring layers open from the right dock (interim surface-swap this
-          slice). The retired left <nav> tab-router lived here pre-v3. */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Canvas chrome top bar: the wordmark doubles as "home" (→ Preview),
-            plus the two surfaces the dock does not hold — Design Notes and the
-            parked Chat — so removing the nav strands neither. */}
-        <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
-          <div className="mx-auto flex w-full max-w-[900px] items-center justify-between">
+      {/* Prompt page v2 — Slice 1: full-width header on top; the body below is a
+          two-pane row (canvas mat left, tooling right). Header pulled out of the
+          canvas column so it spans the full width. */}
+      <header className="shrink-0 border-b border-[var(--line)] bg-[var(--paper)] px-10 py-3">
+        <div className="flex w-full items-center justify-between">
           <button
             type="button"
             onClick={() => setTab("preview")}
@@ -830,6 +826,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           </div>
         </header>
 
+      {/* v2 body row: canvas (left) + tooling dock (right) */}
+      <div className="flex min-h-0 flex-1">
+        {/* CANVAS — left pane on the recessed --vellum mat. Slice 1 interim: the
+            existing content sits in the mat; the artboard wrap + the dedicated
+            right tooling panel land in the next slices. */}
+        <div className="flex min-w-0 flex-1 flex-col bg-[var(--vellum)]">
         <div className="px-10 py-8">
           {isAuthoring && (
             <div className="mx-auto max-w-[900px]">
@@ -1196,6 +1198,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         active={isAuthoring ? (tab as AuthoringTab) : null}
         onOpen={(t) => setTab((cur) => (cur === t ? "preview" : t))}
       />
+      </div>
 
       {/* Parked Chat — reachable from the top bar, anchored bottom-left so it
           never collides with the right dock. */}
