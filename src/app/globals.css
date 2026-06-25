@@ -43,9 +43,9 @@ html::-webkit-scrollbar {
   --line: #dce3d5;
   --line-strong: rgba(28, 33, 26, 0.22);
 
-  /* base44-style entry wash (Pass 12): cool teal-tint → sage field →
-     warm peach. First-run hero only; the working shell stays flat --paper. */
-  --hero-wash: linear-gradient(135deg, #e2efe8 0%, var(--paper) 50%, #f4e2d0 100%);
+  /* base44-style entry wash (Pass 12): warm peach → sage field →
+     cool teal-tint. First-run hero only; the working shell stays flat --paper. */
+  --hero-wash: linear-gradient(135deg, #f4e2d0 0%, var(--paper) 50%, #e2efe8 100%);
 
   --background: var(--paper);
   --foreground: var(--ink);
