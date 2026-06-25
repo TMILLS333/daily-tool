@@ -23,11 +23,15 @@ export function DataTab({
   onChange,
   context,
   onContextChange,
+  bare,
 }: {
   value: string;
   onChange: (next: string) => void;
   context: DataContext;
   onContextChange: (next: DataContext) => void;
+  /** In-popup mode: drop the title + teaching card (the popup chrome says them);
+      keep the starter-chip row + textarea. */
+  bare?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -48,14 +52,14 @@ export function DataTab({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Pass 3 cleanup (Version A): lead with a short title; the long
-          "how it works" explanation moved into the collapsed card below. */}
-      <div>
-        <div className="text-sm font-semibold text-neutral-800">Your data</div>
-        <p className="text-xs text-neutral-500">
-          {"The agent's only source of facts."}
-        </p>
-      </div>
+      {!bare && (
+        <div>
+          <div className="text-sm font-semibold text-neutral-800">Your data</div>
+          <p className="text-xs text-neutral-500">
+            {"The agent's only source of facts."}
+          </p>
+        </div>
+      )}
 
       {/* Samples + upload, tidied into one chip row. Both just load text into
           the box below; loading replaces whatever is there. Samples are
@@ -130,12 +134,14 @@ export function DataTab({
         placeholder="Paste anything here…"
         spellCheck={false}
       />
-      <TeachingCard
-        name="Data"
-        collapsible
-        mechanism="In a real product this data would arrive via an API, a database, or a connector. Here you paste it by hand to stand in for that. The agent never parses it in this panel."
-        purpose="Whatever is in the box is the agent's only source of facts. It structures that raw text into the render on each run, so the data you bring decides what the render can say."
-      />
+      {!bare && (
+        <TeachingCard
+          name="Data"
+          collapsible
+          mechanism="In a real product this data would arrive via an API, a database, or a connector. Here you paste it by hand to stand in for that. The agent never parses it in this panel."
+          purpose="Whatever is in the box is the agent's only source of facts. It structures that raw text into the render on each run, so the data you bring decides what the render can say."
+        />
+      )}
     </div>
   );
 }

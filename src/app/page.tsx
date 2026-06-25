@@ -1240,6 +1240,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               </div>
               <div className="pbody">
                 <CatalogTab
+                  bare
                   enabled={enabled}
                   onToggle={(name, next) =>
                     setEnabled((prev) => ({ ...prev, [name]: next }))
@@ -1280,7 +1281,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 </div>
               </div>
               <div className="pbody">
-                <RulesTab value={rules} onChange={setRules} />
+                <RulesTab bare value={rules} onChange={setRules} />
               </div>
               <div className="pfoot">
                 <span>Plain-language</span>
@@ -1301,6 +1302,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               </div>
               <div className="pbody">
                 <DataTab
+                  bare
                   value={data}
                   onChange={setData}
                   context={context}
@@ -1325,7 +1327,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 </button>
               </div>
               <div className="pbody">
-                <StyleTab tokens={tokens} onChange={setTokens} />
+                <StyleTab bare tokens={tokens} onChange={setTokens} />
               </div>
               <div className="pfoot">
                 <span className="faint" style={{ marginLeft: "auto" }}>

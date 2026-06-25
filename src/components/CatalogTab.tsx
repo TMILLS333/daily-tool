@@ -21,12 +21,16 @@ export function CatalogTab({
   descriptions,
   onDescriptionChange,
   onDescriptionReset,
+  bare,
 }: {
   enabled: Record<string, boolean>;
   onToggle: (name: string, next: boolean) => void;
   descriptions: Record<string, string>;
   onDescriptionChange: (name: string, value: string) => void;
   onDescriptionReset: (name: string) => void;
+  /** In-popup mode: drop the chip + intro + teaching card (the popup says them);
+      keep the component grid. */
+  bare?: boolean;
 }) {
   // Per-card UI state, keyed by component name: which cards have their "what
   // the agent sees" revealed, and which are in edit mode.
@@ -160,15 +164,19 @@ export function CatalogTab({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex justify-end">
-        <HonestyChip variant="hard">Hard · enforced</HonestyChip>
-      </div>
-      <p className="text-sm text-[var(--muted)]">
-        Lever 1 of 3: catalog breadth. This is your design system as an
-        allow-list. On Controlled and Declarative, turn a component off and the
-        agent can no longer reach for it on the next run. Open-ended has no
-        catalog, by design: that is what HIGH freedom means.
-      </p>
+      {!bare && (
+        <>
+          <div className="flex justify-end">
+            <HonestyChip variant="hard">Hard · enforced</HonestyChip>
+          </div>
+          <p className="text-sm text-[var(--muted)]">
+            Lever 1 of 3: catalog breadth. This is your design system as an
+            allow-list. On Controlled and Declarative, turn a component off and
+            the agent can no longer reach for it on the next run. Open-ended has
+            no catalog, by design: that is what HIGH freedom means.
+          </p>
+        </>
+      )}
       <div className="space-y-5">
         <section>
           <div className={sectionLabel}>Basic</div>
@@ -198,11 +206,13 @@ export function CatalogTab({
           </span>
         </button>
       </div>
-      <TeachingCard
-        name="the Catalog"
-        mechanism="A typed component registry. Toggle one off and it leaves the agent's vocabulary, and the renderer hard-rejects anything not on the list. The description is the prose the agent reads, so editing it steers what gets built."
-        purpose="The catalog is your design space: on Controlled and Declarative it decides which components can appear, enforced in code, not merely requested. Open-ended lifts the catalog on purpose, the freedom-dial trade-off made real."
-      />
+      {!bare && (
+        <TeachingCard
+          name="the Catalog"
+          mechanism="A typed component registry. Toggle one off and it leaves the agent's vocabulary, and the renderer hard-rejects anything not on the list. The description is the prose the agent reads, so editing it steers what gets built."
+          purpose="The catalog is your design space: on Controlled and Declarative it decides which components can appear, enforced in code, not merely requested. Open-ended lifts the catalog on purpose, the freedom-dial trade-off made real."
+        />
+      )}
     </div>
   );
 }

@@ -74,9 +74,12 @@ function px(value: string) {
 export function StyleTab({
   tokens,
   onChange,
+  bare,
 }: {
   tokens: StyleTokens;
   onChange: (next: StyleTokens) => void;
+  /** In-popup mode: drop the chip + intro + teaching card (the popup says them). */
+  bare?: boolean;
 }) {
   const set = (patch: Partial<StyleTokens>) => onChange({ ...tokens, ...patch });
   const activeSet = activeStyleSetName(tokens);
@@ -85,15 +88,20 @@ export function StyleTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <HonestyChip variant="invisible">AGENT-INVISIBLE</HonestyChip>
-      </div>
-      <p className="text-sm text-neutral-500">
-        Lever 2 of 3: visual theme. Your design tokens as a form. Pick a preset
-        or tune each token; the live sample and every catalog component the agent
-        renders re-skin together, without re-running the agent. Open-ended output
-        lives in its own sandbox, so it keeps its own styling.
-      </p>
+      {!bare && (
+        <>
+          <div className="flex justify-end">
+            <HonestyChip variant="invisible">AGENT-INVISIBLE</HonestyChip>
+          </div>
+          <p className="text-sm text-neutral-500">
+            Lever 2 of 3: visual theme. Your design tokens as a form. Pick a
+            preset or tune each token; the live sample and every catalog
+            component the agent renders re-skin together, without re-running the
+            agent. Open-ended output lives in its own sandbox, so it keeps its
+            own styling.
+          </p>
+        </>
+      )}
 
       <div>
         <div className="mb-1 flex items-baseline justify-between">
@@ -176,11 +184,13 @@ export function StyleTab({
           </div>
         </div>
       </div>
-      <TeachingCard
-        name="Theme"
-        mechanism="The agent asks for a role, “the brand accent,” never a color. What each role looks like is yours: set here as tokens and joined to the role in code at the render boundary. The agent can't see these values or override them, so your visual rules hold on every output. Change a token and everything on screen re-skins with no re-run. Styling was never the agent's decision to make."
-        purpose="Theme is a constraint, not a coat of paint: the agent owns meaning, you own appearance. These controls are the runtime face of a design system whose real work, the tokens and their bindings, lives in code, not this panel. CopilotKit names this same layer `theme`."
-      />
+      {!bare && (
+        <TeachingCard
+          name="Theme"
+          mechanism="The agent asks for a role, “the brand accent,” never a color. What each role looks like is yours: set here as tokens and joined to the role in code at the render boundary. The agent can't see these values or override them, so your visual rules hold on every output. Change a token and everything on screen re-skins with no re-run. Styling was never the agent's decision to make."
+          purpose="Theme is a constraint, not a coat of paint: the agent owns meaning, you own appearance. These controls are the runtime face of a design system whose real work, the tokens and their bindings, lives in code, not this panel. CopilotKit names this same layer `theme`."
+        />
+      )}
     </div>
   );
 }
