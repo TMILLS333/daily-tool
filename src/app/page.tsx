@@ -831,47 +831,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             right tooling panel land in the next slices. */}
         <div className="canvas">
         <div className="flex flex-col">
-          {isAuthoring && (
-            <div className="mx-auto max-w-[900px]">
-              {tab === "data" && (
-                <DataTab
-                  value={data}
-                  onChange={setData}
-                  context={context}
-                  onContextChange={setContext}
-                />
-              )}
-              {tab === "rules" && <RulesTab value={rules} onChange={setRules} />}
-              {tab === "catalog" && (
-                <CatalogTab
-                  enabled={enabled}
-                  onToggle={(name, next) =>
-                    setEnabled((prev) => ({ ...prev, [name]: next }))
-                  }
-                  descriptions={descriptions}
-                  onDescriptionChange={(name, value) =>
-                    setDescriptions((prev) => ({ ...prev, [name]: value }))
-                  }
-                  onDescriptionReset={(name) =>
-                    setDescriptions((prev) => {
-                      const next = { ...prev };
-                      delete next[name];
-                      return next;
-                    })
-                  }
-                />
-              )}
-              {tab === "style" && (
-                <StyleTab tokens={tokens} onChange={setTokens} />
-              )}
-            </div>
-          )}
+          {/* Layer surfaces moved into the modal popups (v2); the chips open
+              them as centered popups over the card, not an inline swap. */}
 
           {/* Preview (the hero) — full-bleed freedom-first run flow + focal Output
               + Operations module + composable two-state Why + "How Preview works"
               card. Chat relocated to the nav's parked slot (Slice 3c); run logic
               unchanged. */}
-          {tab === "preview" && (
+          {tab !== "notes" && (
             <div className="flex min-w-0 flex-col gap-4">
                 {/* Freedom + Prompt moved to the right tooling panel (v2 Slice
                     2). The canvas now leads with the rendered Output. */}
@@ -1243,6 +1210,132 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         </div>
       </aside>
       </div>
+
+      {/* Layer popups (v2) — a chip opens a centered popup over the card with
+          shared chrome (header + honesty chip + close, body = the existing
+          *Tab, footer); scrim and the close control both dismiss. */}
+      {isAuthoring && (
+        <div
+          className="ovl"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTab("preview");
+          }}
+        >
+          {tab === "catalog" && (
+            <div className="pop" role="dialog" aria-label="Catalog">
+              <div className="ph">
+                <div>
+                  <h2>Catalog</h2>
+                  <p>
+                    Your design system as an allow-list. Turn a component off and
+                    the agent can no longer reach for it.
+                  </p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span className="hon hard">Hard · enforced</span>
+                  <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="pbody">
+                <CatalogTab
+                  enabled={enabled}
+                  onToggle={(name, next) =>
+                    setEnabled((prev) => ({ ...prev, [name]: next }))
+                  }
+                  descriptions={descriptions}
+                  onDescriptionChange={(name, value) =>
+                    setDescriptions((prev) => ({ ...prev, [name]: value }))
+                  }
+                  onDescriptionReset={(name) =>
+                    setDescriptions((prev) => {
+                      const next = { ...prev };
+                      delete next[name];
+                      return next;
+                    })
+                  }
+                />
+              </div>
+              <div className="pfoot">
+                <span>
+                  {enabledNames.size} of {CATALOG.length} enabled
+                </span>
+                <span className="faint">Applies on your next run</span>
+              </div>
+            </div>
+          )}
+          {tab === "rules" && (
+            <div className="pop" role="dialog" aria-label="Rules">
+              <div className="ph">
+                <div>
+                  <h2>Rules</h2>
+                  <p>Plain-language guidance the agent should follow when it builds.</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span className="hon soft">Soft · guidance</span>
+                  <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="pbody">
+                <RulesTab value={rules} onChange={setRules} />
+              </div>
+              <div className="pfoot">
+                <span>Plain-language</span>
+                <span className="faint">Weighed by the agent, not enforced</span>
+              </div>
+            </div>
+          )}
+          {tab === "data" && (
+            <div className="pop" role="dialog" aria-label="Data">
+              <div className="ph">
+                <div>
+                  <h2>Data</h2>
+                  <p>What the agent works from.</p>
+                </div>
+                <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
+                  ×
+                </button>
+              </div>
+              <div className="pbody">
+                <DataTab
+                  value={data}
+                  onChange={setData}
+                  context={context}
+                  onContextChange={setContext}
+                />
+              </div>
+              <div className="pfoot">
+                <span>Loose text · {data.split("\n").length} lines</span>
+                <span className="faint">The agent infers the structure on each run</span>
+              </div>
+            </div>
+          )}
+          {tab === "style" && (
+            <div className="pop" role="dialog" aria-label="Theme">
+              <div className="ph">
+                <div>
+                  <h2>Theme</h2>
+                  <p>The visual system the output renders in. Tokens, not chrome.</p>
+                </div>
+                <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
+                  ×
+                </button>
+              </div>
+              <div className="pbody">
+                <StyleTab tokens={tokens} onChange={setTokens} />
+              </div>
+              <div className="pfoot">
+                <span className="faint" style={{ marginLeft: "auto" }}>
+                  Applies instantly, no run needed
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       </div>
 
       {/* Parked Chat — reachable from the top bar, anchored bottom-left so it

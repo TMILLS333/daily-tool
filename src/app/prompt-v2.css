@@ -296,7 +296,7 @@
 
 /* modal chrome — shared by all four layer popups (bodies are the *Tab comps) */
 .pv2 .ovl {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 50;
   background: rgba(28, 33, 26, 0.45);
