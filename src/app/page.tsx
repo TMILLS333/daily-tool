@@ -875,82 +875,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               unchanged. */}
           {tab === "preview" && (
             <div className="flex min-w-0 flex-col gap-4">
-                {/* Consolidated setup (Pass 3): a compact, visible freedom
-                    control + one persistent input whose inline arrow is the
-                    only run trigger. Replaces the pattern-cards / theme-set /
-                    request / Run / Edit-Re-run stack. Freedom stays visible
-                    (freedom leads); theme moved to the dock Theme tile. */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
-                      Freedom
-                    </span>
-                    <div className="inline-flex overflow-hidden rounded-[var(--dt-radius)] border border-[var(--line)]">
-                      {PATTERNS.map((p) => {
-                        const on = pattern === p;
-                        return (
-                          <button
-                            key={p}
-                            type="button"
-                            onClick={() => setPattern(p)}
-                            aria-pressed={on}
-                            title={PATTERN_CARDS[p].line}
-                            className={`flex items-baseline gap-1.5 px-3 py-1.5 text-sm transition-colors ${
-                              on
-                                ? "bg-[var(--ink)] font-medium text-[var(--surface)]"
-                                : "text-[var(--muted)] hover:bg-[var(--line)]"
-                            }`}
-                          >
-                            {PATTERN_CARDS[p].name}
-                            <span
-                              className={`text-[9px] uppercase tracking-wider ${
-                                on ? "text-[var(--surface)]" : "text-[var(--faint)]"
-                              }`}
-                            >
-                              {PATTERN_CARDS[p].freedom}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex items-end gap-2 rounded-[var(--dt-radius)] border border-[var(--line-strong)] bg-[var(--surface)] p-2 transition-colors focus-within:border-[var(--ink)]">
-                    <textarea
-                      ref={requestRef}
-                      className="min-h-[44px] w-full resize-none bg-transparent px-2 py-1.5 font-mono text-[13px] leading-relaxed text-[var(--ink)] outline-none"
-                      rows={2}
-                      value={request}
-                      onChange={(e) => setRequest(e.target.value)}
-                      onKeyDown={(e) => {
-                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                          e.preventDefault();
-                          void run();
-                        }
-                      }}
-                      placeholder="Describe what you want from your data…"
-                      spellCheck={false}
-                    />
-                    <button
-                      type="button"
-                      aria-label={runState.kind === "running" ? "Stop" : "Run"}
-                      onClick={runState.kind === "running" ? stop : () => void run()}
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--dt-radius)] text-base font-medium transition-colors ${
-                        runState.kind === "running" ? "animate-pulse" : ""
-                      }`}
-                      style={
-                        runState.kind === "running"
-                          ? { background: "var(--line)", color: "var(--ink)" }
-                          : {
-                              background: "var(--dt-brand)",
-                              color: "var(--dt-brand-contrast)",
-                            }
-                      }
-                    >
-                      {runState.kind === "running" ? "■" : "→"}
-                    </button>
-                  </div>
-                </div>
+                {/* Freedom + Prompt moved to the right tooling panel (v2 Slice
+                    2). The canvas now leads with the rendered Output. */}
 
                 {/* Pending hint (Pass 4): the render is behind your edits.
                     Names the changed layers; activating focuses the input so
@@ -1189,15 +1115,133 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         </footer>
       </div>
 
-      {/* RIGHT DOCK — four authoring tiles (Data/Rules/Catalog/Theme). No Run
-          control: running is the canvas request input's submit arrow. Status is
-          a static placeholder this slice; real save-states land next slice. */}
-      <RightDock
-        tabs={AUTHORING_TABS}
-        status={layerStatus}
-        active={isAuthoring ? (tab as AuthoringTab) : null}
-        onOpen={(t) => setTab((cur) => (cur === t ? "preview" : t))}
-      />
+      {/* TOOLING PANEL (v2 Slice 2) — right pane. Primary zone: Freedom +
+          Prompt (moved out of the canvas). Secondary zone: demoted Layer chips
+          that open each authoring surface. Replaces the RightDock tiles. */}
+      <aside className="flex w-[384px] shrink-0 flex-col overflow-y-auto border-l border-[var(--line)] bg-[var(--paper)] p-6">
+        {/* Primary: Freedom */}
+        <div className="flex flex-col gap-5">
+          <div>
+            <div className="mb-2.5 flex items-baseline gap-2">
+              <span className="text-[15px] font-medium text-[var(--ink)]">
+                Freedom
+              </span>
+              <span className="text-[11px] text-[var(--faint)]">
+                how much you let the agent decide
+              </span>
+            </div>
+            <div className="flex w-full overflow-hidden rounded-[var(--dt-radius)] border border-[var(--line-strong)]">
+              {PATTERNS.map((p) => {
+                const on = pattern === p;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPattern(p)}
+                    aria-pressed={on}
+                    className={`flex flex-1 flex-col items-center gap-0.5 border-r border-[var(--line)] px-2 py-2.5 transition-colors last:border-r-0 ${
+                      on
+                        ? "bg-[var(--ink)] text-[var(--surface)]"
+                        : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--line)]"
+                    }`}
+                  >
+                    <span className="text-[13px]">{PATTERN_CARDS[p].name}</span>
+                    <span
+                      className={`text-[9px] uppercase tracking-wider ${
+                        on ? "text-[var(--surface)]" : "text-[var(--faint)]"
+                      }`}
+                    >
+                      {PATTERN_CARDS[p].freedom}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2.5 text-[12px] leading-relaxed text-[var(--muted)]">
+              {PATTERN_CARDS[pattern].line}
+            </p>
+          </div>
+
+          {/* Prompt composer */}
+          <div className="flex flex-col rounded-[13px] border border-[var(--line-strong)] bg-[var(--surface)] p-3.5 transition-colors focus-within:border-[var(--ink)]">
+            <textarea
+              ref={requestRef}
+              className="min-h-[96px] w-full resize-none bg-transparent font-mono text-[13.5px] leading-relaxed text-[var(--ink)] outline-none"
+              value={request}
+              onChange={(e) => setRequest(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void run();
+                }
+              }}
+              placeholder="Describe what you want from your data…"
+              spellCheck={false}
+            />
+            <div className="mt-2.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] text-[var(--faint)]">
+                <span className="rounded border border-[var(--line)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted)]">
+                  ⌘ ↵
+                </span>{" "}
+                to run
+              </span>
+              <button
+                type="button"
+                aria-label={runState.kind === "running" ? "Stop" : "Run"}
+                onClick={runState.kind === "running" ? stop : () => void run()}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] text-base font-medium transition-colors"
+                style={
+                  runState.kind === "running"
+                    ? { background: "var(--line)", color: "var(--ink)" }
+                    : {
+                        background: "var(--dt-brand)",
+                        color: "var(--dt-brand-contrast)",
+                      }
+                }
+              >
+                {runState.kind === "running" ? "■" : "→"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Secondary: Layers (demoted) */}
+        <div className="mt-6 border-t border-[var(--line)] pt-5">
+          <div className="mb-3 flex items-baseline gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]">
+              Layers
+            </span>
+            <span className="text-[11px] text-[var(--faint)]">
+              what the agent can use, optional
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {(
+              [
+                ["data", "Data", "loose text"],
+                ["rules", "Rules", "guidance"],
+                ["catalog", "Catalog", `${enabledNames.size}/${CATALOG.length}`],
+                ["style", "Theme", "Sage"],
+              ] as const
+            ).map(([key, label, sub]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab((cur) => (cur === key ? "preview" : key))}
+                aria-pressed={tab === key}
+                className={`flex flex-col items-start rounded-[10px] border px-3 py-2.5 text-left transition-colors ${
+                  tab === key
+                    ? "border-[var(--ink)] bg-[var(--surface)]"
+                    : "border-[var(--line-strong)] bg-[var(--surface)] hover:border-[var(--ink)]"
+                }`}
+              >
+                <span className="text-[13px] text-[var(--ink)]">{label}</span>
+                <span className="text-[11px] text-[var(--muted)]">{sub}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
       </div>
 
       {/* Parked Chat — reachable from the top bar, anchored bottom-left so it
