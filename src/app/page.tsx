@@ -32,7 +32,6 @@ import { DeclarativeA2UILive } from "@/components/DeclarativeA2UILive";
 import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTimeline";
 import { LegibilityView } from "@/components/LegibilityView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
-import { RightDock, type LayerStatus } from "@/components/RightDock";
 import { SetupSequence, type SetupStep } from "@/components/SetupSequence";
 import {
   CATALOG,
@@ -647,9 +646,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     for (const name of usedNames) {
       if (alwaysKeep.has(name)) continue;
       if (!catalogNames.has(name)) {
-        problems.push(`"${name}" is not in the catalog — not rendered.`);
+        problems.push(`"${name}" is not in the catalog, not rendered.`);
       } else if (!enabledNames.has(name)) {
-        problems.push(`"${name}" is disabled — not rendered.`);
+        problems.push(`"${name}" is disabled, not rendered.`);
       }
     }
     return problems;
@@ -679,12 +678,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     if (applied.rules !== rules) pendingLayers.push("Rules");
     if (applied.catalog !== catalogKey) pendingLayers.push("Catalog");
   }
-  const layerStatus: Record<AuthoringTab, LayerStatus> = {
-    data: pendingLayers.includes("Data") ? "pending" : "applied",
-    rules: pendingLayers.includes("Rules") ? "pending" : "applied",
-    catalog: pendingLayers.includes("Catalog") ? "pending" : "applied",
-    style: "live",
-  };
+  // layerStatus + RightDock retired in v2: the panel's Layer chips replace the
+  // dock tiles, so the per-tile status map is no longer needed.
 
   // First-run: the guided stepper replaces the working shell until the first
   // successful run. Steps reuse the existing layer components + their props.
@@ -787,7 +782,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             type="button"
             onClick={() => setTab("preview")}
             className="font-serif text-[17px] leading-tight"
-            aria-label="GenUI Studio — back to Preview"
+            aria-label="GenUI Studio, back to Preview"
           >
             GenUI Studio{" "}
             <span className="font-sans text-[11px] text-[var(--muted)]">
@@ -863,7 +858,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 {runState.kind === "rate-limited" && (
                   <div className="rounded-[var(--dt-radius)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     Free-tier rate limit reached (about 10 requests per minute).
-                    Wait a few seconds and run again — nothing is broken.
+                    Wait a few seconds and run again. Nothing is broken.
                   </div>
                 )}
                 {runState.kind === "error" && (
@@ -946,13 +941,13 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                           ) : runState.kind !== "running" && !a2uiSurfacePresent ? (
                             <p className="text-sm text-[var(--faint)]">
                               The run completed but produced no A2UI surface. Run
-                              again — small models occasionally skip the tool call.
+                              again. Small models occasionally skip the tool call.
                             </p>
                           ) : null}
                           {a2uiRejections.length > 0 ? (
                             <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
                               <div className="text-xs font-semibold text-amber-800">
-                                Catalog enforcement — rejected by your component vocabulary
+                                Catalog enforcement: rejected by your component vocabulary
                               </div>
                               <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-amber-700">
                                 {a2uiRejections.map((p, i) => (
@@ -977,6 +972,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   ) : null}
                 </section>
 
+                {/* Receipt: Why / Operations / how-it-emerged, centered to the
+                    artboard width (mockup .receipt) so it does not run full-bleed
+                    past the centered artboard. */}
+                <div className="receipt">
                 {/* Operations module: the component tree + bindings the agent
                     emitted, shown as its own module (no toggle). Display-only,
                     derived from activeText / emitted ops, flake-proof. The
@@ -1042,13 +1041,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                           <>
                             Freedom leads because it is the real choice you are making:
                             how much you let the agent decide. Everything below the
-                            Output is the receipt — what the agent actually produced —
+                            Output is the receipt, what the agent actually produced,
                             so the render stays legible, not magic.
                           </>
                         }
                       />
                     </div>
                   )}
+                </div>
                 </div>
               </div>
           )}

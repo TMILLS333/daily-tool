@@ -45,8 +45,8 @@ export function WhyPanel({
     return (
       <aside className={cardClass}>
         <p className="text-sm text-[var(--faint)]">
-          <span className="font-medium text-[var(--muted)]">Why this render</span>{" "}
-          — run a request and the agent reports the pattern it used, the rules it
+          <span className="font-medium text-[var(--muted)]">Why this render</span>:{" "}
+          run a request and the agent reports the pattern it used, the rules it
           applied, and the components it was allowed to touch.
         </p>
       </aside>
@@ -81,7 +81,7 @@ export function WhyPanel({
               </span>
             </div>
             {componentsAllowed.length === 0 ? (
-              <div className="text-sm text-[var(--faint)]">none — rules only</div>
+              <div className="text-sm text-[var(--faint)]">none, rules only</div>
             ) : (
               <div className="mt-1 flex flex-wrap gap-2">
                 {componentsAllowed.map((name) => (
@@ -110,7 +110,7 @@ export function WhyPanel({
         {realPath ? (
           <p className="text-sm text-[var(--muted)]">
             On the Real A2UI path the agent emits operations, not a written
-            account — see the Operations module above for exactly what it built.
+            account. See the Operations module above for exactly what it built.
           </p>
         ) : (
           <div className="flex flex-col gap-2 text-sm text-[var(--muted)]">
