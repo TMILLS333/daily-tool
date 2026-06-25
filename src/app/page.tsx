@@ -275,10 +275,18 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   }, [hydrated, data, rules, request, tokens, context, hasRunOnce]);
 
   // --- application context: what the agent knows on every run -------------
-  const catalogText = useMemo(
-    () => catalogPromptText(enabledNames, descriptions),
-    [enabledNames, descriptions]
-  );
+  const catalogText = useMemo(() => {
+    // Advertise only what the active pattern can actually render. Controlled
+    // (static) has no show_* tool for containers (StaticPattern filters
+    // !c.container), so listing Card/Stack here invites uncallable show_card /
+    // show_stack calls -> orphaned tool-calls -> the AI SDK MissingToolResults
+    // run failure. Reuse the same per-pattern filter the tools + Why panel use.
+    const names =
+      pattern === "static"
+        ? new Set(allowedComponentNames("static", enabledNames))
+        : enabledNames;
+    return catalogPromptText(names, descriptions);
+  }, [pattern, enabledNames, descriptions]);
   useAgentContext({ description: "Active pattern", value: pattern });
   useAgentContext({
     description: "The user's data (the only source of facts)",
