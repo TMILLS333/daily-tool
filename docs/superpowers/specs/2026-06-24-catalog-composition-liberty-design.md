@@ -93,11 +93,14 @@ Verified on a keyed production build (`next build` + a real Gemini run), per hou
 
 ## Outcomes Record (Closeout)
 
-- **Status:** key-free criteria CLOSED; agent-driven criteria PENDING a keyed run.
+- **Status:** CLOSED. All six acceptance criteria verified — `next build` plus keyed Gemini runs (model source: google BYO) across both Declarative render paths.
 - **Files delivered (AFP, six):** `catalog-primitives.tsx`, `catalog.tsx`, `a2ui-spike-catalog.tsx`, `api/copilotkit/route.ts`, `api/copilotkit-a2ui-spike/route.ts`, `CatalogTab.tsx`.
 - **AFP corrections (recorded honestly):** the original five-file AFP (a) mischaracterized the main route as verify-only — it carries the shipped real-A2UI `A2UI_SCHEMA`, which was edited — and (b) missed `CatalogTab.tsx`, whose hardcoded `BASIC`/`STRUCTURED` grouping does not auto-surface new entries. Both folded in above; no expansion beyond the slice's intent.
-- **Verified:**
+- **Verified (all six):**
   - Criterion 1 (build): PASS. `next build` compiled, TypeScript passed, both routes generated, zero errors.
-  - Criterion 2 (Catalog tab): PASS. `Image` (honest captioned placeholder), `Icon` (brand-teal check glyph), `Divider` (hairline) render in BASIC; the `Card` sample shows nested children; `PieChart`/`Table` unchanged (no regression). Browser console clean.
-- **Pending a keyed Gemini run (the worktree has no `.env` key):** criterion 3 (composed card, simplified path), 4 (composed card, real-A2UI path), 5 (real-`src` render path), 6 (honest mode holds across runs).
+  - Criterion 2 (Catalog tab): PASS. `Image` (honest captioned placeholder), `Icon` (brand-teal check glyph), `Divider` (hairline) render in BASIC; the `Card` sample shows nested children; `PieChart`/`Table` unchanged. Console clean.
+  - Criterion 3 (composed card, simplified): PASS. A keyed Gemini run on a profile request rendered a `Card` composing the bio text, an `Image`, and a `Badge`.
+  - Criterion 4 (composed card, real A2UI): PASS. The "Real A2UI (live surface)" rendered a `Card` composing `Image` + `Badge` + `List` through the new by-id `Card` child resolver.
+  - Criterion 5 (real `src`): PASS. With an image URL in the data, the agent set `Image.src` and `DTImage` rendered the actual photo (loaded 300×300, `complete: true`).
+  - Criterion 6 (honest mode): PASS. With no URL in the data, the agent rendered `Image` as the captioned placeholder on BOTH paths — no fabricated `src`.
 - **Isolation:** all on `catalog-expansion`; the parallel `studio-ui-cleanup` working tree was untouched throughout.
