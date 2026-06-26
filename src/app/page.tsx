@@ -931,6 +931,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                         blocks={staticBlocks}
                         onBlock={(b) => setStaticBlocks((prev) => [...prev, b])}
                         enabledNames={enabledNames}
+                        descriptions={descriptions}
                       />
                     )}
                     {pattern === "declarative" &&
