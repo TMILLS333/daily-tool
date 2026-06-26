@@ -12,6 +12,8 @@
   min-height: 100dvh;
   background: #dfe4da;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* The studio as a framed card on the backdrop (mockup .a). */
@@ -19,16 +21,31 @@
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  /* Fixed to the viewport (not min-height) so the body never scrolls: the two
-     columns (canvas, panel) each scroll their own overflow internally. This
-     keeps the right panel in view while the left canvas scrolls. */
-  height: calc(100dvh - 40px);
+  /* Fills the backdrop column below the lifted brand bar. Internal-scroll only:
+     the two columns (canvas, panel) each scroll their own overflow, so the body
+     never scrolls and the right panel stays in view. min-height:0 is load-bearing
+     for that nested scroll. */
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   background: var(--paper);
   border: 0.5px solid var(--line-strong);
   border-radius: 16px;
   overflow: hidden;
+}
+/* The wordmark, lifted onto the backdrop above the card for a floating feel.
+   Matched to the card's max width so it sits flush with the card's left edge. */
+.pv2 .brandbar {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 2px 4px 12px;
 }
 .pv2 .hd {
   display: flex;

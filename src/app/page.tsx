@@ -799,11 +799,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         style={tokenStyle}
       >
         <header className="flex shrink-0 items-center border-b border-[var(--line)] px-10 py-3">
-          <div className="flex flex-col items-start leading-tight">
+          <div className="leading-tight">
+            <span className="font-mono text-[15px] text-[var(--dt-brand)]" aria-hidden="true">//</span>{" "}
             <span className="font-serif text-[17px]">GenUI Studio</span>
-            <span className="font-mono text-[11px] text-[var(--muted)]">
-              <span className="text-[var(--dt-brand)]" aria-hidden="true">//</span> for the rest of us
-            </span>
           </div>
         </header>
         <div className="mx-auto w-full max-w-[900px] px-10 py-8">
@@ -826,52 +824,48 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     <div className="pv2 text-[var(--ink)]" style={tokenStyle}>
       {/* Prompt page v2 — the studio as a framed card on a backdrop, matching
           mockups/prompt-page-v2.html: .a card > .hd header + .sh body row. */}
-      <div className="a">
-        <header className="hd">
-          <div className="flex w-full items-center justify-between">
+      <div className="brandbar">
+        <button
+          type="button"
+          onClick={() => setTab("preview")}
+          className="leading-tight"
+          aria-label="GenUI Studio, back to Preview"
+        >
+          <span className="font-mono text-[15px] text-[var(--dt-brand)]" aria-hidden="true">//</span>{" "}
+          <span className="font-serif text-[17px]">GenUI Studio</span>
+        </button>
+        {/* Design Notes + Chat nav HIDDEN 2026-06-26 (Tania) — not needed for the
+            event. Restore by uncommenting:
+        <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setTab("preview")}
-            className="flex flex-col items-start leading-tight"
-            aria-label="GenUI Studio, back to Preview"
+            onClick={() => setTab(tab === "notes" ? "preview" : "notes")}
+            aria-pressed={tab === "notes"}
+            className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
+              tab === "notes"
+                ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+            }`}
           >
-            <span className="font-serif text-[17px]">GenUI Studio</span>
-            <span className="font-mono text-[11px] text-[var(--muted)]">
-              <span className="text-[var(--dt-brand)]" aria-hidden="true">//</span> for the rest of us
-            </span>
+            Design Notes{" "}
+            <span className="text-[var(--faint)]">soon</span>
           </button>
-          {/* Design Notes + Chat nav HIDDEN 2026-06-26 (Tania) — not needed for the
-              event. Restore by uncommenting:
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setTab(tab === "notes" ? "preview" : "notes")}
-              aria-pressed={tab === "notes"}
-              className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
-                tab === "notes"
-                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                  : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
-              }`}
-            >
-              Design Notes{" "}
-              <span className="text-[var(--faint)]">soon</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setChatOpen((o) => !o)}
-              aria-expanded={chatOpen}
-              className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
-                chatOpen
-                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                  : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
-              }`}
-            >
-              <span aria-hidden>✦</span> Chat
-            </button>
-          </div>
-          */}
-          </div>
-        </header>
+          <button
+            type="button"
+            onClick={() => setChatOpen((o) => !o)}
+            aria-expanded={chatOpen}
+            className={`rounded-[9px] px-3 py-1.5 text-[12px] transition-colors ${
+              chatOpen
+                ? "bg-[var(--surface)] text-[var(--ink)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                : "text-[var(--muted)] hover:bg-[rgba(255,253,248,0.6)]"
+            }`}
+          >
+            <span aria-hidden>✦</span> Chat
+          </button>
+        </div>
+        */}
+      </div>
+      <div className="a">
 
       {/* v2 body row (.sh): canvas (left) + tooling panel (right) */}
       <div className="sh">
