@@ -164,10 +164,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   const [setupStep, setSetupStep] = useState(0);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
-  // Default OFF, never persisted: every load starts on the shipped simplified
-  // path, so the floor is always the default. When ON, the Declarative canvas
-  // is driven by the dedicated declarativeA2UI agent + the low-level renderer.
-  const [realA2UI, setRealA2UI] = useState(false);
+  // Pass 4: Real A2UI is the Declarative DEFAULT. Simplified stays a saved
+  // fallback (its render path + the Simplified|Real toggle remain in code, the
+  // toggle commented out below). Never persisted: every load starts on Real A2UI.
+  const [realA2UI, setRealA2UI] = useState(true);
   const [a2uiRunNonce, setA2uiRunNonce] = useState(0);
   const [a2uiRequest, setA2uiRequest] = useState("");
   const [a2uiSurfacePresent, setA2uiSurfacePresent] = useState(false);
@@ -580,14 +580,16 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   );
 
   const activeText = agentText[pattern] ?? null;
-  // Real-A2UI path: the reveal reads the emitted ops, and real A2UI emits no
-  // ```why block, so the Why account is app-truth only (pattern + freedom; no
-  // fabricated model narrative). The simplified path keeps parsing the ```why
-  // block exactly as before.
+  // Real-A2UI path (Pass 4): the declarativeA2UI agent's reply may include a
+  // ```why block (route.ts asks for one). Parse it when present so the
+  // agent-account card renders; if the agent emitted ops but no why, fall back
+  // to a minimal app-truth account (pattern + freedom). The simplified path
+  // parses the ```why block exactly as before.
   const why: WhyAccount | null = a2uiActive
-    ? a2uiOps && a2uiOps.length > 0
-      ? { pattern: "declarative", rulesApplied: [] }
-      : null
+    ? (activeText ? parseWhy(activeText) : null) ??
+      (a2uiOps && a2uiOps.length > 0
+        ? { pattern: "declarative", rulesApplied: [] }
+        : null)
     : activeText
     ? parseWhy(activeText)
     : null;
@@ -877,6 +879,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     the centered artboard (v2). */}
                 <section>
                   <div className="canvas-lbl">Canvas</div>
+                  {/* Pass 4 HIDDEN — render-path toggle. Real A2UI is now the
+                      Declarative default; Simplified is the saved fallback.
+                      Restore by uncommenting the block below.
                   {pattern === "declarative" && (
                     <div className="mb-2 flex items-center gap-2 text-xs">
                       <span className="text-[var(--faint)]">Render path</span>
@@ -910,6 +915,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       )}
                     </div>
                   )}
+                  */}
                   <div className="artboard">
                     {runState.kind === "running" && (
                       <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-[var(--muted)]">
@@ -997,7 +1003,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   </section>
                 )}
 
-                <EmergenceTimeline beats={beats} />
+                {/* Pass 4 HIDDEN — emergence timeline ("HOW THIS UI EMERGED"); restore by uncommenting: <EmergenceTimeline beats={beats} /> */}
 
                 <WhyPanel
                   why={why}
@@ -1007,9 +1013,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   realPath={a2uiActive}
                 />
 
-                {/* How Preview works: render-first reveal (Pass 2). Collapsed to
-                    a bar by default; expands the teaching card on demand so the
-                    render leads, not the explainer. */}
+                {/* Pass 4 HIDDEN — "How Preview works" reveal. Restore by uncommenting:
                 <div>
                   <button
                     type="button"
@@ -1055,6 +1059,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     </div>
                   )}
                 </div>
+                */}
                 </div>
               </div>
           )}

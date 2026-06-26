@@ -99,7 +99,9 @@ export function WhyPanel({
       </div>
 
       {/* Reported by the model — the agent's own account (can be wrong). Its own
-          card. On the real A2UI path an honest note replaces the written account. */}
+          card. On the real A2UI path the card shows the agent's parsed why-account
+          when present; the honest "operations, not words" note shows only when no
+          written account was emitted. */}
       <div className={cardClass}>
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[12px] font-medium text-[var(--ink)]">
@@ -107,7 +109,14 @@ export function WhyPanel({
           </span>
           <HonestyChip variant="soft">Agent&apos;s account</HonestyChip>
         </div>
-        {realPath ? (
+        {realPath &&
+        !(
+          why?.intent ||
+          why?.structure ||
+          why?.source ||
+          why?.notes ||
+          (why?.rulesApplied?.length ?? 0) > 0
+        ) ? (
           <p className="text-sm text-[var(--muted)]">
             On the Real A2UI path the agent emits operations, not a written
             account. See the Operations module above for exactly what it built.
