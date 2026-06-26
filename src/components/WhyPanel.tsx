@@ -22,14 +22,21 @@ const cardClass =
 
 export function WhyPanel({
   why,
-  componentsAllowed,
+  usedNames,
+  rejections,
   freedom,
   pattern,
   realPath,
 }: {
   why: WhyAccount | null;
-  /** App truth: components actually allowed in this pattern, not a model claim. */
-  componentsAllowed: string[];
+  /** App truth: the components THIS run actually RENDERED — per pattern, the
+   *  rendered blocks (Controlled) or the emitted A2UI ops minus anything the
+   *  catalog refused (Real A2UI). Shown as the "Components used" set. */
+  usedNames: string[];
+  /** App truth (Real-A2UI only): components the agent NAMED but the catalog
+   *  refused (off-catalog or disabled). Deterministic enforcement, not a model
+   *  claim; empty on Controlled (the tool simply never exists). */
+  rejections: string[];
   /** App-derived AI-freedom level for the active pattern (Low / Medium / High). */
   freedom: string;
   /** Active pattern from app state — authoritative, NOT the model's why.pattern. */
@@ -77,28 +84,74 @@ export function WhyPanel({
             </div>
           </div>
           <div className="min-w-0">
-            <div className={label}>
-              Components allowed{" "}
-              <span className="normal-case text-[var(--faint)]">
-                (from your catalog)
-              </span>
-            </div>
-            {componentsAllowed.length === 0 ? (
-              <div className="text-sm text-[var(--faint)]">none, rules only</div>
+            {pattern === "open-ended" ? (
+              // Open-Ended renders raw HTML in a sandboxed iframe: no catalog,
+              // no tool calls, no ops. The honest non-answer, not an empty list.
+              <>
+                <div className={label}>Components used</div>
+                <p className="mt-1 text-sm text-[var(--faint)]">
+                  No verifiable component calls — this pattern renders raw HTML,
+                  so there is nothing to attribute.
+                </p>
+              </>
             ) : (
-              <div className="mt-1 flex flex-wrap gap-2">
-                {componentsAllowed.map((name) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--paper)] px-2 py-1 text-[11px] text-[var(--ink)]"
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
+              // Controlled / Declarative: what the agent ACTUALLY used this run,
+              // counted against the allow-list. The count carries the constraint
+              // ("3 of 18"); we do not list the untouched remainder.
+              <>
+                <div className={label}>Components used</div>
+                {usedNames.length === 0 ? (
+                  <div className="mt-1 text-sm text-[var(--faint)]">
+                    No components used this run.
+                  </div>
+                ) : (
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {usedNames.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper)] px-2 py-1 text-[11px] text-[var(--ink)]"
+                      >
+                        <span className="text-[var(--dt-brand)]" aria-hidden>
+                          ✓
+                        </span>
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
+        {realPath && rejections.length > 0 ? (
+          // Real-A2UI only: the agent NAMED a component the catalog refused, so it
+          // was not rendered. Deterministic (catalog membership / enabledNames),
+          // not a model claim. Terracotta harmonises with --hero-wash; it must
+          // read categorically different from a used chip.
+          <div className="mt-4 border-t border-[var(--line)] pt-3">
+            <div className="text-[11px] text-[#8f4a31]">
+              Named by the agent, blocked by your catalog
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {rejections.map((msg, i) => {
+                const name = msg.match(/^"([^"]+)"/)?.[1] ?? msg;
+                const reason = /is disabled/.test(msg)
+                  ? "disabled"
+                  : "not in catalog";
+                return (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 rounded-full border border-[#e4c9ba] bg-[#f4e3d8] px-2 py-1 text-[11px] text-[#8f4a31]"
+                  >
+                    <span aria-hidden>⊘</span>
+                    {name}
+                    <span className="opacity-70">{reason}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Reported by the model — the agent's own account (can be wrong). Its own

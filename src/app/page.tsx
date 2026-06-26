@@ -594,8 +594,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     ? parseWhy(activeText)
     : null;
   const commentary = activeText ? commentaryOf(activeText) : "";
-  // App truth, not the model's claim: what this pattern actually allows.
-  const allowed = allowedComponentNames(pattern, enabledNames);
   // App truth: which catalog entries the CURRENT render used. Controlled reads
   // the rendered blocks; Declarative walks the emitted spec. Drives the Catalog
   // facet's "used" marks. Open-Ended has no catalog, so the set stays empty.
@@ -641,7 +639,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
   // Real-A2UI catalog enforcement, made visible (parity with the simplified
   // DeclarativePattern). The agent can still NAME a disabled or off-catalog
-  // component (its injected tool schema is the full vocabulary), but the client
+  // component because the render_a2ui tool schema does not constrain component
+  // names — the catalog reaches the agent as prompt context (the enabled subset),
+  // a strong instruction it can still ignore, not a hard grammar. The client
   // catalog only renders the enabled subset, so such a node would paint as the
   // renderer's raw "Unknown component" with no honest framing. Here we read the
   // emitted types and list the rejections the same way the simplified path does.
@@ -661,6 +661,36 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     }
     return problems;
   }, [a2uiActive, usedNames, enabledNames]);
+
+  // The components that actually RENDERED this run = usedNames minus anything the
+  // catalog refused. On Controlled / Open-Ended usedNames is already render-only
+  // (no rejects possible), so this is a passthrough; on Real A2UI it drops the
+  // named-but-blocked types (they appear in the blocked row) while KEEPING the
+  // always-kept structural containers (Stack) that genuinely rendered. The honest
+  // complement of a2uiRejections — what the agent built, no allow-list math.
+  const renderedUsedNames = useMemo<string[]>(() => {
+    if (!a2uiActive) return [...usedNames];
+    const catalogNames = new Set(CATALOG.map((c) => c.name));
+    const alwaysKeep = new Set(["Stack"]); // mirrors buildCatalog ALWAYS_KEEP
+    return [...usedNames].filter(
+      (n) => alwaysKeep.has(n) || (catalogNames.has(n) && enabledNames.has(n))
+    );
+  }, [a2uiActive, usedNames, enabledNames]);
+
+  // The receipt (provenance cards) appears only once the canvas has a COMPLETED
+  // render — at rest the canvas stands alone, nothing below it. Per pattern:
+  // Controlled has rendered blocks, Real A2UI has a painted surface, Open-Ended
+  // has agent HTML. Held off while a run is in flight, so a fresh run hides the
+  // prior receipt until the new render lands.
+  const canvasHasRender =
+    runState.kind !== "running" &&
+    (pattern === "static"
+      ? staticBlocks.length > 0
+      : pattern === "open-ended"
+        ? !!activeText
+        : a2uiActive
+          ? a2uiSurfacePresent
+          : !!activeText);
 
   // Style tokens applied as CSS custom properties on the app root. They drive
   // the rendered OUTPUT (catalog primitives); attendee edits override the
@@ -957,6 +987,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                               again. Small models occasionally skip the tool call.
                             </p>
                           ) : null}
+                          {/* Rejections relocated to the receipt's "blocked by your
+                              catalog" row (consolidated 2026-06-26; confirm this is the
+                              home you want). Restore this in-canvas amber box by
+                              uncommenting:
                           {a2uiRejections.length > 0 ? (
                             <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
                               <div className="text-xs font-semibold text-amber-800">
@@ -969,6 +1003,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                               </ul>
                             </div>
                           ) : null}
+                          */}
                         </>
                       ) : (
                         <DeclarativePattern
@@ -987,7 +1022,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
                 {/* Receipt: Why / Operations / how-it-emerged, centered to the
                     artboard width (mockup .receipt) so it does not run full-bleed
-                    past the centered artboard. */}
+                    past the centered artboard. Shown only once the canvas has a
+                    completed render — at rest the canvas stands alone. */}
+                {canvasHasRender && (
                 <div className="receipt">
                 {/* Operations module: the component tree + bindings the agent
                     emitted, shown as its own module (no toggle). Display-only,
@@ -1008,7 +1045,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
 
                 <WhyPanel
                   why={why}
-                  componentsAllowed={allowed}
+                  usedNames={renderedUsedNames}
+                  rejections={a2uiRejections}
                   freedom={PATTERN_CARDS[pattern].freedom}
                   pattern={pattern}
                   realPath={a2uiActive}
@@ -1062,6 +1100,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 </div>
                 */}
                 </div>
+                )}
               </div>
           )}
 
