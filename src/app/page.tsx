@@ -972,6 +972,17 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                         <span className="text-sm">Building your interface…</span>
                       </div>
                     )}
+                    {/* Renders stay MOUNTED while running (the agent needs the
+                        tools / island), but their output is hidden so the design
+                        doesn't paint in progressively (it looked sloppy). Show the
+                        pulsing loader during the wait, then reveal the finished
+                        render in one go. display:contents keeps layout identical
+                        when shown. */}
+                    <div
+                      style={{
+                        display: runState.kind === "running" ? "none" : "contents",
+                      }}
+                    >
                     {pattern === "static" && (
                       <StaticPattern
                         blocks={staticBlocks}
@@ -1031,6 +1042,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                     {pattern === "open-ended" && (
                       <OpenEndedPattern agentText={activeText} />
                     )}
+                    </div>
                   </div>
                   {/* Below-canvas commentary HIDDEN 2026-06-26 (Tania) — the agent's
                       prose was leaking below the artboard. Restore by uncommenting
