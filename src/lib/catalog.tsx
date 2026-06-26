@@ -21,16 +21,21 @@ import {
   DTBadge,
   DTButton,
   DTCard,
+  DTCardWithImage,
   DTDivider,
   DTHeading,
   DTIcon,
+  DTIconCard,
   DTImage,
   DTKanban,
   DTList,
   DTMatrix,
   DTPieChart,
+  DTProductCard,
   DTStack,
+  DTStatCard,
   DTTable,
+  DTText,
   DTTimeline,
 } from "@/components/catalog-primitives";
 
@@ -59,8 +64,19 @@ export const CATALOG: CatalogEntry[] = [
       text: z.string(),
       level: z.number().min(1).max(3).optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTHeading,
+  },
+  {
+    name: "Text",
+    description:
+      "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title. Props: text (string), tone ('default' | 'muted').",
+    props: z.object({
+      text: z.string(),
+      tone: z.enum(["default", "muted"]).optional(),
+    }),
+    enabled: false,
+    Component: DTText,
   },
   {
     name: "Card",
@@ -71,7 +87,7 @@ export const CATALOG: CatalogEntry[] = [
       body: z.string().optional(),
       accent: z.enum(["none", "brand"]).optional(),
     }),
-    enabled: true,
+    enabled: false,
     container: true,
     Component: DTCard,
   },
@@ -83,7 +99,7 @@ export const CATALOG: CatalogEntry[] = [
       label: z.string(),
       tone: z.enum(["neutral", "success", "warning", "danger"]).optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTBadge,
   },
   {
@@ -95,7 +111,7 @@ export const CATALOG: CatalogEntry[] = [
       items: z.array(z.string()),
       ordered: z.boolean().optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTList,
   },
   {
@@ -106,7 +122,7 @@ export const CATALOG: CatalogEntry[] = [
       label: z.string(),
       intent: z.enum(["primary", "secondary"]).optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTButton,
   },
   {
@@ -117,7 +133,7 @@ export const CATALOG: CatalogEntry[] = [
       alt: z.string(),
       src: z.string().optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTImage,
   },
   {
@@ -136,14 +152,14 @@ export const CATALOG: CatalogEntry[] = [
       ]),
       label: z.string().optional(),
     }),
-    enabled: true,
+    enabled: false,
     Component: DTIcon,
   },
   {
     name: "Divider",
     description: "A thin horizontal rule that separates sections. No props.",
     props: z.object({}),
-    enabled: true,
+    enabled: false,
     Component: DTDivider,
   },
   {
@@ -153,9 +169,69 @@ export const CATALOG: CatalogEntry[] = [
     props: z.object({
       direction: z.enum(["vertical", "horizontal"]).optional(),
     }),
-    enabled: true,
+    enabled: false,
     container: true,
     Component: DTStack,
+  },
+  {
+    name: "CardWithImage",
+    description:
+      "A card with an image on top and a title and caption below. Props: title (string), caption (string, optional), alt (string, a short image description), src (string, optional URL). Set src ONLY if the data has a real image URL; never invent one. With no real src it shows an honest captioned placeholder, so the card always renders. Prefer this over a bare Image when you want an image card.",
+    props: z.object({
+      title: z.string(),
+      caption: z.string().optional(),
+      alt: z.string(),
+      src: z.string().optional(),
+    }),
+    enabled: false,
+    Component: DTCardWithImage,
+  },
+  {
+    name: "ProductCard",
+    description:
+      "A product card: an image, a title, a right-aligned price, and an optional meta line. Props: title (string), price (string, e.g. '$49'), meta (string, optional), alt (string, optional image description), src (string, optional URL; never invent one — a placeholder shows when absent).",
+    props: z.object({
+      title: z.string(),
+      price: z.string(),
+      meta: z.string().optional(),
+      alt: z.string().optional(),
+      src: z.string().optional(),
+    }),
+    enabled: false,
+    Component: DTProductCard,
+  },
+  {
+    name: "StatCard",
+    description:
+      "A single statistic: a large right-aligned figure with a label and optional unit and trend. Props: label (string), value (string, the figure, e.g. '128'), unit (string, optional, e.g. '%'), trend ('up' | 'down' | 'flat', optional). Use for a key number drawn from the data; do not invent figures.",
+    props: z.object({
+      label: z.string(),
+      value: z.string(),
+      unit: z.string().optional(),
+      trend: z.enum(["up", "down", "flat"]).optional(),
+    }),
+    enabled: false,
+    Component: DTStatCard,
+  },
+  {
+    name: "IconCard",
+    description:
+      "A small card with an icon, a label, and an optional value. Props: icon (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string), value (string, optional). Good for category callouts or labelled facts.",
+    props: z.object({
+      icon: z.enum([
+        "check",
+        "info",
+        "warning",
+        "star",
+        "calendar",
+        "dot",
+        "arrow-right",
+      ]),
+      label: z.string(),
+      value: z.string().optional(),
+    }),
+    enabled: false,
+    Component: DTIconCard,
   },
   {
     name: "PieChart",
@@ -227,6 +303,7 @@ export const CATALOG_SAMPLES: Record<
   { props: Record<string, unknown>; childrenSample?: boolean }
 > = {
   Heading: { props: { text: "Section heading", level: 2 } },
+  Text: { props: { text: "A short paragraph of supporting body copy.", tone: "default" } },
   Card: { props: { title: "Card title", body: "A short supporting line.", accent: "brand" }, childrenSample: true },
   Badge: { props: { label: "Accepting", tone: "success" } },
   List: { props: { title: "Checklist", items: ["First item", "Second item"], ordered: false } },
@@ -235,6 +312,10 @@ export const CATALOG_SAMPLES: Record<
   Icon: { props: { name: "check", label: "Done" } },
   Divider: { props: {} },
   Stack: { props: { direction: "horizontal" }, childrenSample: true },
+  CardWithImage: { props: { title: "Onboarding illustrations", caption: "Sketches approved, vectors in progress.", alt: "Illustration preview" } },
+  ProductCard: { props: { title: "Focus timer", price: "$12", meta: "Productivity", alt: "Product photo" } },
+  StatCard: { props: { label: "Sessions complete", value: "5", unit: "/ 8", trend: "up" } },
+  IconCard: { props: { icon: "calendar", label: "Due Friday", value: "Offsite planning doc" } },
   PieChart: { props: { title: "Sources", labels: ["A", "B", "C"], values: [50, 30, 20] } },
   Table: {
     props: {

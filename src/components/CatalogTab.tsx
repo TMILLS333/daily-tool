@@ -22,25 +22,33 @@ import {
   IconEye,
   IconPencil,
   IconPlus,
+  IconAlignLeft,
+  IconArticle,
+  IconShoppingBag,
+  IconChartBar,
+  IconId,
 } from "@tabler/icons-react";
 
 /**
  * Catalog tab: one of the levers. The component allow-list as compact rows
  * (matching mockups/prompt-page-v2.html): icon + name + a one-line role + a
  * "what the agent sees" disclosure (the agent-read description, editable) + an
- * enable toggle. A search field and an All/On/Off filter sit at the top. Basic
- * = the default-on presentational primitives; Structured = the data-shape
- * components (off by default).
+ * enable toggle. A search field and an All/On/Off filter sit at the top. Every
+ * component is OFF by default (the designer curates the allow-list): Basic =
+ * presentational primitives, Composed = whole multi-part components, Structured
+ * = data-shape components.
  *
  * In a popup the `bare` prop drops this component's own chip / intro / teaching
  * card (the popup chrome already states them); the search + rows stay.
  */
-const BASIC = ["Heading", "Card", "Badge", "List", "Button", "Image", "Icon", "Divider", "Stack"];
+const BASIC = ["Heading", "Text", "Card", "Badge", "List", "Button", "Image", "Icon", "Divider", "Stack"];
+const COMPOSED = ["CardWithImage", "ProductCard", "StatCard", "IconCard"];
 const STRUCTURED = ["PieChart", "Table", "Timeline", "Kanban", "Matrix"];
 
 // Per-component icon + short role (the mockup's row metadata).
 const META: Record<string, { icon: typeof IconHeading; role: string }> = {
   Heading: { icon: IconHeading, role: "Section heading" },
+  Text: { icon: IconAlignLeft, role: "Paragraph of body text" },
   Card: { icon: IconSquareRounded, role: "Bordered card, composes children" },
   Badge: { icon: IconTag, role: "Small status label" },
   List: { icon: IconList, role: "Short list of items" },
@@ -54,6 +62,10 @@ const META: Record<string, { icon: typeof IconHeading; role: string }> = {
   Timeline: { icon: IconTimeline, role: "Dated sequence" },
   Kanban: { icon: IconLayoutKanban, role: "Columns of cards" },
   Matrix: { icon: IconGridDots, role: "Two-axis placement" },
+  CardWithImage: { icon: IconArticle, role: "Image card with title + caption" },
+  ProductCard: { icon: IconShoppingBag, role: "Image, title, price" },
+  StatCard: { icon: IconChartBar, role: "A single statistic" },
+  IconCard: { icon: IconId, role: "Icon, label, value" },
 };
 
 export function CatalogTab({
@@ -106,7 +118,6 @@ export function CatalogTab({
             <div className="rname">
               {name}
               {entry.container ? <span className="tag tag-c">container</span> : null}
-              {!entry.enabled ? <span className="tag tag-off">off by default</span> : null}
               {edited ? <span className="tag tag-c">edited</span> : null}
             </div>
             <div className="rrole">{meta?.role ?? ""}</div>
@@ -203,7 +214,17 @@ export function CatalogTab({
       <div className="catbody">
         <div className="grp">Basic</div>
         {BASIC.map(renderRow)}
-        <div className="grp">Structured · off by default</div>
+        <div className="grp">Composed</div>
+        <p
+          className="text-xs text-[var(--muted)]"
+          style={{ margin: "0 0 6px", padding: "0 2px" }}
+        >
+          Whole, multi-part components. Most useful in Controlled, where the agent
+          picks one block and fills it (it can&rsquo;t assemble parts itself).
+          CopilotKit calls this &ldquo;components as tools.&rdquo;
+        </p>
+        {COMPOSED.map(renderRow)}
+        <div className="grp">Structured</div>
         {STRUCTURED.map(renderRow)}
         <button className="add" type="button" disabled aria-disabled="true" title="Coming soon">
           <IconPlus size={16} stroke={1.5} />

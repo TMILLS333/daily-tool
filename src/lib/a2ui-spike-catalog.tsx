@@ -38,8 +38,13 @@ import {
   DTList,
   DTMatrix,
   DTPieChart,
+  DTCardWithImage,
+  DTIconCard,
+  DTProductCard,
   DTStack,
+  DTStatCard,
   DTTable,
+  DTText,
   DTTimeline,
 } from "@/components/catalog-primitives";
 
@@ -49,6 +54,14 @@ const definitions = {
     props: z.object({
       text: z.string(),
       level: z.number().min(1).max(3).optional(),
+    }),
+  },
+  Text: {
+    description:
+      "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title. Props: text (string), tone ('default' | 'muted').",
+    props: z.object({
+      text: z.string(),
+      tone: z.enum(["default", "muted"]).optional(),
     }),
   },
   Card: {
@@ -131,6 +144,54 @@ const definitions = {
     description: "A thin horizontal rule that separates sections. No props.",
     props: z.object({}),
   },
+  CardWithImage: {
+    description:
+      "A card with an image on top and a title and caption below. Props: title (string), caption (string, optional), alt (string), src (string, optional URL; never invent one — an honest placeholder shows when absent).",
+    props: z.object({
+      title: z.string(),
+      caption: z.string().optional(),
+      alt: z.string(),
+      src: z.string().optional(),
+    }),
+  },
+  ProductCard: {
+    description:
+      "A product card: an image, a title, a right-aligned price, and an optional meta line. Props: title (string), price (string), meta (string, optional), alt (string, optional), src (string, optional URL; never invent one).",
+    props: z.object({
+      title: z.string(),
+      price: z.string(),
+      meta: z.string().optional(),
+      alt: z.string().optional(),
+      src: z.string().optional(),
+    }),
+  },
+  StatCard: {
+    description:
+      "A single statistic: a large right-aligned figure with a label and optional unit and trend. Props: label (string), value (string), unit (string, optional), trend ('up' | 'down' | 'flat', optional).",
+    props: z.object({
+      label: z.string(),
+      value: z.string(),
+      unit: z.string().optional(),
+      trend: z.enum(["up", "down", "flat"]).optional(),
+    }),
+  },
+  IconCard: {
+    description:
+      "A small card with an icon, a label, and an optional value. Props: icon (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string), value (string, optional).",
+    props: z.object({
+      icon: z.enum([
+        "check",
+        "info",
+        "warning",
+        "star",
+        "calendar",
+        "dot",
+        "arrow-right",
+      ]),
+      label: z.string(),
+      value: z.string().optional(),
+    }),
+  },
   PieChart: {
     description:
       "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels).",
@@ -184,6 +245,7 @@ const definitions = {
     subset of component names (catalog-governance enforcement). */
 const renderers = {
   Heading: ({ props }) => <DTHeading text={props.text} level={props.level} />,
+  Text: ({ props }) => <DTText text={props.text} tone={props.tone} />,
   Card: ({ props, children }) => {
     // Card is a container too: resolve child IDs the same way Stack does.
     const list = props.children ?? props.childIds ?? [];
@@ -237,6 +299,29 @@ const renderers = {
   Image: ({ props }) => <DTImage alt={props.alt} src={props.src} />,
   Icon: ({ props }) => <DTIcon name={props.name} label={props.label} />,
   Divider: () => <DTDivider />,
+  CardWithImage: ({ props }) => (
+    <DTCardWithImage
+      title={props.title}
+      caption={props.caption}
+      alt={props.alt}
+      src={props.src}
+    />
+  ),
+  ProductCard: ({ props }) => (
+    <DTProductCard
+      title={props.title}
+      price={props.price}
+      meta={props.meta}
+      alt={props.alt}
+      src={props.src}
+    />
+  ),
+  StatCard: ({ props }) => (
+    <DTStatCard label={props.label} value={props.value} unit={props.unit} trend={props.trend} />
+  ),
+  IconCard: ({ props }) => (
+    <DTIconCard icon={props.icon} label={props.label} value={props.value} />
+  ),
   PieChart: ({ props }) => (
     <DTPieChart title={props.title} labels={props.labels} values={props.values} />
   ),

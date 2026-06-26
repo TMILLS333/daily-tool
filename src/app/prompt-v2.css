@@ -296,7 +296,10 @@
 
 /* modal chrome — shared by all four layer popups (bodies are the *Tab comps) */
 .pv2 .ovl {
-  position: absolute;
+  /* fixed (not absolute): anchor the backdrop + centered modal to the viewport,
+     not the page container, which grows to full canvas height once content
+     renders and would otherwise sink the modal below the fold. */
+  position: fixed;
   inset: 0;
   z-index: 50;
   background: rgba(28, 33, 26, 0.45);

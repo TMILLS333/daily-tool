@@ -17,6 +17,23 @@ export function DTHeading({ text, level = 2 }: { text: string; level?: number })
   return <Tag className={`${size} font-serif font-medium tracking-tight`}>{text}</Tag>;
 }
 
+export function DTText({
+  text,
+  tone = "default",
+}: {
+  text: string;
+  tone?: "default" | "muted";
+}) {
+  return (
+    <p
+      className="text-sm leading-relaxed"
+      style={tone === "muted" ? { color: "var(--muted)" } : undefined}
+    >
+      {text}
+    </p>
+  );
+}
+
 export function DTCard({
   title,
   body,
@@ -169,6 +186,141 @@ export function DTImage({ alt, src }: { alt: string; src?: string }) {
         <path d="M21 15l-5-5L5 21" />
       </svg>
       <span className="text-xs text-[var(--muted)]">{alt}</span>
+    </div>
+  );
+}
+
+// --- Composed "whole" components (Pass 2) --------------------------------
+// Multi-part display blocks the agent selects as one unit. The image-bearing
+// ones reuse DTImage so the honest placeholder is shared, not re-implemented.
+
+export function DTCardWithImage({
+  title,
+  caption,
+  alt,
+  src,
+}: {
+  title: string;
+  caption?: string;
+  alt: string;
+  src?: string;
+}) {
+  return (
+    <div
+      className="overflow-hidden border bg-[var(--surface)]"
+      style={{ borderRadius: "var(--dt-radius)", borderColor: "var(--dt-border)" }}
+    >
+      <DTImage alt={alt} src={src} />
+      <div style={{ padding: "var(--dt-gap)" }}>
+        <div className="font-serif text-base font-medium">{title}</div>
+        {caption ? <div className="mt-1 text-sm text-[var(--muted)]">{caption}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+export function DTProductCard({
+  title,
+  price,
+  meta,
+  alt,
+  src,
+}: {
+  title: string;
+  price: string;
+  meta?: string;
+  alt?: string;
+  src?: string;
+}) {
+  return (
+    <div
+      className="overflow-hidden border bg-[var(--surface)]"
+      style={{ borderRadius: "var(--dt-radius)", borderColor: "var(--dt-border)" }}
+    >
+      <DTImage alt={alt ?? title} src={src} />
+      <div
+        className="flex items-start justify-between gap-3"
+        style={{ padding: "var(--dt-gap)" }}
+      >
+        <div>
+          <div className="font-serif text-base font-medium">{title}</div>
+          {meta ? <div className="mt-1 text-xs text-[var(--muted)]">{meta}</div> : null}
+        </div>
+        <div
+          className="text-base font-medium tabular-nums"
+          style={{ textAlign: "right", whiteSpace: "nowrap" }}
+        >
+          {price}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TREND_GLYPH: Record<string, string> = { up: "↑", down: "↓", flat: "→" };
+const TREND_COLOR: Record<string, string> = {
+  up: "var(--dt-tone-success-fg)",
+  down: "var(--dt-tone-danger-fg)",
+  flat: "var(--muted)",
+};
+
+export function DTStatCard({
+  label,
+  value,
+  unit,
+  trend,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  trend?: "up" | "down" | "flat";
+}) {
+  return (
+    <div
+      className="border bg-[var(--surface)]"
+      style={{
+        borderRadius: "var(--dt-radius)",
+        borderColor: "var(--dt-border)",
+        padding: "var(--dt-gap)",
+      }}
+    >
+      <div className="text-xs uppercase tracking-wide text-[var(--muted)]">{label}</div>
+      <div className="mt-1 flex items-baseline justify-end gap-1 tabular-nums">
+        <span className="font-serif text-2xl font-medium">{value}</span>
+        {unit ? <span className="text-sm text-[var(--muted)]">{unit}</span> : null}
+        {trend ? (
+          <span className="text-sm" style={{ color: TREND_COLOR[trend] }}>
+            {TREND_GLYPH[trend]}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function DTIconCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value?: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-3 border bg-[var(--surface)]"
+      style={{
+        borderRadius: "var(--dt-radius)",
+        borderColor: "var(--dt-border)",
+        padding: "var(--dt-gap)",
+      }}
+    >
+      <DTIcon name={icon} label={label} />
+      <div>
+        <div className="text-sm font-medium">{label}</div>
+        {value ? <div className="text-sm text-[var(--muted)]">{value}</div> : null}
+      </div>
     </div>
   );
 }

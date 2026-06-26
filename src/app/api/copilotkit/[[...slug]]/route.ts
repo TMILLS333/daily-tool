@@ -192,6 +192,7 @@ patterns use no tools at all.`;
 // which is client-only); names + descriptions mirror a2ui-spike-catalog.tsx.
 const A2UI_SCHEMA = [
   { name: "Heading", description: "A section heading. Props: text (string), level (1, 2 or 3)." },
+  { name: "Text", description: "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title. Props: text (string), tone ('default' | 'muted')." },
   { name: "Card", description: "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'), children (array of the IDs of child components to place inside, in order)." },
   { name: "Badge", description: "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger')." },
   { name: "Stack", description: "A layout container. Props: direction ('vertical' | 'horizontal'), children (array of the IDs of the child components to place in order)." },
@@ -200,6 +201,10 @@ const A2UI_SCHEMA = [
   { name: "Image", description: "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder." },
   { name: "Icon", description: "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional)." },
   { name: "Divider", description: "A thin horizontal rule that separates sections. No props." },
+  { name: "CardWithImage", description: "A card with an image on top and a title and caption below. Props: title (string), caption (string, optional), alt (string), src (string, optional URL; never invent one — an honest placeholder shows when absent)." },
+  { name: "ProductCard", description: "A product card: an image, a title, a right-aligned price, and an optional meta line. Props: title (string), price (string), meta (string, optional), alt (string, optional), src (string, optional URL; never invent one)." },
+  { name: "StatCard", description: "A single statistic: a large right-aligned figure with a label and optional unit and trend. Props: label (string), value (string), unit (string, optional), trend ('up' | 'down' | 'flat', optional)." },
+  { name: "IconCard", description: "A small card with an icon, a label, and an optional value. Props: icon (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string), value (string, optional)." },
   { name: "PieChart", description: "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels)." },
   { name: "Table", description: "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items." },
   { name: "Timeline", description: "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates." },
