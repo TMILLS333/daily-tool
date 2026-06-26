@@ -402,6 +402,17 @@ export const catalogPromptText = (
     .join("\n");
 
 /**
+ * Always-available layout containers. A2UI renders one root node per surface, so
+ * composing more than one component requires a container to hold the children;
+ * with `includeBasicCatalog` off, CopilotKit supplies none, so the host must
+ * guarantee one. `Stack` is therefore FIXED-on (not a designer toggle): it is
+ * kept in the agent's catalog regardless of the enable state, shown as an
+ * always-on "layout" row, and excluded from the curate-count. Single source for
+ * buildCatalog (the agent), the why-panel mirrors, and the Catalog tab UI.
+ */
+export const ALWAYS_KEEP = new Set(["Stack"]);
+
+/**
  * The components the agent is actually allowed to use in a given pattern.
  * This is app truth, not a model claim — the why-panel renders this instead
  * of the model's self-report, which smaller models hallucinate (e.g. scout

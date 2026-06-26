@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CATALOG } from "@/lib/catalog";
+import { ALWAYS_KEEP, CATALOG } from "@/lib/catalog";
 import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 import {
   IconHeading,
@@ -91,7 +91,7 @@ export function CatalogTab({
   const [filter, setFilter] = useState<"all" | "on" | "off">("all");
 
   const visible = (name: string) => {
-    const on = enabled[name] ?? false;
+    const on = ALWAYS_KEEP.has(name) || (enabled[name] ?? false);
     if (filter === "on" && !on) return false;
     if (filter === "off" && on) return false;
     if (query && !name.toLowerCase().includes(query.toLowerCase())) return false;
@@ -103,7 +103,11 @@ export function CatalogTab({
     if (!entry || !visible(name)) return null;
     const meta = META[name];
     const Ic = meta?.icon ?? IconSquareRounded;
-    const on = enabled[name] ?? false;
+    // Fixed-on layout containers (Stack) are not toggles: they are always supplied
+    // to the agent so a multi-component layout can be assembled, so disabling them
+    // would be a false affordance. Shown as an "always on" row instead.
+    const fixed = ALWAYS_KEEP.has(name);
+    const on = fixed || (enabled[name] ?? false);
     const edited = descriptions[name] !== undefined;
     const descValue = edited ? descriptions[name] : entry.description;
     const isRevealed = revealed[name] ?? false;
@@ -131,16 +135,26 @@ export function CatalogTab({
             <IconEye size={13} stroke={1.5} />
             what the agent sees
           </button>
-          <button
-            type="button"
-            className="tog"
-            role="switch"
-            aria-checked={on}
-            aria-label={`${name} ${on ? "enabled" : "disabled"}`}
-            onClick={() => onToggle(name, !on)}
-          >
-            <span className="knob" />
-          </button>
+          {fixed ? (
+            <span
+              className="text-[10px] font-medium uppercase tracking-wide text-[var(--faint)]"
+              title="Layout container — always available so the agent can compose a multi-component layout. Not part of the curated allow-list."
+              style={{ whiteSpace: "nowrap" }}
+            >
+              always on
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="tog"
+              role="switch"
+              aria-checked={on}
+              aria-label={`${name} ${on ? "enabled" : "disabled"}`}
+              onClick={() => onToggle(name, !on)}
+            >
+              <span className="knob" />
+            </button>
+          )}
         </div>
         {isRevealed ? (
           <div className="sees">

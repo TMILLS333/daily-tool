@@ -26,6 +26,7 @@ import {
   type CatalogDefinitions,
   type CatalogRenderers,
 } from "@copilotkit/a2ui-renderer";
+import { ALWAYS_KEEP } from "@/lib/catalog";
 import {
   DTBadge,
   DTButton,
@@ -370,9 +371,7 @@ const CATALOG_OPTIONS = {
   catalogId: "https://a2ui.org/specification/v0_9/basic_catalog.json",
 } as const;
 
-// Container components must always be available or layout can't be assembled,
-// even if a designer disables them in the Catalog tab.
-const ALWAYS_KEEP = new Set(["Stack"]);
+// ALWAYS_KEEP (the fixed-on layout containers) is single-sourced in catalog.tsx.
 
 /**
  * Build the A2UI render catalog from a subset of enabled component names. This

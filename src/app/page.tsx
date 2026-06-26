@@ -34,6 +34,7 @@ import { LegibilityView } from "@/components/LegibilityView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
 import { SetupSequence, type SetupStep } from "@/components/SetupSequence";
 import {
+  ALWAYS_KEEP,
   CATALOG,
   allowedComponentNames,
   catalogPromptText,
@@ -210,6 +211,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     () => JSON.stringify({ enabled: [...enabledNames].sort(), descriptions }),
     [enabledNames, descriptions]
   );
+  // Catalog count = components the designer curated. Excludes the fixed-on layout
+  // containers (ALWAYS_KEEP / Stack), which are always available by design and
+  // shown as a non-toggle row, so the count never reads "+1 you didn't choose".
+  const curatedEnabledCount = useMemo(
+    () => [...enabledNames].filter((n) => !ALWAYS_KEEP.has(n)).length,
+    [enabledNames]
+  );
+  const curatedTotal = CATALOG.length - ALWAYS_KEEP.size;
   const [applied, setApplied] = useState<{
     data: string;
     rules: string;
@@ -649,7 +658,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Stack is a container the catalog always keeps, so it is never a rejection.
   const a2uiRejections = useMemo<string[]>(() => {
     if (!a2uiActive) return [];
-    const alwaysKeep = new Set(["Stack"]); // mirrors buildCatalog ALWAYS_KEEP
+    const alwaysKeep = ALWAYS_KEEP; // single-sourced in catalog.tsx
     const catalogNames = new Set(CATALOG.map((c) => c.name));
     const problems: string[] = [];
     for (const name of usedNames) {
@@ -672,7 +681,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   const renderedUsedNames = useMemo<string[]>(() => {
     if (!a2uiActive) return [...usedNames];
     const catalogNames = new Set(CATALOG.map((c) => c.name));
-    const alwaysKeep = new Set(["Stack"]); // mirrors buildCatalog ALWAYS_KEEP
+    const alwaysKeep = ALWAYS_KEEP; // single-sourced in catalog.tsx
     return [...usedNames].filter(
       (n) => alwaysKeep.has(n) || (catalogNames.has(n) && enabledNames.has(n))
     );
@@ -1175,7 +1184,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               <span className="lab">
                 Catalog
                 <span className="ct">
-                  {enabledNames.size}/{CATALOG.length}
+                  {curatedEnabledCount}/{curatedTotal}
                 </span>
               </span>
             </button>
@@ -1305,7 +1314,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 />
               <div className="pfoot">
                 <span>
-                  {enabledNames.size} of {CATALOG.length} enabled
+                  {curatedEnabledCount} of {curatedTotal} enabled
                 </span>
                 <span className="faint">Applies on your next run</span>
               </div>
