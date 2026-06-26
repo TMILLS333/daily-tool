@@ -1,20 +1,14 @@
 /**
- * Default design rules — the starter content of the Rules tab.
+ * Default design rules — EMPTY by design.
  *
- * This is the file attendees rewrite in plain English during Act 2.
- * The text is sent to the agent verbatim as design policy. There is no
- * special syntax: write rules the way you would brief a junior designer.
+ * Rules are the SOFT, optional escape hatch: the agent is asked to follow them
+ * but nothing enforces it (unlike the Catalog, which is enforced at render).
+ * They start empty so the tool never implies that typing prose is how you
+ * steer — the real levers are the catalog (membership + descriptions) and
+ * theme. A designer reaches for a rule only if those aren't enough, knowing it
+ * is not guaranteed to be used.
  */
-export const DEFAULT_RULES = `# My design rules
-
-- Always start with one heading that names the task, not the data.
-- Group related items into cards. One idea per card.
-- Use badges for status only: "blocked" is always danger, "done" is always success.
-- Never show more than 3 items per list. If there are more, show the top 3
-  and say how many were left out.
-- Never invent data that isn't in my Data tab.
-- Keep all text short. No paragraphs longer than two sentences.
-`;
+export const DEFAULT_RULES = "";
 
 /**
  * Default content of the Data tab, so the first run works before anyone

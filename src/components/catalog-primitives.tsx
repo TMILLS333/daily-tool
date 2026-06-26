@@ -17,6 +17,24 @@ export function DTHeading({ text, level = 2 }: { text: string; level?: number })
   return <Tag className={`${size} font-serif font-medium tracking-tight`}>{text}</Tag>;
 }
 
+// Emphasis primitives: a prominent line and a de-emphasized fine-print line.
+// Token-driven like the rest. data-test is a readout hook for the naming/
+// description probes.
+export function DTHighlight({ text }: { text: string }) {
+  return (
+    <div data-test="highlight" className="text-lg font-bold" style={{ color: "var(--ink)" }}>
+      {text}
+    </div>
+  );
+}
+export function DTFootnote({ text }: { text: string }) {
+  return (
+    <div data-test="footnote" className="text-xs italic" style={{ color: "var(--faint)" }}>
+      {text}
+    </div>
+  );
+}
+
 export function DTText({
   text,
   tone = "default",

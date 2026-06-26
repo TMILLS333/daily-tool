@@ -41,7 +41,7 @@ import {
  * In a popup the `bare` prop drops this component's own chip / intro / teaching
  * card (the popup chrome already states them); the search + rows stay.
  */
-const BASIC = ["Heading", "Text", "Card", "Badge", "List", "Button", "Image", "Icon", "Divider", "Stack"];
+const BASIC = ["Heading", "Highlight", "Footnote", "Text", "Card", "Badge", "List", "Button", "Image", "Icon", "Divider", "Stack"];
 const COMPOSED = ["CardWithImage", "ProductCard", "StatCard", "IconCard"];
 const STRUCTURED = ["PieChart", "Table", "Timeline", "Kanban", "Matrix"];
 
@@ -148,6 +148,11 @@ export function CatalogTab({
               <IconEye size={13} stroke={1.5} />
               The description the agent reads
             </div>
+            <p style={{ fontSize: 11, lineHeight: 1.4, color: "var(--faint)", marginBottom: 6 }}>
+              Write what this component is <em>for</em> (a role), e.g.
+              &ldquo;Use for the page title.&rdquo; Steers <em>which</em> component
+              the agent picks, not how it renders.
+            </p>
             {isEditing ? (
               <textarea
                 className="desc"

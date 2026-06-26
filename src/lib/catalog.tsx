@@ -23,7 +23,9 @@ import {
   DTCard,
   DTCardWithImage,
   DTDivider,
+  DTFootnote,
   DTHeading,
+  DTHighlight,
   DTIcon,
   DTIconCard,
   DTImage,
@@ -66,6 +68,22 @@ export const CATALOG: CatalogEntry[] = [
     }),
     enabled: false,
     Component: DTHeading,
+  },
+  {
+    name: "Highlight",
+    description:
+      "Prominent, emphasized text. Use for the single most important line you want to stand out. Props: text (string).",
+    props: z.object({ text: z.string() }),
+    enabled: false,
+    Component: DTHighlight,
+  },
+  {
+    name: "Footnote",
+    description:
+      "Small, muted fine print. Use for disclaimers, captions, or secondary detail. Props: text (string).",
+    props: z.object({ text: z.string() }),
+    enabled: false,
+    Component: DTFootnote,
   },
   {
     name: "Text",

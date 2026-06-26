@@ -23,12 +23,12 @@ export function RulesTab({
       {!bare && (
         <>
           <div className="flex justify-end">
-            <HonestyChip variant="soft">Soft · instructed</HonestyChip>
+            <HonestyChip variant="soft">Soft · not guaranteed</HonestyChip>
           </div>
           <p className="text-sm text-neutral-500">
-            Your design system, expressed as policy: what components appear when,
-            and what the agent must never do. Plain English: every rule you write
-            here binds the agent on the next run.
+            Optional, soft guidance. Use only if the catalog and descriptions
+            aren&apos;t enough. The agent is asked to follow each rule and reports
+            that it did, but nothing enforces it — unlike the Catalog.
           </p>
         </>
       )}

@@ -65,6 +65,9 @@ export function WhyPanel({
           </span>
           <HonestyChip variant="hard">Verified</HonestyChip>
         </div>
+        <p className="mb-3 text-[11px] leading-snug text-[var(--faint)]">
+          What the app computed and checked — not the model&apos;s say-so.
+        </p>
         <div className="flex flex-wrap gap-x-10 gap-y-4">
           <div>
             <div className={label}>Pattern</div>
@@ -109,6 +112,10 @@ export function WhyPanel({
           </span>
           <HonestyChip variant="soft">Agent&apos;s account</HonestyChip>
         </div>
+        <p className="mb-3 text-[11px] leading-snug text-[var(--faint)]">
+          Not verifiable — the app can confirm what the agent built, but not
+          whether it actually followed a rule. This is the model&apos;s own claim.
+        </p>
         {realPath &&
         !(
           why?.intent ||

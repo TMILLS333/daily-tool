@@ -1269,10 +1269,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               <div className="ph">
                 <div>
                   <h2>Rules</h2>
-                  <p>Plain-language guidance the agent should follow when it builds.</p>
+                  <p>Optional. Use only if the catalog and descriptions aren&apos;t enough — the agent may not follow it.</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                  <span className="hon soft">Soft · guidance</span>
+                  <span className="hon soft">Soft · not guaranteed</span>
                   <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
                     ×
                   </button>
@@ -1320,11 +1320,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               <div className="ph">
                 <div>
                   <h2>Theme</h2>
-                  <p>The visual system the output renders in. Tokens, not chrome.</p>
+                  <p>Styling is applied by the app. The agent never sees your theme.</p>
                 </div>
-                <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
-                  ×
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span className="hon hard">Host-side</span>
+                  <button className="x" type="button" onClick={() => setTab("preview")} aria-label="Close">
+                    ×
+                  </button>
+                </div>
               </div>
               <div className="pbody">
                 <StyleTab bare tokens={tokens} onChange={setTokens} />
