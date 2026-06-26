@@ -353,8 +353,11 @@ const CATALOG_OPTIONS = {
   // the agent only ever uses our 11 DT names and emits flat `children` arrays —
   // the basic catalog was an unused safety net, off-brand if it ever fired. With
   // false we register ONLY the 11 DT components: the curated designer vocabulary,
-  // which is the teaching thesis. The agent's vocabulary is governed server-side
-  // by route.ts A2UI_SCHEMA regardless.
+  // which is the teaching thesis. (Pass 3, e27183e: the agent's vocabulary is
+  // governed by THIS client catalog — buildCatalog(enabledNames) sent as agent
+  // context via react-core a2ui `includeSchema` — NOT a server schema. The old
+  // route.ts A2UI_SCHEMA override was removed, so the enabled set governs per
+  // request, the CopilotKit-native way.)
   includeBasicCatalog: false,
   // KEEP this on the basic-catalog URL. The a2ui middleware HARDCODES this id in
   // the surface the agent emits ("the catalog id is set by the host"); there is
