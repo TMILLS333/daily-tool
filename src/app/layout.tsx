@@ -24,7 +24,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GenUI Studio — Daily Tool",
+  title: "GenUI Studio",
   description:
     "Your daily pile of text, rendered as an interface by an agent — within design rules you write.",
 };

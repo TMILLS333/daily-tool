@@ -799,10 +799,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         style={tokenStyle}
       >
         <header className="flex shrink-0 items-center border-b border-[var(--line)] px-10 py-3">
-          <div className="font-serif text-[17px] leading-tight">
-            GenUI Studio{" "}
-            <span className="font-sans text-[11px] text-[var(--muted)]">
-              Daily Tool
+          <div className="flex flex-col items-start leading-tight">
+            <span className="font-serif text-[17px]">GenUI Studio</span>
+            <span className="font-mono text-[11px] text-[var(--muted)]">
+              <span className="text-[var(--dt-brand)]" aria-hidden="true">//</span> for the rest of us
             </span>
           </div>
         </header>
@@ -832,12 +832,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           <button
             type="button"
             onClick={() => setTab("preview")}
-            className="font-serif text-[17px] leading-tight"
+            className="flex flex-col items-start leading-tight"
             aria-label="GenUI Studio, back to Preview"
           >
-            GenUI Studio{" "}
-            <span className="font-sans text-[11px] text-[var(--muted)]">
-              Daily Tool
+            <span className="font-serif text-[17px]">GenUI Studio</span>
+            <span className="font-mono text-[11px] text-[var(--muted)]">
+              <span className="text-[var(--dt-brand)]" aria-hidden="true">//</span> for the rest of us
             </span>
           </button>
           {/* Design Notes + Chat nav HIDDEN 2026-06-26 (Tania) — not needed for the
