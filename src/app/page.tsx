@@ -1083,68 +1083,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           zone: Freedom + Prompt. Secondary zone: demoted Layer chips. Handoff
           pinned to the bottom. */}
       <aside className="panel">
-        <div className="prime">
-          <div>
-            <div className="fhead">
-              <span className="ftitle">Freedom</span>
-              <span className="fsub">how much you let the agent decide</span>
-            </div>
-            <div className="seg">
-              {PATTERNS.map((p) => {
-                const on = pattern === p;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setPattern(p)}
-                  >
-                    <span className="nm">{PATTERN_CARDS[p].name}</span>
-                    <span className="f">{PATTERN_CARDS[p].freedom}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="fdesc">
-              <b>{PATTERN_CARDS[pattern].name}.</b> {PATTERN_CARDS[pattern].line}
-            </div>
-          </div>
-
-          <div className="pb">
-            <textarea
-              ref={requestRef}
-              value={request}
-              onChange={(e) => setRequest(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  void run();
-                }
-              }}
-              placeholder="Describe what you want from your data…"
-              spellCheck={false}
-            />
-            <div className="pbtools">
-              <span className="phint">
-                <span className="pkey">⌘ ↵</span> to run
-              </span>
-              <button
-                className="run"
-                type="button"
-                aria-label={runState.kind === "running" ? "Stop" : "Run"}
-                onClick={runState.kind === "running" ? stop : () => void run()}
-                style={
-                  runState.kind === "running"
-                    ? { background: "var(--line)", color: "var(--ink)" }
-                    : undefined
-                }
-              >
-                {runState.kind === "running" ? "■" : "→"}
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div className="second">
           <div className="slabel">
             <span className="t">Layers</span>
@@ -1208,9 +1146,66 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           </div>
         </div>
 
-        <div className="handoff">
-          You author the <b>vocabulary, constraints, and visual system</b>. A
-          genuinely <b>new</b> primitive still needs engineering.
+        <div className="prime">
+          <div>
+            <div className="fhead">
+              <span className="ftitle">Freedom</span>
+              <span className="fsub">how much you let the agent decide</span>
+            </div>
+            <div className="seg">
+              {PATTERNS.map((p) => {
+                const on = pattern === p;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setPattern(p)}
+                  >
+                    <span className="nm">{PATTERN_CARDS[p].name}</span>
+                    <span className="f">{PATTERN_CARDS[p].freedom}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="fdesc">
+              <b>{PATTERN_CARDS[pattern].name}.</b> {PATTERN_CARDS[pattern].line}
+            </div>
+          </div>
+
+          <div className="pb">
+            <textarea
+              ref={requestRef}
+              value={request}
+              onChange={(e) => setRequest(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void run();
+                }
+              }}
+              placeholder="Describe what you want from your data…"
+              spellCheck={false}
+            />
+            <div className="pbtools">
+              <span className="phint">
+                <span className="pkey">⌘ ↵</span> to run
+              </span>
+              <button
+                className="run"
+                type="button"
+                aria-label={runState.kind === "running" ? "Stop" : "Run"}
+                onClick={runState.kind === "running" ? stop : () => void run()}
+                style={
+                  runState.kind === "running"
+                    ? { background: "var(--line)", color: "var(--ink)" }
+                    : undefined
+                }
+              >
+                {runState.kind === "running" ? "■" : "→"}
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
       </div>

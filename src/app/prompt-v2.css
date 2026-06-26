@@ -19,7 +19,10 @@
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  min-height: calc(100dvh - 40px);
+  /* Fixed to the viewport (not min-height) so the body never scrolls: the two
+     columns (canvas, panel) each scroll their own overflow internally. This
+     keeps the right panel in view while the left canvas scrolls. */
+  height: calc(100dvh - 40px);
   display: flex;
   flex-direction: column;
   background: var(--paper);
@@ -83,7 +86,9 @@
   gap: 16px;
 }
 
-/* RIGHT — tooling panel */
+/* RIGHT — tooling panel. A full-height internal-scroll column: the shell (.a) is
+   viewport-height-capped, so the panel and canvas each scroll their own overflow
+   and the page never scrolls — the panel stays in view while the canvas scrolls. */
 .pv2 .panel {
   width: 384px;
   flex-shrink: 0;
@@ -221,11 +226,11 @@
   cursor: pointer;
 }
 
-/* secondary zone — layers, demoted */
+/* layers zone — now the top zone; hairline separates it from Freedom below */
 .pv2 .second {
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 0.5px solid var(--line);
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 0.5px solid var(--line);
 }
 .pv2 .slabel {
   display: flex;
@@ -281,17 +286,6 @@
   font-size: 11px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-}
-.pv2 .handoff {
-  margin-top: auto;
-  padding-top: 16px;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-.pv2 .handoff b {
-  color: var(--ink);
-  font-weight: 500;
 }
 
 /* modal chrome — shared by all four layer popups (bodies are the *Tab comps) */
