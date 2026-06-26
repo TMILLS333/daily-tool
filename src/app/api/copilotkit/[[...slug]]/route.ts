@@ -261,10 +261,23 @@ const agent = new BuiltInAgent({
   overridableProperties: ["toolChoice"],
 });
 
-// The real-A2UI agent. toolChoice is left at its default (auto) so it can CALL
-// render_a2ui — NOT in overridableProperties, so the front end can't force it
-// to "none" the way it does for the default agent's text patterns. Proven on
-// the spike: injectA2UITool + auto = a clean single tool-call (2026-06-19).
+// The real-A2UI agent. toolChoice is left at its default (auto). The "no
+// surface" failures have TWO grounded buckets, verified on the wire 2026-06-26
+// (RUN_STARTED..RUN_FINISHED captures):
+//   (1) SKIP — the model never calls render_a2ui (no TOOL_CALL_START); a clean
+//       text/empty answer. This is the AI-SDK "auto" default letting a small
+//       model decline the tool.
+//   (2) EMPTY CALL — render_a2ui IS called but with degenerate args, e.g.
+//       {"surfaceId":"...","components":[{},{},{}]} (empty objects, NOT
+//       truncation), so the middleware emits status:"building" with no
+//       a2ui_operations and nothing paints.
+// Forcing toolChoice ({type:"tool",toolName:"render_a2ui"}) was TESTED and
+// REJECTED: it converts bucket (1) into bucket (2) — the model, forced, emits
+// the empty [{},{},{}] call — so it does not improve paint reliability and can
+// suppress the trailing ```why text. The real levers are prompt reliability,
+// the middleware validate/retry loop (doesn't currently catch empty
+// components), and model capability (Gemini Flash is the weak link) — not a
+// one-line toolChoice flip. Tracked for a deliberate pass, not band-aided.
 const a2uiAgent = new BuiltInAgent({
   model: MODEL,
   prompt: A2UI_PROMPT,

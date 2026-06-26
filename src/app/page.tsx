@@ -999,8 +999,9 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                             </p>
                           ) : runState.kind !== "running" && !a2uiSurfacePresent ? (
                             <p className="text-sm text-[var(--faint)]">
-                              The run completed but produced no A2UI surface. Run
-                              again. Small models occasionally skip the tool call.
+                              The run finished without a renderable surface — the
+                              agent either didn&apos;t call the render tool or
+                              returned an empty one. Run again.
                             </p>
                           ) : null}
                           {/* Rejections relocated to the receipt's "blocked by your
