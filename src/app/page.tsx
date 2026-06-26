@@ -593,7 +593,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     : activeText
     ? parseWhy(activeText)
     : null;
-  const commentary = activeText ? commentaryOf(activeText) : "";
+  // commentary (the below-canvas prose) HIDDEN 2026-06-26 — see the render site.
+  // const commentary = activeText ? commentaryOf(activeText) : "";
   // App truth: which catalog entries the CURRENT render used. Controlled reads
   // the rendered blocks; Declarative walks the emitted spec. Drives the Catalog
   // facet's "used" marks. Open-Ended has no catalog, so the set stays empty.
@@ -827,6 +828,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               Daily Tool
             </span>
           </button>
+          {/* Design Notes + Chat nav HIDDEN 2026-06-26 (Tania) — not needed for the
+              event. Restore by uncommenting:
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -854,6 +857,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               <span aria-hidden>✦</span> Chat
             </button>
           </div>
+          */}
           </div>
         </header>
 
@@ -1015,9 +1019,13 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       <OpenEndedPattern agentText={activeText} />
                     )}
                   </div>
+                  {/* Below-canvas commentary HIDDEN 2026-06-26 (Tania) — the agent's
+                      prose was leaking below the artboard. Restore by uncommenting
+                      (and the `commentary` const above):
                   {commentary ? (
                     <p className="mt-2 text-xs text-[var(--muted)]">{commentary}</p>
                   ) : null}
+                  */}
                 </section>
 
                 {/* Receipt: Why / Operations / how-it-emerged, centered to the

@@ -18,7 +18,7 @@ import { HonestyChip } from "@/components/TeachingCard";
  * from the --paper panel ground), padded on the 8/4 grid (p-4, gap-2, mb-2).
  */
 const cardClass =
-  "rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-4";
+  "rounded-[var(--dt-radius)] border border-[var(--line)] bg-[var(--surface)] p-5";
 
 export function WhyPanel({
   why,
@@ -46,24 +46,13 @@ export function WhyPanel({
 }) {
   const label = "text-[11px] uppercase tracking-wide text-[var(--faint)]";
 
-  // Pre-run on the simplified path: the quiet prompt, on its own card. (The real
-  // path always has app-truth to show, so it skips the placeholder.)
-  if (!why && !realPath) {
-    return (
-      <aside className={cardClass}>
-        <p className="text-sm text-[var(--faint)]">
-          <span className="font-medium text-[var(--muted)]">Why this render</span>:{" "}
-          run a request and the agent reports the pattern it used, the rules it
-          applied, and the components it was allowed to touch.
-        </p>
-      </aside>
-    );
-  }
-
+  // The receipt is mounted only once the canvas has a completed render (gated in
+  // page.tsx), so there is no pre-run placeholder here — both provenance cards
+  // always have app-truth to show.
   const patternName = pattern === "static" ? "Controlled" : pattern;
 
   return (
-    <aside className="flex flex-col gap-2">
+    <aside className="flex flex-col gap-3">
       {/* Computed by the app — verified, not a model claim. Its own card. */}
       <div className={cardClass}>
         <div className="mb-2 flex items-center gap-2">
@@ -72,13 +61,13 @@ export function WhyPanel({
           </span>
           <HonestyChip variant="hard">Verified</HonestyChip>
         </div>
-        <p className="mb-3 text-[11px] leading-snug text-[var(--faint)]">
+        <p className="mb-5 text-[11px] leading-relaxed text-[var(--faint)]">
           What the app computed and checked — not the model&apos;s say-so.
         </p>
-        <div className="flex flex-wrap gap-x-10 gap-y-4">
+        <div className="flex flex-wrap gap-x-12 gap-y-5">
           <div>
             <div className={label}>Pattern</div>
-            <div className="font-serif text-[15px] capitalize">{patternName}</div>
+            <div className="mt-1.5 font-serif text-[15px] capitalize">{patternName}</div>
             <div className="mt-1 text-[11px] text-[var(--faint)]">
               {freedom} AI freedom
             </div>
@@ -159,16 +148,12 @@ export function WhyPanel({
           when present; the honest "operations, not words" note shows only when no
           written account was emitted. */}
       <div className={cardClass}>
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-4 flex items-center gap-2">
           <span className="text-[12px] font-medium text-[var(--ink)]">
             Reported by the model
           </span>
           <HonestyChip variant="soft">Agent&apos;s account</HonestyChip>
         </div>
-        <p className="mb-3 text-[11px] leading-snug text-[var(--faint)]">
-          Not verifiable — the app can confirm what the agent built, but not
-          whether it actually followed a rule. This is the model&apos;s own claim.
-        </p>
         {realPath &&
         !(
           why?.intent ||
@@ -177,50 +162,64 @@ export function WhyPanel({
           why?.notes ||
           (why?.rulesApplied?.length ?? 0) > 0
         ) ? (
-          <p className="text-sm text-[var(--muted)]">
+          <p className="text-sm leading-relaxed text-[var(--muted)]">
             On the Real A2UI path the agent emits operations, not a written
-            account. See the Operations module above for exactly what it built.
+            account, so there is nothing for it to self-report here.
           </p>
         ) : (
-          <div className="flex flex-col gap-2 text-sm text-[var(--muted)]">
+          // Each field as an eyebrow label + value (matching the Verified card),
+          // generously spaced, so the labels lead the eye instead of blending in.
+          <div className="flex flex-col gap-5 text-sm">
             <div>
-              <span className="text-[var(--faint)]">Rules fired: </span>
-              {!why || why.rulesApplied.length === 0 ? (
-                <span className="text-[var(--faint)]">none reported</span>
-              ) : (
-                <span className="text-[var(--ink)]">
-                  {why.rulesApplied.join(" · ")}
-                </span>
-              )}
+              <div className={label}>Rules fired</div>
+              <div className="mt-1.5">
+                {!why || why.rulesApplied.length === 0 ? (
+                  <span className="text-[var(--faint)]">none reported</span>
+                ) : (
+                  <span className="text-[var(--ink)]">
+                    {why.rulesApplied.join(" · ")}
+                  </span>
+                )}
+              </div>
             </div>
             {why?.intent ? (
               <div>
-                <span className="text-[var(--faint)]">Intent: </span>
-                {why.intent}
+                <div className={label}>Intent</div>
+                <div className="mt-1.5 leading-relaxed text-[var(--muted)]">
+                  {why.intent}
+                </div>
               </div>
             ) : null}
             {why?.structure ? (
               <div>
-                <span className="text-[var(--faint)]">Structure inferred: </span>
-                {why.structure}
+                <div className={label}>Structure inferred</div>
+                <div className="mt-1.5 leading-relaxed text-[var(--muted)]">
+                  {why.structure}
+                </div>
               </div>
             ) : null}
             {why?.source ? (
               <div>
-                <span className="text-[var(--faint)]">Drawn from: </span>
-                {why.source}
+                <div className={label}>Drawn from</div>
+                <div className="mt-1.5 leading-relaxed text-[var(--muted)]">
+                  {why.source}
+                </div>
               </div>
             ) : null}
             {why?.notes ? (
               <div>
-                <span className="text-[var(--faint)]">
-                  Decisions the rules didn&apos;t cover:{" "}
-                </span>
-                {why.notes}
+                <div className={label}>Decisions the rules didn&apos;t cover</div>
+                <div className="mt-1.5 leading-relaxed text-[var(--muted)]">
+                  {why.notes}
+                </div>
               </div>
             ) : null}
           </div>
         )}
+        <p className="mt-5 border-t border-[var(--line)] pt-4 text-[11px] leading-relaxed text-[var(--faint)]">
+          Not verifiable — the app can confirm what the agent built, but not
+          whether it actually followed a rule. This is the model&apos;s own claim.
+        </p>
       </div>
     </aside>
   );
