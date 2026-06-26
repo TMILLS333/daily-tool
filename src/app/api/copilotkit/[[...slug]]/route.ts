@@ -182,35 +182,16 @@ patterns use no tools at all.`;
 // Declarative) never sees render_a2ui — proven at the source in
 // configureAgentForRequest (shouldApply = targetAgents.includes(agentId)).
 //
-// Catalog governance (Package 1, Approach B): the agent is STEERED by the
-// enabled catalog via the same "Component catalog" application context the
-// front end already sends (catalogPromptText), and ENFORCED client-side by
-// building the A2UIRenderer catalog from enabledNames. So this server schema
-// stays the full vocabulary; the enabled subset governs via context + render.
-//
-// The schema is plain data (NOT imported from the client a2ui-renderer adapter,
-// which is client-only); names + descriptions mirror a2ui-spike-catalog.tsx.
-const A2UI_SCHEMA = [
-  { name: "Heading", description: "A section heading. Props: text (string), level (1, 2 or 3)." },
-  { name: "Text", description: "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title. Props: text (string), tone ('default' | 'muted')." },
-  { name: "Card", description: "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'), children (array of the IDs of child components to place inside, in order)." },
-  { name: "Badge", description: "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger')." },
-  { name: "Stack", description: "A layout container. Props: direction ('vertical' | 'horizontal'), children (array of the IDs of the child components to place in order)." },
-  { name: "List", description: "A short list of items. Props: title (string, optional), items (array of strings), ordered (boolean)." },
-  { name: "Button", description: "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version." },
-  { name: "Image", description: "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder." },
-  { name: "Icon", description: "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional)." },
-  { name: "Divider", description: "A thin horizontal rule that separates sections. No props." },
-  { name: "CardWithImage", description: "A card with an image on top and a title and caption below. Props: title (string), caption (string, optional), alt (string), src (string, optional URL; never invent one — an honest placeholder shows when absent)." },
-  { name: "ProductCard", description: "A product card: an image, a title, a right-aligned price, and an optional meta line. Props: title (string), price (string), meta (string, optional), alt (string, optional), src (string, optional URL; never invent one)." },
-  { name: "StatCard", description: "A single statistic: a large right-aligned figure with a label and optional unit and trend. Props: label (string), value (string), unit (string, optional), trend ('up' | 'down' | 'flat', optional)." },
-  { name: "IconCard", description: "A small card with an icon, a label, and an optional value. Props: icon (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string), value (string, optional)." },
-  { name: "PieChart", description: "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels)." },
-  { name: "Table", description: "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items." },
-  { name: "Timeline", description: "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates." },
-  { name: "Kanban", description: "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings). Use ONLY when the data has a status or stage to group by." },
-  { name: "Matrix", description: "A two-axis placement chart. Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100), y (array of numbers 0-100). Use ONLY when you can justify two rateable axes from the data; do not invent scores." },
-];
+// Catalog governance is CLIENT-driven — the CopilotKit-native way. The provider
+// sends the enabled-only catalog's component schemas to the agent as context
+// (@copilotkit/react-core a2ui `includeSchema` defaults to true; the client
+// builds buildCatalog(enabledNames) per request, so the agent's allow-list is
+// exactly the enabled subset). We deliberately do NOT set a server `a2ui.schema`
+// in the runtime config below: @ag-ui/a2ui-middleware REPLACES the client-sent
+// schema with a server one when configured, which would advertise disabled
+// components to the agent and re-open the governance gap. The "Component catalog"
+// application context (catalogPromptText) and the client-side renderer rejection
+// remain as reinforcement + backstop, but the schema is the real allow-list.
 
 const A2UI_PROMPT = `You build a small interface that answers the user's request,
 rendered as a REAL A2UI surface via the A2UI tool, within the designer's rules.
@@ -304,7 +285,8 @@ const runtime = new CopilotRuntime({
   // render_a2ui. injectA2UITool registers render_a2ui as a real callable tool
   // (without it the model emits ops-as-text + an apology — proven 2026-06-19).
   a2ui: {
-    schema: A2UI_SCHEMA,
+    // No server `schema` on purpose — see the governance note above A2UI_PROMPT.
+    // The client catalog (enabled subset) is the agent's allow-list per request.
     injectA2UITool: true,
     agents: ["declarativeA2UI"],
   },
