@@ -24,6 +24,7 @@ export function WhyPanel({
   why,
   usedNames,
   rejections,
+  commentary,
   freedom,
   pattern,
   realPath,
@@ -37,6 +38,9 @@ export function WhyPanel({
    *  refused (off-catalog or disabled). Deterministic enforcement, not a model
    *  claim; empty on Controlled (the tool simply never exists). */
   rejections: string[];
+  /** The agent's free-text prose (its non-fenced reply). Shown as the agent's
+   *  account when there is no structured ```why — chiefly the Real A2UI path. */
+  commentary: string;
   /** App-derived AI-freedom level for the active pattern (Low / Medium / High). */
   freedom: string;
   /** Active pattern from app state — authoritative, NOT the model's why.pattern. */
@@ -50,6 +54,18 @@ export function WhyPanel({
   // page.tsx), so there is no pre-run placeholder here — both provenance cards
   // always have app-truth to show.
   const patternName = pattern === "static" ? "Controlled" : pattern;
+
+  // The model's account, in precedence: a structured ```why (Controlled /
+  // simplified) wins; else the agent's free-text prose (Real A2UI writes prose
+  // but no structured why); else, nothing was reported.
+  const hasStructuredWhy = !!(
+    why?.intent ||
+    why?.structure ||
+    why?.source ||
+    why?.notes ||
+    (why?.rulesApplied?.length ?? 0) > 0
+  );
+  const agentNote = commentary.trim();
 
   return (
     <aside className="flex flex-col gap-3">
@@ -154,19 +170,7 @@ export function WhyPanel({
           </span>
           <HonestyChip variant="soft">Agent&apos;s account</HonestyChip>
         </div>
-        {realPath &&
-        !(
-          why?.intent ||
-          why?.structure ||
-          why?.source ||
-          why?.notes ||
-          (why?.rulesApplied?.length ?? 0) > 0
-        ) ? (
-          <p className="text-sm leading-relaxed text-[var(--muted)]">
-            On the Real A2UI path the agent emits operations, not a written
-            account, so there is nothing for it to self-report here.
-          </p>
-        ) : (
+        {hasStructuredWhy ? (
           // Each field as an eyebrow label + value (matching the Verified card),
           // generously spaced, so the labels lead the eye instead of blending in.
           <div className="flex flex-col gap-5 text-sm">
@@ -215,6 +219,22 @@ export function WhyPanel({
               </div>
             ) : null}
           </div>
+        ) : agentNote ? (
+          // The agent's own prose — its account when it wrote no structured why
+          // (chiefly the Real A2UI path, which emits operations + a text reply).
+          <div>
+            <div className={label}>In its own words</div>
+            <p className="mt-1.5 leading-relaxed text-[var(--muted)]">{agentNote}</p>
+          </div>
+        ) : realPath ? (
+          <p className="text-sm leading-relaxed text-[var(--muted)]">
+            On the Real A2UI path the agent emits operations, not a written
+            account, so there is nothing for it to self-report here.
+          </p>
+        ) : (
+          <p className="text-sm text-[var(--faint)]">
+            The model reported no account for this render.
+          </p>
         )}
         <p className="mt-5 border-t border-[var(--line)] pt-4 text-[11px] leading-relaxed text-[var(--faint)]">
           Not verifiable — the app can confirm what the agent built, but not

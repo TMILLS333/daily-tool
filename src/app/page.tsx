@@ -602,8 +602,11 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     : activeText
     ? parseWhy(activeText)
     : null;
-  // commentary (the below-canvas prose) HIDDEN 2026-06-26 — see the render site.
-  // const commentary = activeText ? commentaryOf(activeText) : "";
+  // The agent's free-text prose (non-fenced reply). No longer rendered below the
+  // canvas (that leaked under the artboard); surfaced inside the "Reported by the
+  // model" card as the agent's account on the Real A2UI path, which emits no
+  // structured ```why block.
+  const commentary = activeText ? commentaryOf(activeText) : "";
   // App truth: which catalog entries the CURRENT render used. Controlled reads
   // the rendered blocks; Declarative walks the emitted spec. Drives the Catalog
   // facet's "used" marks. Open-Ended has no catalog, so the set stays empty.
@@ -1064,6 +1067,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   why={why}
                   usedNames={renderedUsedNames}
                   rejections={a2uiRejections}
+                  commentary={commentary}
                   freedom={PATTERN_CARDS[pattern].freedom}
                   pattern={pattern}
                   realPath={a2uiActive}
