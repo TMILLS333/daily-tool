@@ -134,9 +134,10 @@ function Runner({ request, runNonce, stopNonce, onReply, onStatus, onSurface, on
 
   return (
     <div className="flex flex-col" style={{ gap: "var(--dt-gap)" }}>
-      <span className="self-start rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-500">
-        Real A2UI (live surface)
-      </span>
+      {/* "Real A2UI (live surface)" tag removed 2026-06-26: leftover from when a
+          "Simplified" Declarative sub-mode existed to contrast with. Simplified is
+          hidden now, so the qualifier (and the dev-jargon "live surface") only
+          added noise over the render; the receipt already states the pattern. */}
       {renderActivityMessage(a2uiMessage as any)}
     </div>
   );
