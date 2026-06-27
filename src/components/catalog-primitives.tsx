@@ -80,10 +80,10 @@ export function DTCard({
 }
 
 const TONES: Record<string, { bg: string; fg: string }> = {
-  neutral: { bg: "var(--dt-tone-neutral-bg)", fg: "var(--dt-tone-neutral-fg)" },
-  success: { bg: "var(--dt-tone-success-bg)", fg: "var(--dt-tone-success-fg)" },
-  warning: { bg: "var(--dt-tone-warning-bg)", fg: "var(--dt-tone-warning-fg)" },
-  danger: { bg: "var(--dt-tone-danger-bg)", fg: "var(--dt-tone-danger-fg)" },
+  neutral: { bg: "color-mix(in srgb, var(--dt-tone-neutral) 14%, var(--surface))", fg: "var(--dt-tone-neutral)" },
+  success: { bg: "color-mix(in srgb, var(--dt-tone-success) 14%, var(--surface))", fg: "var(--dt-tone-success)" },
+  warning: { bg: "color-mix(in srgb, var(--dt-tone-warning) 16%, var(--surface))", fg: "var(--dt-tone-warning)" },
+  danger: { bg: "color-mix(in srgb, var(--dt-tone-danger) 13%, var(--surface))", fg: "var(--dt-tone-danger)" },
 };
 
 export function DTBadge({
@@ -277,8 +277,8 @@ export function DTProductCard({
 
 const TREND_GLYPH: Record<string, string> = { up: "↑", down: "↓", flat: "→" };
 const TREND_COLOR: Record<string, string> = {
-  up: "var(--dt-tone-success-fg)",
-  down: "var(--dt-tone-danger-fg)",
+  up: "var(--dt-tone-success)",
+  down: "var(--dt-tone-danger)",
   flat: "var(--muted)",
 };
 
@@ -427,10 +427,10 @@ export function DTStack({
 // Pie slice colors, token-driven so the chart re-themes with the Theme tab.
 const PIE_PALETTE = [
   "var(--dt-brand)",
-  "var(--dt-tone-success-fg)",
-  "var(--dt-tone-warning-fg)",
-  "var(--dt-tone-danger-fg)",
-  "var(--dt-tone-neutral-fg)",
+  "var(--dt-tone-success)",
+  "var(--dt-tone-warning)",
+  "var(--dt-tone-danger)",
+  "var(--dt-tone-neutral)",
 ];
 
 function polar(cx: number, cy: number, r: number, angle: number): [number, number] {

@@ -60,14 +60,14 @@ html::-webkit-scrollbar {
   --dt-radius: 10px;
   --dt-gap: 12px;
 
-  --dt-tone-neutral-bg: #e8ece4;
-  --dt-tone-neutral-fg: #4f5b52;
-  --dt-tone-success-bg: #e9f0ea;
-  --dt-tone-success-fg: #3b6d4f;
-  --dt-tone-warning-bg: #f6edd9;
-  --dt-tone-warning-fg: #7a5a1e;
-  --dt-tone-danger-bg: #f4e9e7;
-  --dt-tone-danger-fg: #9c3b32;
+  /* Semantic tones — one editable hue each (design-system v2). The renderer
+     derives the soft chip background via color-mix; defaults are the prior fg
+     hues so the look barely moves. Now part of the runtime override too, so a
+     designer can tune them live in the Theme tab. */
+  --dt-tone-neutral: #4f5b52;
+  --dt-tone-success: #3b6d4f;
+  --dt-tone-warning: #7a5a1e;
+  --dt-tone-danger: #9c3b32;
 }
 
 body {

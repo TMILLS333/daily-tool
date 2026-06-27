@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { DTBadge, DTButton, DTCard } from "@/components/catalog-primitives";
 import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 
@@ -10,7 +10,19 @@ export type StyleTokens = {
   border: string;
   radius: string;
   gap: string;
+  toneNeutral: string;
+  toneSuccess: string;
+  toneWarning: string;
+  toneDanger: string;
 };
+
+/** The stylistic subset a Theme SET carries. Semantic tones (and later the
+    category palette) are a separate concern, preserved when a designer switches
+    stylistic presets. */
+export type StyleSetTokens = Pick<
+  StyleTokens,
+  "brand" | "brandContrast" | "border" | "radius" | "gap"
+>;
 
 /** The "Editorial" baseline — matches the :root --dt-* defaults in globals.css.
    This is the beautiful starting point attendees restyle FROM; their edits
@@ -21,6 +33,10 @@ export const DEFAULT_TOKENS: StyleTokens = {
   border: "#e3dccf",
   radius: "10px",
   gap: "12px",
+  toneNeutral: "#4f5b52",
+  toneSuccess: "#3b6d4f",
+  toneWarning: "#7a5a1e",
+  toneDanger: "#9c3b32",
 };
 
 /**
@@ -31,8 +47,17 @@ export const DEFAULT_TOKENS: StyleTokens = {
  * sets vary the STYLISTIC axes (brand, border, shape, density) only; semantic
  * tone colors stay stable on purpose.
  */
-export const STYLE_SETS: { name: string; tokens: StyleTokens }[] = [
-  { name: "Editorial", tokens: DEFAULT_TOKENS },
+export const STYLE_SETS: { name: string; tokens: StyleSetTokens }[] = [
+  {
+    name: "Editorial",
+    tokens: {
+      brand: DEFAULT_TOKENS.brand,
+      brandContrast: DEFAULT_TOKENS.brandContrast,
+      border: DEFAULT_TOKENS.border,
+      radius: DEFAULT_TOKENS.radius,
+      gap: DEFAULT_TOKENS.gap,
+    },
+  },
   {
     name: "Modern",
     tokens: { brand: "#2f6f8f", brandContrast: "#ffffff", border: "#dfe4ea", radius: "16px", gap: "16px" },
@@ -63,6 +88,18 @@ export function activeStyleSetName(tokens: StyleTokens): string | null {
 function px(value: string) {
   return parseInt(value, 10) || 0;
 }
+
+/** A tone color input styled as a full-width swatch in the bare popup. */
+const toneSwatch: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  height: 24,
+  borderRadius: 6,
+  border: "0.5px solid var(--line-strong)",
+  padding: 0,
+  background: "none",
+  cursor: "pointer",
+};
 
 /**
  * Theme tab — the design tokens as a visual form, not raw CSS. In a popup
@@ -155,10 +192,10 @@ export function StyleTab({
               <span className="v">neutral · success · warning · danger</span>
             </div>
             <div className="tones">
-              <span className="tone" style={{ background: "#e8ece4" }} />
-              <span className="tone" style={{ background: "#e9f0ea" }} />
-              <span className="tone" style={{ background: "#f6edd9" }} />
-              <span className="tone" style={{ background: "#f4e9e7" }} />
+              <input type="color" value={tokens.toneNeutral} onChange={(e) => set({ toneNeutral: e.target.value })} aria-label="Neutral tone" style={toneSwatch} />
+              <input type="color" value={tokens.toneSuccess} onChange={(e) => set({ toneSuccess: e.target.value })} aria-label="Success tone" style={toneSwatch} />
+              <input type="color" value={tokens.toneWarning} onChange={(e) => set({ toneWarning: e.target.value })} aria-label="Warning tone" style={toneSwatch} />
+              <input type="color" value={tokens.toneDanger} onChange={(e) => set({ toneDanger: e.target.value })} aria-label="Danger tone" style={toneSwatch} />
             </div>
           </div>
         </div>
@@ -176,7 +213,7 @@ export function StyleTab({
                   <button
                     key={p.name}
                     type="button"
-                    onClick={() => onChange(p.tokens)}
+                    onClick={() => onChange({ ...tokens, ...p.tokens })}
                     aria-pressed={on}
                     className={`rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
                       on
@@ -228,6 +265,10 @@ export function StyleTab({
                 <Color label="Border" value={tokens.border} onChange={(v) => set({ border: v })} />
                 <Range label="Radius" value={px(tokens.radius)} min={0} max={24} onChange={(n) => set({ radius: `${n}px` })} />
                 <Range label="Gap" value={px(tokens.gap)} min={0} max={32} onChange={(n) => set({ gap: `${n}px` })} />
+                <Color label="Tone neutral" value={tokens.toneNeutral} onChange={(v) => set({ toneNeutral: v })} />
+                <Color label="Tone success" value={tokens.toneSuccess} onChange={(v) => set({ toneSuccess: v })} />
+                <Color label="Tone warning" value={tokens.toneWarning} onChange={(v) => set({ toneWarning: v })} />
+                <Color label="Tone danger" value={tokens.toneDanger} onChange={(v) => set({ toneDanger: v })} />
               </div>
             ) : null}
           </div>

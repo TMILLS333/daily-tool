@@ -715,6 +715,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     "--dt-border": tokens.border,
     "--dt-radius": tokens.radius,
     "--dt-gap": tokens.gap,
+    "--dt-tone-neutral": tokens.toneNeutral,
+    "--dt-tone-success": tokens.toneSuccess,
+    "--dt-tone-warning": tokens.toneWarning,
+    "--dt-tone-danger": tokens.toneDanger,
   } as CSSProperties;
 
   const railLabel = "mb-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]";
