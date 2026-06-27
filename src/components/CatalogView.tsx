@@ -36,12 +36,12 @@ export function CatalogView({
             <li
               key={entry.name}
               className="border-l pl-3"
-              style={{ borderColor: used ? "var(--dt-brand)" : "var(--line)" }}
+              style={{ borderColor: used ? "var(--petrol)" : "var(--line)" }}
             >
               <div className="flex items-baseline gap-2">
                 <span
                   className="font-serif text-[15px]"
-                  style={{ color: used ? "var(--dt-brand)" : "var(--ink)" }}
+                  style={{ color: used ? "var(--petrol)" : "var(--ink)" }}
                 >
                   {entry.name}
                 </span>
@@ -49,8 +49,8 @@ export function CatalogView({
                   <span
                     className="rounded px-1.5 py-0.5 text-[10px] font-medium"
                     style={{
-                      background: "var(--dt-brand)",
-                      color: "var(--dt-brand-contrast)",
+                      background: "var(--petrol)",
+                      color: "#fff",
                     }}
                   >
                     used

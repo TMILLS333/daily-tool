@@ -237,7 +237,7 @@
   flex-shrink: 0;
   border: 0;
   border-radius: 11px;
-  background: var(--dt-brand);
+  background: var(--petrol);
   color: #fff;
   font-size: 17px;
   cursor: pointer;
@@ -548,7 +548,7 @@
   transition: transform 0.15s;
 }
 .pv2 .tog[aria-checked="true"] {
-  background: var(--dt-brand);
+  background: var(--petrol);
 }
 .pv2 .tog[aria-checked="true"] .knob {
   transform: translateX(18px);

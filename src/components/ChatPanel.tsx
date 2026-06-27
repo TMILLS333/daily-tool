@@ -107,8 +107,8 @@ export function ChatPanel({
           disabled={disabled || !draft.trim()}
           className="mt-2 w-full rounded-[var(--dt-radius)] py-2 text-sm font-medium disabled:opacity-50"
           style={{
-            background: "var(--dt-brand)",
-            color: "var(--dt-brand-contrast)",
+            background: "var(--petrol)",
+            color: "#fff",
           }}
         >
           Send

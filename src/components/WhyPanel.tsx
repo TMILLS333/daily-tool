@@ -116,7 +116,7 @@ export function WhyPanel({
                         key={name}
                         className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper)] px-2 py-1 text-[11px] text-[var(--ink)]"
                       >
-                        <span className="text-[var(--dt-brand)]" aria-hidden>
+                        <span className="text-[var(--petrol)]" aria-hidden>
                           ✓
                         </span>
                         {name}

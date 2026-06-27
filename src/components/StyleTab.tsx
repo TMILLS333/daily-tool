@@ -31,7 +31,7 @@ export type StyleSetTokens = Pick<
    This is the beautiful starting point attendees restyle FROM; their edits
    override it live, so their choices lead in the rendered output. */
 export const DEFAULT_TOKENS: StyleTokens = {
-  brand: "#1f5d59",
+  brand: "#2b8f74",
   brandContrast: "#ffffff",
   border: "#e3dccf",
   radius: "10px",

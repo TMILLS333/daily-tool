@@ -108,8 +108,8 @@ export function SetupSequence({
                 running ? "animate-pulse" : ""
               }`}
               style={{
-                background: "var(--dt-brand)",
-                color: "var(--dt-brand-contrast)",
+                background: "var(--petrol)",
+                color: "#fff",
               }}
             >
               →
@@ -146,8 +146,8 @@ export function SetupSequence({
             onClick={() => onCurrent(current + 1)}
             className="rounded-[var(--dt-radius)] px-4 py-2 text-sm font-medium transition-colors"
             style={{
-              background: "var(--dt-brand)",
-              color: "var(--dt-brand-contrast)",
+              background: "var(--petrol)",
+              color: "#fff",
             }}
           >
             Next: {steps[current + 1].label} →
