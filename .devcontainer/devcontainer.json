@@ -24,6 +24,11 @@
   // `next start` needs .next to exist, and we run the production server (not
   // `next dev`) because the Turbopack dev runtime breaks the agent run with a
   // browser fetch "Illegal invocation" error.
+  // PREBUILD NOTE: the repo's prebuild trigger is "on configuration change", so
+  // a code-only change won't refresh the baked node_modules/.next. After a
+  // meaningful code change, re-run the prebuild (repo Settings -> Codespaces) so
+  // attendees don't boot a stale build. Editing THIS file is itself a config
+  // change, which is what retriggers the prebuild.
   "onCreateCommand": "npm install && npm run build",
 
   // The app's dev port. forwardPorts surfaces it immediately regardless of the
