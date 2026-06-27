@@ -105,6 +105,32 @@ const toneSwatch: CSSProperties = {
   cursor: "pointer",
 };
 
+/** A color swatch with the agent-facing role/slot label beneath it, so a
+    designer sees at a glance what the agent names this color (a role/slot,
+    never the hex). */
+function labeledSwatch(
+  value: string,
+  onChange: (v: string) => void,
+  label: string,
+  key?: number,
+) {
+  return (
+    <div
+      key={key}
+      style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}
+    >
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        style={{ ...toneSwatch, flex: "0 0 auto", width: "100%" }}
+      />
+      <span style={{ fontSize: 10, color: "var(--faint)", lineHeight: 1 }}>{label}</span>
+    </div>
+  );
+}
+
 /**
  * Theme tab — the design tokens as a visual form, not raw CSS. In a popup
  * (`bare`) it shows the mockup's direct token controls (brand, radius, gap, and
@@ -193,31 +219,29 @@ export function StyleTab({
           <div>
             <div className="tok-row" style={{ marginBottom: 7 }}>
               <span className="k">Tones</span>
-              <span className="v">neutral · success · warning · danger</span>
+              <span className="v">the role the agent names</span>
             </div>
             <div className="tones">
-              <input type="color" value={tokens.toneNeutral} onChange={(e) => set({ toneNeutral: e.target.value })} aria-label="Neutral tone" style={toneSwatch} />
-              <input type="color" value={tokens.toneSuccess} onChange={(e) => set({ toneSuccess: e.target.value })} aria-label="Success tone" style={toneSwatch} />
-              <input type="color" value={tokens.toneWarning} onChange={(e) => set({ toneWarning: e.target.value })} aria-label="Warning tone" style={toneSwatch} />
-              <input type="color" value={tokens.toneDanger} onChange={(e) => set({ toneDanger: e.target.value })} aria-label="Danger tone" style={toneSwatch} />
+              {labeledSwatch(tokens.toneNeutral, (v) => set({ toneNeutral: v }), "neutral")}
+              {labeledSwatch(tokens.toneSuccess, (v) => set({ toneSuccess: v }), "success")}
+              {labeledSwatch(tokens.toneWarning, (v) => set({ toneWarning: v }), "warning")}
+              {labeledSwatch(tokens.toneDanger, (v) => set({ toneDanger: v }), "danger")}
             </div>
           </div>
           <div>
             <div className="tok-row" style={{ marginBottom: 7 }}>
               <span className="k">Category palette</span>
-              <span className="v">color-code by data category</span>
+              <span className="v">the slot the agent picks</span>
             </div>
             <div className="tones">
-              {tokens.cats.map((c, i) => (
-                <input
-                  key={i}
-                  type="color"
-                  value={c}
-                  onChange={(e) => set({ cats: tokens.cats.map((x, j) => (j === i ? e.target.value : x)) })}
-                  aria-label={`Category ${i + 1}`}
-                  style={toneSwatch}
-                />
-              ))}
+              {tokens.cats.map((c, i) =>
+                labeledSwatch(
+                  c,
+                  (v) => set({ cats: tokens.cats.map((x, j) => (j === i ? v : x)) }),
+                  String(i + 1),
+                  i,
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -292,18 +316,18 @@ export function StyleTab({
                 <Color label="Tone warning" value={tokens.toneWarning} onChange={(v) => set({ toneWarning: v })} />
                 <Color label="Tone danger" value={tokens.toneDanger} onChange={(v) => set({ toneDanger: v })} />
                 <div className="sm:col-span-2">
-                  <div className="mb-1 text-xs text-neutral-700">Category palette</div>
+                  <div className="mb-1 text-xs text-neutral-700">
+                    Category palette <span className="text-neutral-400">· the slot the agent picks</span>
+                  </div>
                   <div className="flex gap-2">
-                    {tokens.cats.map((c, i) => (
-                      <input
-                        key={i}
-                        type="color"
-                        value={c}
-                        onChange={(e) => set({ cats: tokens.cats.map((x, j) => (j === i ? e.target.value : x)) })}
-                        aria-label={`Category ${i + 1}`}
-                        style={toneSwatch}
-                      />
-                    ))}
+                    {tokens.cats.map((c, i) =>
+                      labeledSwatch(
+                        c,
+                        (v) => set({ cats: tokens.cats.map((x, j) => (j === i ? v : x)) }),
+                        String(i + 1),
+                        i,
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
