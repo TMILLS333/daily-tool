@@ -32,7 +32,6 @@ import { DeclarativeA2UILive } from "@/components/DeclarativeA2UILive";
 import { EmergenceTimeline, type EmergenceBeat } from "@/components/EmergenceTimeline";
 import { LegibilityView } from "@/components/LegibilityView";
 import { OpenEndedPattern } from "@/components/OpenEndedPattern";
-import { SetupSequence, type SetupStep } from "@/components/SetupSequence";
 import {
   ALWAYS_KEEP,
   CATALOG,
@@ -88,7 +87,6 @@ const LS = {
   catalogLabels: "daily-tool:v1:catalog-labels",
   style: "daily-tool:v1:style",
   context: "daily-tool:v1:context",
-  hasRunOnce: "daily-tool:v1:has-run-once",
 };
 
 /** One short line per pattern for the rail's selectable cards: who designs,
@@ -156,16 +154,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // Parked chat lives in the nav, collapsed by default (Slice 3c), so the
   // dashed handoff note stays the closing beat.
   const [chatOpen, setChatOpen] = useState(false);
-  // First-run guided sequence (Pass 10) + first-run-error hardening (Pass 11).
-  // hasRunOnce is the PERSISTED "has attempted a run" flag; it flips at run
-  // commit (in `run`, below), so a reload after a failed first run lands in the
-  // working shell rather than resetting the stepper. revealWorkingShell is the
-  // in-session gate: the stepper stays until the first SUCCESSFUL run this load,
-  // so a failed first run stays in the guided frame (showing the failure)
-  // instead of being stranded with no feedback.
-  const [hasRunOnce, setHasRunOnce] = useState(false);
-  const [revealWorkingShell, setRevealWorkingShell] = useState(false);
-  const [setupStep, setSetupStep] = useState(0);
 
   // --- real-A2UI Declarative sub-mode (Pass B) ----------------------------
   // Pass 4: Real A2UI is the Declarative DEFAULT. Simplified stays a saved
@@ -267,12 +255,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           /* ignore malformed */
         }
       }
-      if (localStorage.getItem(LS.hasRunOnce) === "1") {
-        // Returning user, or a reload after a committed (possibly failed) run:
-        // skip the stepper and land directly in the working shell.
-        setHasRunOnce(true);
-        setRevealWorkingShell(true);
-      }
     } catch {
       // private mode etc. — run without persistence
     }
@@ -286,11 +268,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       localStorage.setItem(LS.request, request);
       localStorage.setItem(LS.style, JSON.stringify(tokens));
       localStorage.setItem(LS.context, JSON.stringify(context));
-      localStorage.setItem(LS.hasRunOnce, hasRunOnce ? "1" : "0");
     } catch {
       /* non-fatal */
     }
-  }, [hydrated, data, rules, request, tokens, context, hasRunOnce]);
+  }, [hydrated, data, rules, request, tokens, context]);
 
   // --- application context: what the agent knows on every run -------------
   const catalogText = useMemo(() => {
@@ -452,7 +433,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
         setApplied(latestLayersRef.current);
-        setRevealWorkingShell(true);
         setRunState({ kind: "idle" });
         ok = true;
         return reply;
@@ -513,7 +493,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       }
       if (status === "complete") {
         setApplied(latestLayersRef.current);
-        setRevealWorkingShell(true);
         setRunState({ kind: "idle" });
       } else {
         const msg = message ?? "The run failed.";
@@ -545,10 +524,6 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // request, then runs it through the shared path (or the A2UI island).
   const run = useCallback(() => {
     if (!request.trim()) return;
-    // Mark "has attempted" the moment a run is committed (persisted), so a
-    // reload after a failed first run lands in the working shell. The in-session
-    // view stays in the stepper until a run actually succeeds (revealWorkingShell).
-    setHasRunOnce(true);
     setChatTurns([]);
     if (a2uiActive) {
       runRealA2UI(request);
@@ -753,102 +728,11 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   // layerStatus + RightDock retired in v2: the panel's Layer chips replace the
   // dock tiles, so the per-tile status map is no longer needed.
 
-  // First-run: the guided stepper replaces the working shell until the first
-  // successful run. Steps reuse the existing layer components + their props.
-  const setupSteps: SetupStep[] = [
-    {
-      key: "data",
-      label: "Data",
-      node: (
-        <DataTab
-          value={data}
-          onChange={setData}
-          context={context}
-          onContextChange={setContext}
-        />
-      ),
-    },
-    {
-      key: "rules",
-      label: "Rules",
-      node: <RulesTab value={rules} onChange={setRules} />,
-    },
-    {
-      key: "catalog",
-      label: "Catalog",
-      node: (
-        <CatalogTab
-          enabled={enabled}
-          onToggle={(name, next) =>
-            setEnabled((prev) => ({ ...prev, [name]: next }))
-          }
-          descriptions={descriptions}
-          onDescriptionChange={(name, value) =>
-            setDescriptions((prev) => ({ ...prev, [name]: value }))
-          }
-          onDescriptionReset={(name) =>
-            setDescriptions((prev) => {
-              const next = { ...prev };
-              delete next[name];
-              return next;
-            })
-          }
-          labels={labels}
-          onLabelChange={(name, value) =>
-            setLabels((prev) => ({ ...prev, [name]: value }))
-          }
-          onLabelReset={(name) =>
-            setLabels((prev) => {
-              const next = { ...prev };
-              delete next[name];
-              return next;
-            })
-          }
-        />
-      ),
-    },
-    {
-      key: "style",
-      label: "Theme",
-      node: <StyleTab tokens={tokens} onChange={setTokens} />,
-    },
-  ];
-
-  // Hold a blank paper frame until hydration resolves hasRunOnce, so neither
-  // the stepper nor the working shell flashes for the wrong audience.
+  // Hold a blank paper frame until hydration resolves the persisted layers, so
+  // the working shell doesn't flash default content before localStorage loads.
   if (!hydrated) {
     return (
       <div className="min-h-dvh bg-[var(--paper)]" style={tokenStyle} aria-hidden />
-    );
-  }
-
-  // First run: the guided sequence, dock hidden, until the first run SUCCEEDS
-  // this load (revealWorkingShell). A failed run stays here, showing the failure.
-  if (!revealWorkingShell) {
-    return (
-      <div
-        className="flex min-h-dvh flex-col hero-wash text-[var(--ink)]"
-        style={tokenStyle}
-      >
-        <header className="flex shrink-0 items-center border-b border-[var(--line)] px-10 py-3">
-          <div className="leading-tight">
-            <span className="font-mono text-[15px] text-[var(--dt-brand)]" aria-hidden="true">//</span>{" "}
-            <span className="font-serif text-[17px]">GenUI Studio</span>
-          </div>
-        </header>
-        <div className="mx-auto w-full max-w-[900px] px-10 py-8">
-          <SetupSequence
-            steps={setupSteps}
-            current={setupStep}
-            onCurrent={setSetupStep}
-            request={request}
-            onRequestChange={setRequest}
-            onRun={run}
-            runStatus={runState.kind}
-            errorMessage={runState.kind === "error" ? runState.message : undefined}
-          />
-        </div>
-      </div>
     );
   }
 
