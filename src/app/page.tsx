@@ -1139,6 +1139,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 </span>
               </span>
             </button>
+            {/* Theme layer HIDDEN 2026-06-27 (Tania) — brand-in-components needs
+                a guardrail redesign before re-exposing theming. The agent never
+                sees the theme; tokens still apply from defaults. Restore by
+                uncommenting:
             <button
               className="chip"
               type="button"
@@ -1151,6 +1155,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                 Theme<span className="ct">Sage</span>
               </span>
             </button>
+            */}
           </div>
         </div>
 
