@@ -122,6 +122,13 @@ the dimension you used and how you inferred it in the "structure" field of your
 why-account. If you deliberately avoided a component because the data lacked its
 dimension, say that there too.
 
+COLOR BY CATEGORY. A few components (Badge, Kanban columns, Matrix points) take
+an optional "category" slot (1-6) that color-codes by a data category using the
+designer's Theme palette. Use it ONLY when the data has a real category worth
+distinguishing, and reuse the SAME slot for the SAME category so colors stay
+consistent across the interface. You pick the slot, never a color; the app owns
+the hues.
+
 === PATTERN: static ===
 The designer pre-built the components; you pick and fill them by calling
 tools. Call the show_* tools ONE AT A TIME, in the visual order the

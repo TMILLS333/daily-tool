@@ -86,14 +86,29 @@ const TONES: Record<string, { bg: string; fg: string }> = {
   danger: { bg: "color-mix(in srgb, var(--dt-tone-danger) 13%, var(--surface))", fg: "var(--dt-tone-danger)" },
 };
 
+const CAT_COUNT = 6;
+/** Map a designer category slot (1..6) to its palette CSS var, or null when
+    unset/out of range. The agent picks the slot; the designer owns the hue. */
+function catVar(slot?: number): string | null {
+  if (typeof slot !== "number" || !Number.isFinite(slot)) return null;
+  const n = Math.round(slot);
+  if (n < 1 || n > CAT_COUNT) return null;
+  return `var(--dt-cat-${n})`;
+}
+
 export function DTBadge({
   label,
   tone = "neutral",
+  category,
 }: {
   label: string;
   tone?: "neutral" | "success" | "warning" | "danger";
+  category?: number;
 }) {
-  const t = TONES[tone] ?? TONES.neutral;
+  const cat = catVar(category);
+  const t = cat
+    ? { bg: `color-mix(in srgb, ${cat} 14%, var(--surface))`, fg: cat }
+    : (TONES[tone] ?? TONES.neutral);
   return (
     <span
       className="inline-block px-2 py-0.5 text-xs font-medium"
@@ -426,11 +441,12 @@ export function DTStack({
 
 // Pie slice colors, token-driven so the chart re-themes with the Theme tab.
 const PIE_PALETTE = [
-  "var(--dt-brand)",
-  "var(--dt-tone-success)",
-  "var(--dt-tone-warning)",
-  "var(--dt-tone-danger)",
-  "var(--dt-tone-neutral)",
+  "var(--dt-cat-1)",
+  "var(--dt-cat-2)",
+  "var(--dt-cat-3)",
+  "var(--dt-cat-4)",
+  "var(--dt-cat-5)",
+  "var(--dt-cat-6)",
 ];
 
 function polar(cx: number, cy: number, r: number, angle: number): [number, number] {
@@ -622,9 +638,11 @@ export function DTTimeline({
 export function DTKanban({
   columnTitles,
   columnCards,
+  columnCategories,
 }: {
   columnTitles: string[];
   columnCards: string[][];
+  columnCategories?: number[];
 }) {
   const titles = columnTitles ?? [];
   if (titles.length === 0) {
@@ -634,8 +652,12 @@ export function DTKanban({
     <div className="flex gap-3 overflow-x-auto">
       {titles.map((title, i) => {
         const cards = Array.isArray(columnCards?.[i]) ? columnCards[i] : [];
+        const accent = catVar(columnCategories?.[i]);
         return (
           <div key={i} className="min-w-[150px] flex-1">
+            {accent ? (
+              <div style={{ height: 3, borderRadius: 999, background: accent, marginBottom: 8 }} />
+            ) : null}
             <div className="mb-2 flex items-baseline justify-between">
               <span className="font-serif text-sm font-medium text-[var(--ink)]">
                 {title}
@@ -674,6 +696,7 @@ export function DTMatrix({
   items,
   x,
   y,
+  category,
 }: {
   title?: string;
   xAxis: string;
@@ -681,6 +704,7 @@ export function DTMatrix({
   items: string[];
   x: number[];
   y: number[];
+  category?: number[];
 }) {
   const pts = (items ?? []).map((label, i) => ({
     label,
@@ -730,7 +754,7 @@ export function DTMatrix({
               >
                 <span
                   className="block h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: "var(--dt-brand)" }}
+                  style={{ background: catVar(category?.[i]) ?? "var(--dt-brand)" }}
                 />
                 <span className="whitespace-nowrap text-[10px] leading-none text-[var(--ink)]">
                   {p.label}

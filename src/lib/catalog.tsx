@@ -112,10 +112,11 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Badge",
     description:
-      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger').",
+      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger'), category (optional number 1-6 to color-code by data category from the Theme palette; when set it overrides tone).",
     props: z.object({
       label: z.string(),
       tone: z.enum(["neutral", "success", "warning", "danger"]).optional(),
+      category: z.number().int().min(1).max(6).optional(),
     }),
     enabled: false,
     Component: DTBadge,
@@ -290,10 +291,11 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Kanban",
     description:
-      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]). Use ONLY when the data has a status or stage to group by. Off by default.",
+      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]), columnCategories (optional array of numbers 1-6, one per column, to color-code columns by data category from the Theme palette). Use ONLY when the data has a status or stage to group by. Off by default.",
     props: z.object({
       columnTitles: z.array(z.string()),
       columnCards: z.array(z.array(z.string())),
+      columnCategories: z.array(z.number().int().min(1).max(6)).optional(),
     }),
     enabled: false,
     Component: DTKanban,
@@ -301,7 +303,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Matrix",
     description:
-      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items). Use ONLY when you can justify two rateable axes from the data; do not invent scores. Off by default.",
+      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items), category (optional array of numbers 1-6, same length as items, to color-code points by data category from the Theme palette). Use ONLY when you can justify two rateable axes from the data; do not invent scores. Off by default.",
     props: z.object({
       title: z.string().optional(),
       xAxis: z.string(),
@@ -309,6 +311,7 @@ export const CATALOG: CatalogEntry[] = [
       items: z.array(z.string()),
       x: z.array(z.number()),
       y: z.array(z.number()),
+      category: z.array(z.number().int().min(1).max(6)).optional(),
     }),
     enabled: false,
     Component: DTMatrix,

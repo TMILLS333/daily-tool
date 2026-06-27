@@ -719,6 +719,12 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     "--dt-tone-success": tokens.toneSuccess,
     "--dt-tone-warning": tokens.toneWarning,
     "--dt-tone-danger": tokens.toneDanger,
+    "--dt-cat-1": tokens.cats[0],
+    "--dt-cat-2": tokens.cats[1],
+    "--dt-cat-3": tokens.cats[2],
+    "--dt-cat-4": tokens.cats[3],
+    "--dt-cat-5": tokens.cats[4],
+    "--dt-cat-6": tokens.cats[5],
   } as CSSProperties;
 
   const railLabel = "mb-2 text-[11px] font-medium uppercase tracking-wider text-[var(--faint)]";

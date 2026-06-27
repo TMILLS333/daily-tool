@@ -14,6 +14,9 @@ export type StyleTokens = {
   toneSuccess: string;
   toneWarning: string;
   toneDanger: string;
+  /** Category palette (Slice 2): 6 designer-owned hues. The agent color-codes
+      data by slot (category = 1..6); the renderer maps the slot to one of these. */
+  cats: string[];
 };
 
 /** The stylistic subset a Theme SET carries. Semantic tones (and later the
@@ -37,6 +40,7 @@ export const DEFAULT_TOKENS: StyleTokens = {
   toneSuccess: "#3b6d4f",
   toneWarning: "#7a5a1e",
   toneDanger: "#9c3b32",
+  cats: ["#2b8f74", "#b07d2b", "#b5543a", "#6a5aa0", "#3f6ea0", "#9c4f78"],
 };
 
 /**
@@ -198,6 +202,24 @@ export function StyleTab({
               <input type="color" value={tokens.toneDanger} onChange={(e) => set({ toneDanger: e.target.value })} aria-label="Danger tone" style={toneSwatch} />
             </div>
           </div>
+          <div>
+            <div className="tok-row" style={{ marginBottom: 7 }}>
+              <span className="k">Category palette</span>
+              <span className="v">color-code by data category</span>
+            </div>
+            <div className="tones">
+              {tokens.cats.map((c, i) => (
+                <input
+                  key={i}
+                  type="color"
+                  value={c}
+                  onChange={(e) => set({ cats: tokens.cats.map((x, j) => (j === i ? e.target.value : x)) })}
+                  aria-label={`Category ${i + 1}`}
+                  style={toneSwatch}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -269,6 +291,21 @@ export function StyleTab({
                 <Color label="Tone success" value={tokens.toneSuccess} onChange={(v) => set({ toneSuccess: v })} />
                 <Color label="Tone warning" value={tokens.toneWarning} onChange={(v) => set({ toneWarning: v })} />
                 <Color label="Tone danger" value={tokens.toneDanger} onChange={(v) => set({ toneDanger: v })} />
+                <div className="sm:col-span-2">
+                  <div className="mb-1 text-xs text-neutral-700">Category palette</div>
+                  <div className="flex gap-2">
+                    {tokens.cats.map((c, i) => (
+                      <input
+                        key={i}
+                        type="color"
+                        value={c}
+                        onChange={(e) => set({ cats: tokens.cats.map((x, j) => (j === i ? e.target.value : x)) })}
+                        aria-label={`Category ${i + 1}`}
+                        style={toneSwatch}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>

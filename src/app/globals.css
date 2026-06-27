@@ -68,6 +68,17 @@ html::-webkit-scrollbar {
   --dt-tone-success: #3b6d4f;
   --dt-tone-warning: #7a5a1e;
   --dt-tone-danger: #9c3b32;
+
+  /* Category palette (design-system v2, Slice 2) — a designer-defined set of
+     distinct hues. The agent color-codes data by assigning each category a SLOT
+     (category = 1..6); the renderer maps the slot to one of these. Editable and
+     in the runtime override, like the brand and tones. */
+  --dt-cat-1: #2b8f74;
+  --dt-cat-2: #b07d2b;
+  --dt-cat-3: #b5543a;
+  --dt-cat-4: #6a5aa0;
+  --dt-cat-5: #3f6ea0;
+  --dt-cat-6: #9c4f78;
 }
 
 body {

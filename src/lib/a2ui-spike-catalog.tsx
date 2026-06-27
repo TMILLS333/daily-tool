@@ -81,10 +81,11 @@ const definitions = {
   },
   Badge: {
     description:
-      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger').",
+      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger'), category (optional number 1-6 to color-code by data category from the Theme palette; when set it overrides tone).",
     props: z.object({
       label: z.string(),
       tone: z.enum(["neutral", "success", "warning", "danger"]).optional(),
+      category: z.number().int().min(1).max(6).optional(),
     }),
   },
   Stack: {
@@ -222,15 +223,16 @@ const definitions = {
   },
   Kanban: {
     description:
-      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]). Use ONLY when the data has a status or stage to group by.",
+      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]), columnCategories (optional array of numbers 1-6, one per column, to color-code columns by data category from the Theme palette). Use ONLY when the data has a status or stage to group by.",
     props: z.object({
       columnTitles: z.array(z.string()),
       columnCards: z.array(z.array(z.string())),
+      columnCategories: z.array(z.number().int().min(1).max(6)).optional(),
     }),
   },
   Matrix: {
     description:
-      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items). Use ONLY when you can justify two rateable axes from the data; do not invent scores.",
+      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items), category (optional array of numbers 1-6, same length as items, to color-code points by data category from the Theme palette). Use ONLY when you can justify two rateable axes from the data; do not invent scores.",
     props: z.object({
       title: z.string().optional(),
       xAxis: z.string(),
@@ -238,6 +240,7 @@ const definitions = {
       items: z.array(z.string()),
       x: z.array(z.number()),
       y: z.array(z.number()),
+      category: z.array(z.number().int().min(1).max(6)).optional(),
     }),
   },
 } satisfies CatalogDefinitions;
@@ -267,7 +270,7 @@ const renderers = {
       </DTCard>
     );
   },
-  Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} />,
+  Badge: ({ props }) => <DTBadge label={props.label} tone={props.tone} category={props.category} />,
   Stack: ({ props, children }) => {
     // A2UI references children by ID. The agent emits the ID list under the
     // native `children` field (A2UI ComponentCommon) OR our `childIds` alias,
@@ -333,7 +336,7 @@ const renderers = {
     <DTTimeline title={props.title} dates={props.dates} events={props.events} />
   ),
   Kanban: ({ props }) => (
-    <DTKanban columnTitles={props.columnTitles} columnCards={props.columnCards} />
+    <DTKanban columnTitles={props.columnTitles} columnCards={props.columnCards} columnCategories={props.columnCategories} />
   ),
   Matrix: ({ props }) => (
     <DTMatrix
@@ -343,6 +346,7 @@ const renderers = {
       items={props.items}
       x={props.x}
       y={props.y}
+      category={props.category}
     />
   ),
 } satisfies CatalogRenderers<typeof definitions>;
