@@ -24,6 +24,7 @@ import {
   type StyleTokens,
 } from "@/components/StyleTab";
 import { WhyPanel } from "@/components/WhyPanel";
+import { NativeMessages } from "@/components/NativeMessages";
 import { TeachingCard } from "@/components/TeachingCard";
 import { ChatPanel, type ChatTurn } from "@/components/ChatPanel";
 import { StaticPattern, type StaticBlock } from "@/components/StaticPattern";
@@ -72,6 +73,13 @@ const PATTERNS = ["static", "declarative", "open-ended"] as const;
 // component-tree noise. The agent's "what it did" provenance is carried by the
 // "How this emerged" reveal. Kept in source, gated off; flip to restore.
 const SHOW_OPERATIONS: boolean = false;
+// Evaluation flag: render the agent's raw `agent.messages` (the Network-tab
+// "messages" payload) below the account card, unparsed, to judge whether the
+// native output stands on its own. Evaluated 2026-06-27: native is a faithful
+// PROOF of the account card (same ```why, relabeled) but developer-JSON, not an
+// attendee surface — so the curated account card stays primary and this is gated
+// OFF. Kept in source (like SHOW_OPERATIONS); flip to true to re-evaluate.
+const SHOW_NATIVE_MESSAGES: boolean = false;
 type Pattern = (typeof PATTERNS)[number];
 type AuthoringTab = "data" | "rules" | "catalog" | "style";
 type Tab = AuthoringTab | "preview" | "notes";
@@ -145,6 +153,10 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
   const [runState, setRunState] = useState<RunState>({ kind: "idle" });
   const [staticBlocks, setStaticBlocks] = useState<StaticBlock[]>([]);
   const [agentText, setAgentText] = useState<Partial<Record<Pattern, string>>>({});
+  // Raw `agent.messages` snapshot per pattern, captured at run completion, for
+  // the native-messages reference card (SHOW_NATIVE_MESSAGES). Faithful by
+  // construction: it is the same array the wire produced, not a derived view.
+  const [nativeMsgs, setNativeMsgs] = useState<Partial<Record<Pattern, unknown[]>>>({});
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   // Setup collapses to a compact bar after a Run (freedom-first run flow);
   // editing re-expands it. Presentation-only; does not touch run logic.
@@ -335,6 +347,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
       setRunState({ kind: "running" });
       if (pattern === "static") setStaticBlocks([]);
       setAgentText((prev) => ({ ...prev, [pattern]: undefined }));
+      setNativeMsgs((prev) => ({ ...prev, [pattern]: undefined }));
       setBeats([]);
 
       // Live-capture the agent's event beats for the "How this UI emerged"
@@ -432,6 +445,8 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
           );
         const reply = (lastAssistant?.content as string) ?? "";
         setAgentText((prev) => ({ ...prev, [pattern]: reply }));
+        // Capture the raw messages for the native-messages reference card.
+        setNativeMsgs((prev) => ({ ...prev, [pattern]: [...agent.messages] }));
         setApplied(latestLayersRef.current);
         setRunState({ kind: "idle" });
         ok = true;
@@ -996,6 +1011,14 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                   pattern={pattern}
                   realPath={a2uiActive}
                 />
+
+                {/* Native messages reference (evaluation only) — the agent's raw
+                    `agent.messages` below the account card, unparsed. Scoped to
+                    the default agent (Controlled / Declarative-simplified /
+                    Open-Ended); Real A2UI is a follow-up. */}
+                {SHOW_NATIVE_MESSAGES && !a2uiActive && (
+                  <NativeMessages messages={nativeMsgs[pattern] ?? []} />
+                )}
 
                 {/* Pass 4 HIDDEN — "How Preview works" reveal. Restore by uncommenting:
                 <div>
