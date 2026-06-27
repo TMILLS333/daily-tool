@@ -4,9 +4,9 @@
 
 This is the in-room path. You install nothing. A Codespace is a full computer
 that runs in your browser, boots the app, and gives you a live web address you
-can share. You need a free personal GitHub account (18+). The app runs on the shared
-workshop gateway, so the only thing you add is the one token your host gives you
-at the event (or your own AI key, if you'd rather).
+can share. You need a free personal GitHub account (18+). The only thing you add
+is a free Google Gemini key (about a minute to make), or the shared workshop
+token your host hands out, if you'd rather.
 
 ## 1. Open the Codespace
 
@@ -18,31 +18,24 @@ dependencies install on their own. If the repo owner enabled prebuilds (see the
 last section), this takes well under a minute; the first time on a repo without
 prebuilds it can take a few minutes.
 
-## 2. Add the workshop token
+## 2. Add your AI key
 
-The app runs on a shared, funded Claude gateway, so you do not need your own AI
-key. Your host gives you ONE token at the event. The gateway ids are already set
-for you in the Codespace, so the token is all you add.
+The app uses a free Google Gemini key. Your `.env` file is already created for
+you in the Codespace, so you just open it and paste.
 
-1. Create your `.env` from the template. Fastest, in the terminal at the bottom:
+1. Get a free Google Gemini key: go to **https://aistudio.google.com/apikey**,
+   sign in, and click **Create API key**. It's free and needs no card.
+2. Open the `.env` file (it's in the file list on the left). Paste your key right
+   after `GOOGLE_API_KEY=` (no spaces, no quotes), and save.
 
-   ```
-   cp .env.example .env
-   ```
-
-   (Or in the file list: right-click `.env.example`, **Copy**, **Paste**, and
-   rename the copy to exactly `.env` — not `.env.example`. The app only ever
-   reads `.env`; pasting your key into `.env.example` does nothing.)
-2. Open `.env`, paste the event token right after `CF_AIG_TOKEN=` (no spaces, no
-   quotes), and save.
-
-That's it. Your token stays on the server side of the app inside your own
+That's it. Your key stays on the server side of the app inside your own
 Codespace; it is never committed (the repo ignores `.env`) and never sent to the
 browser.
 
-**Prefer your own key?** Optional. Paste a Google (free), Anthropic, or OpenAI
-key into the matching commented line in `.env` instead, and it overrides the
-gateway (you pay that provider). Clear it again to return to the shared gateway.
+**Use the shared workshop token instead?** Optional. If your host hands out a
+gateway token at the event, paste it after `CF_AIG_TOKEN=` in `.env` instead —
+the gateway ids are already set for you. (An Anthropic or OpenAI key works too;
+any personal key beats the gateway token.)
 
 ## 3. Start the app
 

@@ -45,8 +45,14 @@ export interface ResolvedModel {
 
 // BYO defaults: the attendee pays, so default to each provider's
 // cheap-but-capable tier. Override per run with MODEL.
+// Anthropic is the deliberate exception: it pins SONNET (not a Haiku) to match
+// the funded gateway, so any Anthropic path renders with the same Claude. (The
+// old `claude-3.5-haiku` here was both retired — 404s as of Feb 2026 — and
+// malformed: model ids use hyphens, not the dot. It was the real cause of the
+// "an Anthropic key falls through to a dead model" failure, since the resolver
+// order is anthropic > openai > google.)
 const BYO_DEFAULT_MODEL: Record<ByoProvider, string> = {
-  anthropic: "anthropic/claude-3.5-haiku",
+  anthropic: "anthropic/claude-sonnet-4-6",
   openai: "openai/gpt-4.1-mini",
   google: "google/gemini-2.5-flash",
 };
