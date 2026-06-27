@@ -59,5 +59,9 @@ locally), add your key, and press **Run**. The full walkthrough is in
 
 ## How it's built
 
-The backend (`src/app/api`) is sealed — you never touch it. Everything you
-customize is in the front-end layers. Built on [CopilotKit](https://copilotkit.ai) (MIT).
+You customize the front-end layers — data, catalog, rules, theme. The backend
+(`src/app/api`) is sealed machinery you never touch.
+
+Under the hood: **Next.js** and **React**, with **[CopilotKit](https://copilotkit.ai)**
+(MIT) streaming the agent over the **AG-UI** protocol, and **A2UI** driving the
+Declarative pattern. Model-agnostic — bring a Google, Anthropic, or OpenAI key.
