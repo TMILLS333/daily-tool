@@ -4,6 +4,11 @@
   // it at a shareable URL. Full attendee walkthrough: ../CODESPACES.md
   "name": "GenUI Studio",
 
+  // Prebuild last rebaked: 2026-06-27 at HEAD fb1405f (README refresh, Theme
+  // layer hidden, onboarding stepper removed, orphan dev probe archived).
+  // Editing this file is itself a configuration change, which retriggers the
+  // prebuild so a fresh Codespace boots the current commit, not a stale image.
+
   // Non-secret gateway ids, injected into every Codespace so attendees only
   // need to paste the ONE shared gateway token (CF_AIG_TOKEN) into .env. The
   // token is handed out at the event and is never committed. Account id and
