@@ -2,7 +2,12 @@
 
 import { useMemo } from "react";
 import { useFrontendTool } from "@copilotkit/react-core/v2";
-import { CATALOG, catalogByName, type CatalogEntry } from "@/lib/catalog";
+import {
+  CATALOG,
+  catalogByName,
+  toolNameFor,
+  type CatalogEntry,
+} from "@/lib/catalog";
 
 /**
  * Static pattern — the designer pre-built the components; the agent picks
@@ -22,10 +27,19 @@ export interface StaticBlock {
 
 function ToolRegistration({
   entry,
+  label,
   description,
   onBlock,
 }: {
   entry: CatalogEntry;
+  /**
+   * The agent-facing name: the designer's edited label (the rename lever) when
+   * present, else the built-in name. It drives the tool name + description the
+   * agent reads, so renaming steers selection. The handler stays bound to the
+   * built-in `entry.name`, so the renderer always resolves the real component
+   * — a rename can misroute the agent but never break what paints.
+   */
+  label: string;
   /**
    * The agent-facing description: the designer's edited text when present,
    * else the build-time default. Single-sourcing this into the native tool
@@ -37,15 +51,15 @@ function ToolRegistration({
 }) {
   useFrontendTool(
     {
-      name: `show_${entry.name.toLowerCase()}`,
-      description: `Add a ${entry.name} to the interface, below everything already shown. ${description}`,
+      name: toolNameFor(label),
+      description: `Add a ${label} to the interface, below everything already shown. ${description}`,
       parameters: entry.props,
       handler: async (args: Record<string, unknown>) => {
         onBlock({ component: entry.name, props: args });
-        return `${entry.name} rendered.`;
+        return `${label} rendered.`;
       },
     },
-    [entry.name, description]
+    [entry.name, label, description]
   );
   return null;
 }
@@ -55,6 +69,7 @@ export function StaticPattern({
   onBlock,
   enabledNames,
   descriptions,
+  labels,
 }: {
   blocks: StaticBlock[];
   onBlock: (block: StaticBlock) => void;
@@ -66,6 +81,13 @@ export function StaticPattern({
    * description, not a competing build-time one.
    */
   descriptions: Record<string, string>;
+  /**
+   * The designer's edited component labels (the rename lever, Catalog tab).
+   * The Controlled tool name + description are built from these so the agent
+   * selects by the renamed vocabulary; the renderer still resolves by the
+   * built-in name.
+   */
+  labels: Record<string, string>;
 }) {
   // Flat, sequential tool-call entries: enabled, non-container catalog items.
   const entries = useMemo(
@@ -78,10 +100,14 @@ export function StaticPattern({
       {entries.map((entry) => {
         const edited = descriptions[entry.name];
         const description = edited && edited.trim() ? edited : entry.description;
+        const editedLabel = labels[entry.name];
+        const label =
+          editedLabel && editedLabel.trim() ? editedLabel.trim() : entry.name;
         return (
           <ToolRegistration
             key={entry.name}
             entry={entry}
+            label={label}
             description={description}
             onBlock={onBlock}
           />

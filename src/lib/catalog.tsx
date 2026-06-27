@@ -61,7 +61,7 @@ export interface CatalogEntry {
 export const CATALOG: CatalogEntry[] = [
   {
     name: "Heading",
-    description: "A section heading. Props: text (string), level (1, 2 or 3).",
+    description: "A section heading.",
     props: z.object({
       text: z.string(),
       level: z.number().min(1).max(3).optional(),
@@ -72,7 +72,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Highlight",
     description:
-      "Prominent, emphasized text. Use for the single most important line you want to stand out. Props: text (string).",
+      "Prominent, emphasized text. Use for the single most important line you want to stand out.",
     props: z.object({ text: z.string() }),
     enabled: false,
     Component: DTHighlight,
@@ -80,7 +80,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Footnote",
     description:
-      "Small, muted fine print. Use for disclaimers, captions, or secondary detail. Props: text (string).",
+      "Small, muted fine print. Use for disclaimers, captions, or secondary detail.",
     props: z.object({ text: z.string() }),
     enabled: false,
     Component: DTFootnote,
@@ -88,7 +88,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Text",
     description:
-      "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title. Props: text (string), tone ('default' | 'muted').",
+      "A paragraph of body text for sentences and supporting copy, as opposed to a Heading title.",
     props: z.object({
       text: z.string(),
       tone: z.enum(["default", "muted"]).optional(),
@@ -99,7 +99,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Card",
     description:
-      "A bordered card. Props: title (string, optional), body (string, optional), accent ('none' | 'brand'). It can hold child components (for example an Image, Heading and Badge) to compose a richer card.",
+      "A bordered card. It can hold child components (for example an Image, Heading and Badge) to compose a richer card.",
     props: z.object({
       title: z.string().optional(),
       body: z.string().optional(),
@@ -112,7 +112,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Badge",
     description:
-      "A small status label. Props: label (string), tone ('neutral' | 'success' | 'warning' | 'danger'), category (optional number 1-6 to color-code by data category from the Theme palette; when set it overrides tone).",
+      "A small status label.",
     props: z.object({
       label: z.string(),
       tone: z.enum(["neutral", "success", "warning", "danger"]).optional(),
@@ -124,7 +124,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "List",
     description:
-      "A short list of items. Props: title (string, optional), items (array of strings), ordered (boolean).",
+      "A short list of items.",
     props: z.object({
       title: z.string().optional(),
       items: z.array(z.string()),
@@ -136,7 +136,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Button",
     description:
-      "A display-only action button. Props: label (string), intent ('primary' | 'secondary'). It does not perform actions in this version.",
+      "A display-only action button. It does not perform actions in this version.",
     props: z.object({
       label: z.string(),
       intent: z.enum(["primary", "secondary"]).optional(),
@@ -147,7 +147,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Image",
     description:
-      "An image or photo. Props: alt (string, a short description), src (string, optional URL). Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder.",
+      "An image or photo. Set src ONLY if the user's data contains a real image URL; never invent one. With no real src it shows a captioned placeholder.",
     props: z.object({
       alt: z.string(),
       src: z.string().optional(),
@@ -158,7 +158,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Icon",
     description:
-      "A small glyph for emphasis or status. Props: name (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string, optional, for accessibility).",
+      "A small glyph for emphasis or status.",
     props: z.object({
       name: z.enum([
         "check",
@@ -176,7 +176,7 @@ export const CATALOG: CatalogEntry[] = [
   },
   {
     name: "Divider",
-    description: "A thin horizontal rule that separates sections. No props.",
+    description: "A thin horizontal rule that separates sections.",
     props: z.object({}),
     enabled: false,
     Component: DTDivider,
@@ -184,7 +184,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Stack",
     description:
-      "A layout container holding child components. Props: direction ('vertical' | 'horizontal'). Children go in the children array.",
+      "A layout container holding child components.",
     props: z.object({
       direction: z.enum(["vertical", "horizontal"]).optional(),
     }),
@@ -195,7 +195,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "CardWithImage",
     description:
-      "A card with an image on top and a title and caption below. Props: title (string), caption (string, optional), alt (string, a short image description), src (string, optional URL). Set src ONLY if the data has a real image URL; never invent one. With no real src it shows an honest captioned placeholder, so the card always renders. Prefer this over a bare Image when you want an image card.",
+      "A card with an image on top and a title and caption below. Set src ONLY if the data has a real image URL; never invent one. With no real src it shows an honest captioned placeholder, so the card always renders. Prefer this over a bare Image when you want an image card.",
     props: z.object({
       title: z.string(),
       caption: z.string().optional(),
@@ -208,7 +208,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "ProductCard",
     description:
-      "A product card: an image, a title, a right-aligned price, and an optional meta line. Props: title (string), price (string, e.g. '$49'), meta (string, optional), alt (string, optional image description), src (string, optional URL; never invent one — a placeholder shows when absent).",
+      "A product card: an image, a title, a right-aligned price, and an optional meta line. Never invent an image URL; a placeholder shows when src is absent.",
     props: z.object({
       title: z.string(),
       price: z.string(),
@@ -222,7 +222,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "StatCard",
     description:
-      "A single statistic: a large right-aligned figure with a label and optional unit and trend. Props: label (string), value (string, the figure, e.g. '128'), unit (string, optional, e.g. '%'), trend ('up' | 'down' | 'flat', optional). Use for a key number drawn from the data; do not invent figures.",
+      "A single statistic: a large right-aligned figure with a label and optional unit and trend. Use for a key number drawn from the data; do not invent figures.",
     props: z.object({
       label: z.string(),
       value: z.string(),
@@ -235,7 +235,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "IconCard",
     description:
-      "A small card with an icon, a label, and an optional value. Props: icon (one of 'check', 'info', 'warning', 'star', 'calendar', 'dot', 'arrow-right'), label (string), value (string, optional). Good for category callouts or labelled facts.",
+      "A small card with an icon, a label, and an optional value. Good for category callouts or labelled facts.",
     props: z.object({
       icon: z.enum([
         "check",
@@ -255,7 +255,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "PieChart",
     description:
-      "A pie chart summarizing parts of a whole. Props: title (string, optional), labels (array of strings), values (array of numbers, same length as labels). Off by default — enable it in the Catalog tab.",
+      "A pie chart summarizing parts of a whole. Give one value per label. Off by default — enable it in the Catalog tab.",
     props: z.object({
       title: z.string().optional(),
       labels: z.array(z.string()),
@@ -267,7 +267,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Table",
     description:
-      "A data table for items that share the same fields. Props: columns (array of column-header strings), rows (array of rows, each row an array of cell strings in the same order as columns), caption (string, optional). Use when the data has consistent fields across many items. Off by default.",
+      "A data table for items that share the same fields. Each row's cells follow the column order. Use when the data has consistent fields across many items. Off by default.",
     props: z.object({
       columns: z.array(z.string()),
       rows: z.array(z.array(z.string())),
@@ -279,7 +279,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Timeline",
     description:
-      "A chronological list. Props: title (string, optional), dates (array of date or step strings), events (array of event strings, same length and order as dates). Use ONLY when the data carries a real date or sequence; do not invent dates. Off by default.",
+      "A chronological list. Pair each date with its event. Use ONLY when the data carries a real date or sequence; do not invent dates. Off by default.",
     props: z.object({
       title: z.string().optional(),
       dates: z.array(z.string()),
@@ -291,7 +291,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Kanban",
     description:
-      "A board of columns holding cards. Props: columnTitles (array of column-name strings), columnCards (array of arrays of card strings; columnCards[i] holds the cards under columnTitles[i]), columnCategories (optional array of numbers 1-6, one per column, to color-code columns by data category from the Theme palette). Use ONLY when the data has a status or stage to group by. Off by default.",
+      "A board of columns holding cards. Group each column's cards under its title. Use ONLY when the data has a status or stage to group by. Off by default.",
     props: z.object({
       columnTitles: z.array(z.string()),
       columnCards: z.array(z.array(z.string())),
@@ -303,7 +303,7 @@ export const CATALOG: CatalogEntry[] = [
   {
     name: "Matrix",
     description:
-      "A two-axis placement chart (e.g. effort vs impact). Props: title (string, optional), xAxis (string label), yAxis (string label), items (array of item strings), x (array of numbers 0-100, same length as items), y (array of numbers 0-100, same length as items), category (optional array of numbers 1-6, same length as items, to color-code points by data category from the Theme palette). Use ONLY when you can justify two rateable axes from the data; do not invent scores. Off by default.",
+      "A two-axis placement chart (e.g. effort vs impact). Place each item with an x and y score from 0 to 100. Use ONLY when you can justify two rateable axes from the data; do not invent scores. Off by default.",
     props: z.object({
       title: z.string().optional(),
       xAxis: z.string(),
@@ -381,6 +381,15 @@ export const enabledCatalog = (enabledNames?: Set<string>) =>
 export const catalogByName = (name: string) =>
   CATALOG.find((c) => c.name.toLowerCase() === name.toLowerCase());
 
+/** The component's prop field names, read from the typed schema (the single
+    source of truth that CopilotKit already sends to the agent as the tool
+    `parameters` / A2UI catalog schema). Used for the editor's read-only props
+    reference, so it can never drift from what the agent actually receives. */
+export const propFieldNames = (entry: CatalogEntry): string[] => {
+  const schema = entry.props as unknown as { shape?: Record<string, unknown> };
+  return schema.shape ? Object.keys(schema.shape) : [];
+};
+
 /** Is this component enabled? Runtime set wins; otherwise the static default. */
 function isEnabledName(name: string, enabledNames?: Set<string>): boolean {
   const entry = catalogByName(name);
@@ -388,19 +397,48 @@ function isEnabledName(name: string, enabledNames?: Set<string>): boolean {
   return enabledNames ? enabledNames.has(entry.name) : entry.enabled;
 }
 
+/** The agent-facing name for a component: the designer's edited label (the
+    rename lever, Controlled only) when present and non-empty, else the built-in
+    name. The label changes what the agent READS to select; the renderer always
+    resolves by the built-in name, so a rename can misroute selection but never
+    break what paints. */
+export const agentFacingName = (
+  builtInName: string,
+  labels?: Record<string, string>
+): string => {
+  const label = labels?.[builtInName];
+  return label && label.trim() ? label.trim() : builtInName;
+};
+
+/** Normalize any (possibly multi-word) agent-facing name into a valid Controlled
+    tool identifier: `show_<slug>`. Free-text labels with spaces/punctuation are
+    reduced to lowercase word groups joined by underscores so the registered tool
+    name stays a legal identifier. */
+export const toolNameFor = (agentName: string): string => {
+  const slug = agentName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return `show_${slug || "component"}`;
+};
+
 /** Model-facing one-line-per-component catalog description. A per-component
     description override (the designer's edited text from the Catalog surface)
     replaces the static one when present and non-empty; otherwise the static
-    default is used. */
+    default is used. A per-component label override (the rename lever) replaces
+    the displayed name; pass it only for patterns where renaming is in scope
+    (Controlled), so other patterns keep the built-in names their lookups use. */
 export const catalogPromptText = (
   enabledNames?: Set<string>,
-  descriptions?: Record<string, string>
+  descriptions?: Record<string, string>,
+  labels?: Record<string, string>
 ) =>
   enabledCatalog(enabledNames)
     .map((c) => {
       const override = descriptions?.[c.name];
       const text = override && override.trim() ? override : c.description;
-      return `- ${c.name}: ${text}`;
+      const name = agentFacingName(c.name, labels);
+      return `- ${name}: ${text}`;
     })
     .join("\n");
 

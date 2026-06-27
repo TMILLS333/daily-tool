@@ -85,6 +85,7 @@ const LS = {
   request: "daily-tool:v1:request",
   catalog: "daily-tool:v1:catalog",
   catalogDescriptions: "daily-tool:v1:catalog-descriptions",
+  catalogLabels: "daily-tool:v1:catalog-labels",
   style: "daily-tool:v1:style",
   context: "daily-tool:v1:context",
   hasRunOnce: "daily-tool:v1:has-run-once",
@@ -125,9 +126,11 @@ type DailyToolInnerProps = {
   enabledNames: Set<string>;
   descriptions: Record<string, string>;
   setDescriptions: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
+  labels: Record<string, string>;
+  setLabels: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
 };
 
-function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDescriptions }: DailyToolInnerProps) {
+function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDescriptions, labels, setLabels }: DailyToolInnerProps) {
   const { copilotkit } = useCopilotKit();
   const { agent } = useAgent();
 
@@ -296,12 +299,20 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
     // !c.container), so listing Card/Stack here invites uncallable show_card /
     // show_stack calls -> orphaned tool-calls -> the AI SDK MissingToolResults
     // run failure. Reuse the same per-pattern filter the tools + Why panel use.
+    // The rename lever (labels) applies only to Controlled, where the agent-
+    // facing name is the native tool name and the renderer resolves by the
+    // built-in name. On Declarative/Open-ended the built-in names are the
+    // lookup keys, so labels are withheld there (out of scope this pass).
     const names =
       pattern === "static"
         ? new Set(allowedComponentNames("static", enabledNames))
         : enabledNames;
-    return catalogPromptText(names, descriptions);
-  }, [pattern, enabledNames, descriptions]);
+    return catalogPromptText(
+      names,
+      descriptions,
+      pattern === "static" ? labels : undefined
+    );
+  }, [pattern, enabledNames, descriptions, labels]);
   useAgentContext({ description: "Active pattern", value: pattern });
   useAgentContext({
     description: "The user's data (the only source of facts)",
@@ -782,6 +793,17 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
               return next;
             })
           }
+          labels={labels}
+          onLabelChange={(name, value) =>
+            setLabels((prev) => ({ ...prev, [name]: value }))
+          }
+          onLabelReset={(name) =>
+            setLabels((prev) => {
+              const next = { ...prev };
+              delete next[name];
+              return next;
+            })
+          }
         />
       ),
     },
@@ -993,6 +1015,7 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                         onBlock={(b) => setStaticBlocks((prev) => [...prev, b])}
                         enabledNames={enabledNames}
                         descriptions={descriptions}
+                        labels={labels}
                       />
                     )}
                     {pattern === "declarative" &&
@@ -1332,6 +1355,17 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
                       return next;
                     })
                   }
+                  labels={labels}
+                  onLabelChange={(name, value) =>
+                    setLabels((prev) => ({ ...prev, [name]: value }))
+                  }
+                  onLabelReset={(name) =>
+                    setLabels((prev) => {
+                      const next = { ...prev };
+                      delete next[name];
+                      return next;
+                    })
+                  }
                 />
               <div className="pfoot">
                 <span>
@@ -1463,6 +1497,7 @@ export default function Home() {
     Object.fromEntries(CATALOG.map((c) => [c.name, c.enabled]))
   );
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+  const [labels, setLabels] = useState<Record<string, string>>({});
   const [catalogHydrated, setCatalogHydrated] = useState(false);
   useEffect(() => {
     try {
@@ -1480,6 +1515,13 @@ export default function Home() {
           setDescriptions(parsedDesc);
         }
       }
+      const lab = localStorage.getItem(LS.catalogLabels);
+      if (lab) {
+        const parsedLab = JSON.parse(lab);
+        if (parsedLab && typeof parsedLab === "object") {
+          setLabels(parsedLab);
+        }
+      }
     } catch {
       /* ignore malformed / private mode */
     }
@@ -1490,10 +1532,11 @@ export default function Home() {
     try {
       localStorage.setItem(LS.catalog, JSON.stringify(enabled));
       localStorage.setItem(LS.catalogDescriptions, JSON.stringify(descriptions));
+      localStorage.setItem(LS.catalogLabels, JSON.stringify(labels));
     } catch {
       /* non-fatal */
     }
-  }, [catalogHydrated, enabled, descriptions]);
+  }, [catalogHydrated, enabled, descriptions, labels]);
 
   const enabledNames = useMemo(
     () =>
@@ -1522,6 +1565,8 @@ export default function Home() {
         enabledNames={enabledNames}
         descriptions={descriptions}
         setDescriptions={setDescriptions}
+        labels={labels}
+        setLabels={setLabels}
       />
     </CopilotKitProvider>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ALWAYS_KEEP, CATALOG } from "@/lib/catalog";
+import { ALWAYS_KEEP, CATALOG, propFieldNames } from "@/lib/catalog";
 import { TeachingCard, HonestyChip } from "@/components/TeachingCard";
 import {
   IconHeading,
@@ -21,6 +21,7 @@ import {
   IconSearch,
   IconEye,
   IconPencil,
+  IconInfoCircle,
   IconPlus,
   IconAlignLeft,
   IconArticle,
@@ -74,6 +75,9 @@ export function CatalogTab({
   descriptions,
   onDescriptionChange,
   onDescriptionReset,
+  labels,
+  onLabelChange,
+  onLabelReset,
   bare,
 }: {
   enabled: Record<string, boolean>;
@@ -81,6 +85,12 @@ export function CatalogTab({
   descriptions: Record<string, string>;
   onDescriptionChange: (name: string, value: string) => void;
   onDescriptionReset: (name: string) => void;
+  /** The rename lever (Controlled only): the designer's edited agent-facing
+      name per component. Keyed by the built-in name; the renderer still
+      resolves by the built-in name, so renaming only steers selection. */
+  labels: Record<string, string>;
+  onLabelChange: (name: string, value: string) => void;
+  onLabelReset: (name: string) => void;
   /** In-popup mode: drop the chip + intro + teaching card (the popup says them);
       keep the search + rows. */
   bare?: boolean;
@@ -110,6 +120,8 @@ export function CatalogTab({
     const on = fixed || (enabled[name] ?? false);
     const edited = descriptions[name] !== undefined;
     const descValue = edited ? descriptions[name] : entry.description;
+    const nameEdited = labels[name] !== undefined;
+    const nameValue = nameEdited ? labels[name] : name;
     const isRevealed = revealed[name] ?? false;
     const isEditing = editing[name] ?? false;
     return (
@@ -122,7 +134,7 @@ export function CatalogTab({
             <div className="rname">
               {name}
               {entry.container ? <span className="tag tag-c">container</span> : null}
-              {edited ? <span className="tag tag-c">edited</span> : null}
+              {edited || nameEdited ? <span className="tag tag-c">edited</span> : null}
             </div>
             <div className="rrole">{meta?.role ?? ""}</div>
           </div>
@@ -160,25 +172,106 @@ export function CatalogTab({
           <div className="sees">
             <div className="cap">
               <IconEye size={13} stroke={1.5} />
-              The description the agent reads
+              What the agent reads
             </div>
-            <p style={{ fontSize: 11, lineHeight: 1.4, color: "var(--faint)", marginBottom: 6 }}>
-              Write what this component is <em>for</em> (a role), e.g.
-              &ldquo;Use for the page title.&rdquo; Steers <em>which</em> component
-              the agent picks, not how it renders.
-            </p>
             {isEditing ? (
-              <textarea
-                className="desc"
-                value={descValue}
-                onChange={(e) => onDescriptionChange(name, e.target.value)}
-                rows={3}
-                aria-label={`${name} description (the agent reads this)`}
-                style={{ width: "100%", resize: "vertical", outline: "none", fontFamily: "var(--font-sans)" }}
-              />
+              <>
+                <div style={{ marginBottom: 8 }}>
+                  <label
+                    htmlFor={`name-${name}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--muted)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    <span>Name the agent reads</span>
+                    <span style={{ fontWeight: 500, color: "var(--faint)" }}>
+                      · Controlled only
+                    </span>
+                    <span
+                      title="Renames what the agent calls this on Controlled. Steers which component it picks, not how it renders. No effect on Declarative or Open-ended."
+                      style={{ display: "inline-flex", cursor: "help", color: "var(--faint)" }}
+                    >
+                      <IconInfoCircle size={12} stroke={1.5} />
+                    </span>
+                  </label>
+                  <input
+                    id={`name-${name}`}
+                    className="desc"
+                    value={nameValue}
+                    onChange={(e) => onLabelChange(name, e.target.value)}
+                    aria-label={`${name} agent-facing name (Controlled only)`}
+                    style={{ width: "100%", outline: "none", fontFamily: "var(--font-sans)" }}
+                  />
+                </div>
+                <label
+                  htmlFor={`desc-${name}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--muted)",
+                    marginBottom: 3,
+                  }}
+                >
+                  <span>Description the agent reads</span>
+                  <span
+                    title="Write what this component is for, e.g. “Use for the page title.” Steers which component the agent picks, not how it renders."
+                    style={{ display: "inline-flex", cursor: "help", color: "var(--faint)" }}
+                  >
+                    <IconInfoCircle size={12} stroke={1.5} />
+                  </span>
+                </label>
+                <textarea
+                  id={`desc-${name}`}
+                  className="desc"
+                  value={descValue}
+                  onChange={(e) => onDescriptionChange(name, e.target.value)}
+                  rows={3}
+                  aria-label={`${name} description (the agent reads this)`}
+                  style={{ width: "100%", resize: "vertical", outline: "none", fontFamily: "var(--font-sans)" }}
+                />
+              </>
             ) : (
               <div className="desc">{descValue}</div>
             )}
+            {(() => {
+              const fields = propFieldNames(entry);
+              return (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontSize: 11,
+                    lineHeight: 1.4,
+                    color: "var(--faint)",
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>
+                    Fields the agent fills:
+                  </span>{" "}
+                  {fields.length ? (
+                    fields.map((f, i) => (
+                      <span key={f}>
+                        {i > 0 ? ", " : ""}
+                        <code style={{ fontFamily: "var(--font-mono)" }}>{f}</code>
+                      </span>
+                    ))
+                  ) : (
+                    <em>none</em>
+                  )}
+                  <span style={{ marginLeft: 6, fontStyle: "italic" }}>
+                    · from the component&rsquo;s schema (read-only)
+                  </span>
+                </div>
+              );
+            })()}
             <div className="acts">
               <button type="button" onClick={() => setEditing((p) => ({ ...p, [name]: !isEditing }))}>
                 <IconPencil size={12} stroke={1.5} style={{ verticalAlign: "-1px" }} />{" "}
@@ -186,7 +279,12 @@ export function CatalogTab({
               </button>
               {edited ? (
                 <button type="button" onClick={() => onDescriptionReset(name)}>
-                  Reset
+                  Reset description
+                </button>
+              ) : null}
+              {nameEdited ? (
+                <button type="button" onClick={() => onLabelReset(name)}>
+                  Reset name
                 </button>
               ) : null}
             </div>
