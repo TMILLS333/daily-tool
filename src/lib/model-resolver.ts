@@ -52,12 +52,15 @@ const BYO_DEFAULT_MODEL: Record<ByoProvider, string> = {
 };
 
 // Gateway default model (Tania funds this path via Unified Billing). Tania's
-// choice 2026-06-23: Claude Sonnet, for its stronger rule-following (the
-// workshop's whole teaching point). The /compat endpoint uses {provider}/{model}
+// choice 2026-06-26: Claude HAIKU — it's fast AND it produces the same rich,
+// colorful output (status icons, color-coded badges) Sonnet does, without
+// Sonnet's latency. The gateway is now the funded BACKUP path (the event leads
+// with BYO Gemini), so a fast backup beats Sonnet's marginally stronger
+// rule-following for a live room. The /compat endpoint uses {provider}/{model}
 // ids with hyphens, not dots — verified live on this gateway:
-// anthropic/claude-sonnet-4-6, anthropic/claude-haiku-4-5 (cheaper),
+// anthropic/claude-haiku-4-5, anthropic/claude-sonnet-4-6 (slower),
 // openai/gpt-4.1-mini, google-ai-studio/gemini-2.5-flash. Override CF_AIG_MODEL.
-const GATEWAY_DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
+const GATEWAY_DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
 
 /** Trim and treat blank / whitespace-only as absent. */
 function present(value: string | undefined): string | undefined {

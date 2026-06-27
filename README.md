@@ -1,6 +1,6 @@
-# Daily Tool
+# GenUI Studio
 
-**Coffee & Claude: GenUI Challenge · IxDF Dallas · June 27, 2026**
+**GenUI Challenge · IxDF Dallas · June 27, 2026**
 
 A small app where an AI agent turns your daily pile of text — interview
 quotes, audit findings, campaign briefs — into a working interface, within
@@ -13,7 +13,7 @@ the **Rules** tab, then run the same request through three render patterns —
 **Controlled** (the agent fills components you pre-built), **Declarative** (the
 agent emits a spec; your catalog decides what renders, A2UI-style), and
 **Open-Ended** (the agent invents the surface, sandboxed). Tune the agent's
-latitude in the **Catalog** tab (which components it may use), the **Style** tab
+latitude in the **Catalog** tab (which components it may use), the **Theme** tab
 (your design tokens). The "Why this render" panel
 reports which rules fired and which components were allowed.
 

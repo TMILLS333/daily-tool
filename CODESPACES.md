@@ -1,6 +1,6 @@
-# Run the Daily Tool in the browser (GitHub Codespaces)
+# Run GenUI Studio in the browser (GitHub Codespaces)
 
-**Coffee & Claude: GenUI Challenge · IxDF Dallas · June 27, 2026**
+**GenUI Challenge · IxDF Dallas · June 27, 2026**
 
 This is the in-room path. You install nothing. A Codespace is a full computer
 that runs in your browser, boots the app, and gives you a live web address you
@@ -24,8 +24,15 @@ The app runs on a shared, funded Claude gateway, so you do not need your own AI
 key. Your host gives you ONE token at the event. The gateway ids are already set
 for you in the Codespace, so the token is all you add.
 
-1. In the file list on the left, right-click `.env.example`, choose **Copy**,
-   then **Paste**, and rename the copy to `.env`.
+1. Create your `.env` from the template. Fastest, in the terminal at the bottom:
+
+   ```
+   cp .env.example .env
+   ```
+
+   (Or in the file list: right-click `.env.example`, **Copy**, **Paste**, and
+   rename the copy to exactly `.env` — not `.env.example`. The app only ever
+   reads `.env`; pasting your key into `.env.example` does nothing.)
 2. Open `.env`, paste the event token right after `CF_AIG_TOKEN=` (no spaces, no
    quotes), and save.
 
@@ -37,22 +44,19 @@ browser.
 key into the matching commented line in `.env` instead, and it overrides the
 gateway (you pay that provider). Clear it again to return to the shared gateway.
 
-## 3. Start the app (and restart after adding your key)
+## 3. Start the app
 
-When the Codespace opens, it starts the app for you. The app reads `.env` only
-at startup, so the copy that started before you added your token (step 2) will
-not see it yet. After you save, restart the app:
-
-1. In the terminal at the bottom, stop the running app (click the trash/stop
-   icon on its task, or press Ctrl+C in that terminal).
-2. Start it again with:
+The Codespace sets itself up but does **not** auto-start the app, so you can add
+your key first (step 2). Once your `.env` is saved, start it in the terminal:
 
 ```
 npm run start
 ```
 
 Watch for the line that says the server is **Ready**. A small popup will offer to
-open the app; open it and go to any pattern tab, then press **Run**.
+open the app; open it and go to any pattern tab, then press **Run**. (If you edit
+`.env` later, stop the app with Ctrl+C and run `npm run start` again — it reads
+`.env` only at startup.)
 
 (A terminal self-check, `node scripts/engine-proof.mjs`, verifies a personal
 **Google** key and the tool-calling engine. It does not test the shared gateway,
@@ -64,7 +68,7 @@ By default the running app is private to you. To turn it into a link you can
 share:
 
 1. Open the **Ports** tab (next to the Terminal tab at the bottom).
-2. Find the row for port **3000** (labeled **Daily Tool**).
+2. Find the row for port **3000** (labeled **GenUI Studio**).
 3. Right-click that row, choose **Port Visibility**, then **Public**.
 4. Copy the **Forwarded Address** for that row. That web address is your live
    app. Paste it into a browser, or share it.
