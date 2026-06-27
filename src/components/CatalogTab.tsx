@@ -69,6 +69,26 @@ const META: Record<string, { icon: typeof IconHeading; role: string }> = {
   IconCard: { icon: IconId, role: "Icon, label, value" },
 };
 
+/** A small hover tooltip that actually pops — Tailwind group-hover, no native
+    `title` delay. Used for the section-kind explanations and the field hints. */
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span
+      className="group relative inline-flex cursor-help align-middle"
+      style={{ color: "var(--faint)" }}
+    >
+      <IconInfoCircle size={12} stroke={1.5} />
+      <span
+        role="tooltip"
+        className="pointer-events-none invisible absolute left-0 top-full z-50 mt-1 w-56 rounded-md px-2.5 py-1.5 text-[11px] font-normal normal-case leading-snug tracking-normal opacity-0 shadow-lg transition-opacity duration-100 group-hover:visible group-hover:opacity-100"
+        style={{ background: "#1f2a27", color: "#f2f5f1" }}
+      >
+        {text}
+      </span>
+    </span>
+  );
+}
+
 export function CatalogTab({
   enabled,
   onToggle,
@@ -142,10 +162,19 @@ export function CatalogTab({
             type="button"
             className="disc"
             aria-expanded={isRevealed}
+            aria-label={
+              isRevealed
+                ? "Hide the agent-facing name and description"
+                : "Show the agent-facing name and description"
+            }
+            title={
+              isRevealed
+                ? "Hide the agent-facing name and description"
+                : "Show the agent-facing name and description"
+            }
             onClick={() => setRevealed((p) => ({ ...p, [name]: !isRevealed }))}
           >
-            <IconEye size={13} stroke={1.5} />
-            what the agent sees
+            <IconEye size={14} stroke={1.5} />
           </button>
           {fixed ? (
             <span
@@ -170,10 +199,6 @@ export function CatalogTab({
         </div>
         {isRevealed ? (
           <div className="sees">
-            <div className="cap">
-              <IconEye size={13} stroke={1.5} />
-              What the agent reads
-            </div>
             {isEditing ? (
               <>
                 <div style={{ marginBottom: 8 }}>
@@ -189,16 +214,11 @@ export function CatalogTab({
                       marginBottom: 3,
                     }}
                   >
-                    <span>Name the agent reads</span>
+                    <span>Name the agent uses</span>
                     <span style={{ fontWeight: 500, color: "var(--faint)" }}>
                       · Controlled only
                     </span>
-                    <span
-                      title="Renames what the agent calls this on Controlled. Steers which component it picks, not how it renders. No effect on Declarative or Open-ended."
-                      style={{ display: "inline-flex", cursor: "help", color: "var(--faint)" }}
-                    >
-                      <IconInfoCircle size={12} stroke={1.5} />
-                    </span>
+                    <InfoTip text="Renames what the agent calls this on Controlled. Steers which component it picks, not how it renders. No effect on Declarative or Open-ended." />
                   </label>
                   <input
                     id={`name-${name}`}
@@ -222,12 +242,7 @@ export function CatalogTab({
                   }}
                 >
                   <span>Description the agent reads</span>
-                  <span
-                    title="Write what this component is for, e.g. “Use for the page title.” Steers which component the agent picks, not how it renders."
-                    style={{ display: "inline-flex", cursor: "help", color: "var(--faint)" }}
-                  >
-                    <IconInfoCircle size={12} stroke={1.5} />
-                  </span>
+                  <InfoTip text="Write what this component is for, e.g. “Use for the page title.” Steers which component the agent picks, not how it renders." />
                 </label>
                 <textarea
                   id={`desc-${name}`}
@@ -329,19 +344,20 @@ export function CatalogTab({
       </div>
 
       <div className="catbody">
-        <div className="grp">Basic</div>
+        <div className="grp">
+          Basic{" "}
+          <InfoTip text="Presentational primitives. One job each, like a heading, list, or badge." />
+        </div>
         {BASIC.map(renderRow)}
-        <div className="grp">Composed</div>
-        <p
-          className="text-xs text-[var(--muted)]"
-          style={{ margin: "0 0 6px", padding: "0 2px" }}
-        >
-          Whole, multi-part components. Most useful in Controlled, where the agent
-          picks one block and fills it (it can&rsquo;t assemble parts itself).
-          CopilotKit calls this &ldquo;components as tools.&rdquo;
-        </p>
+        <div className="grp">
+          Composed{" "}
+          <InfoTip text="Whole, multi-part components built from several pieces, like an image card or stat card." />
+        </div>
         {COMPOSED.map(renderRow)}
-        <div className="grp">Structured</div>
+        <div className="grp">
+          Structured{" "}
+          <InfoTip text="Data-shape components that render a structure, like tables, charts, and boards." />
+        </div>
         {STRUCTURED.map(renderRow)}
         <button className="add" type="button" disabled aria-disabled="true" title="Coming soon">
           <IconPlus size={16} stroke={1.5} />

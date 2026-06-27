@@ -521,7 +521,7 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.9;
   transition: opacity 0.15s;
 }
 .pv2 .row:hover .disc {
