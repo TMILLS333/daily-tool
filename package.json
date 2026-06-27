@@ -2,7 +2,7 @@
   "name": "daily-tool",
   "version": "0.1.0",
   "private": true,
-  "description": "Coffee & Claude: GenUI Challenge — your daily tool, rendered by an agent within rules you write.",
+  "description": "A designer's playground for hands-on generative UI: shape what an AI agent builds through the catalog, rules, and theme you design.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
