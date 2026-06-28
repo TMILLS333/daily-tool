@@ -9,7 +9,11 @@
 
 .pv2 {
   --off: #cdd5c8;
-  min-height: 100dvh;
+  /* Hard viewport cap (was min-height): the shell must not grow past the
+     viewport, or the whole page scrolls and the right panel rides away with it.
+     With this cap the page never scrolls; only .canvas scrolls its own overflow,
+     so the right tooling panel stays pinned in view. */
+  height: 100dvh;
   background: #dfe4da;
   padding: 20px;
   display: flex;
@@ -61,7 +65,9 @@
   min-height: 0;
 }
 
-/* LEFT — canvas */
+/* LEFT — canvas. The only scroller in the body row: it scrolls its own overflow
+   while the right panel stays pinned. Scrollbar hidden on purpose (scroll still
+   works via wheel/trackpad/keys) so the canvas reads as a clean artboard mat. */
 .pv2 .canvas {
   flex: 1;
   min-width: 0;
@@ -70,6 +76,11 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge/IE */
+}
+.pv2 .canvas::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Edge */
 }
 .pv2 .canvas-lbl {
   font-size: 11px;

@@ -17,7 +17,7 @@ import {
 
 import { DataTab, type DataContext } from "@/components/DataTab";
 import { RulesTab } from "@/components/RulesTab";
-import { CatalogTab } from "@/components/CatalogTab";
+import { CatalogTab, InfoTip } from "@/components/CatalogTab";
 import {
   StyleTab,
   DEFAULT_TOKENS,
@@ -1291,7 +1291,13 @@ function DailyToolInner({ enabled, setEnabled, enabledNames, descriptions, setDe
             <div className="pop" role="dialog" aria-label="Rules">
               <div className="ph">
                 <div>
-                  <h2>Rules</h2>
+                  <h2>
+                    Rules{" "}
+                    <InfoTip
+                      width="w-72"
+                      text={`Injected with CopilotKit's useAgentContext() hook as "design rules" context. The full text rides in the prompt on every run, so longer rules cost more each time. They are advisory, not enforced, so keep them tight.`}
+                    />
+                  </h2>
                   <p>Optional. Use only if the catalog and descriptions aren&apos;t enough — the agent may not follow it.</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>

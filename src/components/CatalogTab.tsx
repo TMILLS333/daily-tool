@@ -70,8 +70,11 @@ const META: Record<string, { icon: typeof IconHeading; role: string }> = {
 };
 
 /** A small hover tooltip that actually pops — Tailwind group-hover, no native
-    `title` delay. Used for the section-kind explanations and the field hints. */
-function InfoTip({ text }: { text: string }) {
+    `title` delay. Used for the section-kind explanations and the field hints,
+    and reused in the Rules popup (page.tsx) for the injection/cost note, so the
+    two tooltips stay visually identical. `width` is an optional Tailwind width
+    class (default w-56) for longer copy. */
+export function InfoTip({ text, width = "w-56" }: { text: string; width?: string }) {
   return (
     <span
       className="group relative inline-flex cursor-help align-middle"
@@ -80,7 +83,7 @@ function InfoTip({ text }: { text: string }) {
       <IconInfoCircle size={12} stroke={1.5} />
       <span
         role="tooltip"
-        className="pointer-events-none invisible absolute left-0 top-full z-50 mt-1 w-56 rounded-md px-2.5 py-1.5 text-[11px] font-normal normal-case leading-snug tracking-normal opacity-0 shadow-lg transition-opacity duration-100 group-hover:visible group-hover:opacity-100"
+        className={`pointer-events-none invisible absolute left-0 top-full z-50 mt-1 ${width} rounded-md px-2.5 py-1.5 text-[11px] font-normal normal-case leading-snug tracking-normal opacity-0 shadow-lg transition-opacity duration-100 group-hover:visible group-hover:opacity-100`}
         style={{ background: "#1f2a27", color: "#f2f5f1" }}
       >
         {text}
